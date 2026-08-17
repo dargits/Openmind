@@ -1,0 +1,24 @@
+# Open-mind — Dependencies
+# ─────────────────────────────────────────────
+# Core AI Engines
+faster-whisper==1.0.3
+llama-cpp-python==0.3.34
+pydub==0.25.1
+
+# Model Hub & Downloads
+huggingface-hub>=0.20.0
+tqdm>=4.65.0
+requests>=2.28.0
+
+# Web UI Desktop
+pywebview>=5.0
+
+# Audio Playback
+pygame==2.6.1
+
+# Build & Packaging
+pyinstaller>=6.10.0
+
+# Benchmark & Metrics (Optional)
+psutil>=5.9.0
+jiwer>=3.0.0

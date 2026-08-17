@@ -1,0 +1,508 @@
+/* ════════════════════════════════════════════
+   Flashcard View — Open-mind Pro
+   4-button SM-2 · CSS 3D flip · Keyboard nav
+════════════════════════════════════════════ */
+
+'use strict';
+
+const FC = {
+  deckId: null,
+  cards: [],
+  idx: 0,
+  isFlipped: false,
+  sessionStart: Date.now(),
+  reviewed: 0,
+  shuffleMode: false,
+  allMode: false,
+  timerInterval: null,
+};
+
+// ──────────────────────────────────────────
+// Render view shell
+// ──────────────────────────────────────────
+function renderFlashcardView() {
+  el('view-flashcard').innerHTML = `
+<div class="flashcard-layout" style="height:100%;padding:0;">
+
+  <!-- LEFT: Deck Panel -->
+  <div class="deck-panel" style="height:100%;overflow:hidden;display:flex;flex-direction:column;gap:10px;">
+    <div class="flex items-center justify-between" style="flex-shrink:0">
+      <span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.05em">DANH SÁCH CHỦ ĐỀ</span>
+      <button class="btn btn-ghost btn-sm" id="fcNewDeck" style="display:inline-flex;align-items:center;gap:4px;">
+        <i data-lucide="plus" style="width:14px;height:14px;"></i> Thêm
+      </button>
+    </div>
+
+    <div class="deck-list" id="deckList" style="flex:1;overflow-y:auto;"></div>
+
+    <div class="mode-toggles" style="flex-shrink:0;padding:2px 0;">
+      <label class="toggle-label"><input type="checkbox" id="fcShuffle"> <i data-lucide="shuffle" style="width:14px;height:14px;"></i> Ngẫu nhiên</label>
+      <label class="toggle-label"><input type="checkbox" id="fcAll"> <i data-lucide="book-open" style="width:14px;height:14px;"></i> Ôn tất cả</label>
+    </div>
+
+    <button class="btn btn-ghost btn-full btn-sm" id="fcAddCard" style="flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+      <i data-lucide="plus-circle" style="width:15px;height:15px;"></i> Thêm thẻ thủ công
+    </button>
+  </div>
+
+  <!-- RIGHT: Study Panel -->
+  <div class="study-panel" style="height:100%;overflow:hidden;">
+    <!-- Top bar -->
+    <div class="study-topbar" style="flex-shrink:0;">
+      <div class="study-title" id="fcDeckTitle" style="display:inline-flex;align-items:center;gap:8px;">
+        <i data-lucide="layers" style="width:18px;height:18px;color:var(--accent);"></i>
+        <span>Chọn một chủ đề để bắt đầu</span>
+      </div>
+      <div class="study-meta">
+        <span class="timer" id="fcTimer"></span>
+        <span class="badge badge-warning" id="fcProgress">0 / 0</span>
+      </div>
+    </div>
+
+    <!-- 3D Flip Card -->
+    <div class="card-scene" id="fcScene" style="flex:1;min-height:0;">
+      <div class="card-inner" id="fcInner">
+        <div class="card-face card-front" id="fcFront">
+          <div class="card-empty" style="border:none;background:transparent;">
+            <i data-lucide="layers" style="width:52px;height:52px;opacity:0.35;margin-bottom:8px;"></i>
+            <div class="card-empty-title">Chọn chủ đề bên trái</div>
+            <div class="card-empty-sub">để bắt đầu ôn tập</div>
+          </div>
+        </div>
+        <div class="card-face card-back" id="fcBack">
+          <!-- populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SRS Rating Bar -->
+    <div class="srs-bar" id="fcSrsBar" style="flex-shrink:0;">
+      <button class="srs-btn srs-again" id="srsAgain" disabled>
+        🔴 QUÊN <span class="srs-interval" id="ivAgain">1 ngày</span>
+      </button>
+      <button class="srs-btn srs-hard" id="srsHard" disabled>
+        🟠 KHÓ <span class="srs-interval" id="ivHard">—</span>
+      </button>
+      <button class="srs-btn srs-good" id="srsGood" disabled>
+        🟢 TỐT <span class="srs-interval" id="ivGood">—</span>
+      </button>
+      <button class="srs-btn srs-easy" id="srsEasy" disabled>
+        🔵 DỄ <span class="srs-interval" id="ivEasy">—</span>
+      </button>
+    </div>
+  </div>
+</div>`;
+
+  // Events
+  el('fcNewDeck').addEventListener('click', createDeckDialog);
+  el('fcAddCard').addEventListener('click', addCardDialog);
+  el('fcInner').addEventListener('click', flipCard);
+  el('fcShuffle').addEventListener('change', e => { FC.shuffleMode = e.target.checked; reloadCards(); });
+  el('fcAll').addEventListener('change', e => { FC.allMode = e.target.checked; reloadCards(); });
+  el('srsAgain').addEventListener('click', () => rateCard(0));
+  el('srsHard').addEventListener('click',  () => rateCard(1));
+  el('srsGood').addEventListener('click',  () => rateCard(2));
+  el('srsEasy').addEventListener('click',  () => rateCard(3));
+
+  loadDecks();
+}
+
+// ──────────────────────────────────────────
+// Deck list
+// ──────────────────────────────────────────
+async function loadDecks() {
+  try {
+    const decks = await API.get_decks();
+    renderDeckList(decks);
+    if (!FC.deckId && decks.length > 0) {
+      selectDeck(decks[0].id, decks[0].name);
+    }
+  } catch (e) {
+    el('deckList').innerHTML = `<p class="text-muted text-sm" style="padding:12px">Lỗi tải danh sách</p>`;
+  }
+}
+
+function renderDeckList(decks) {
+  if (!el('deckList')) return;
+  if (!decks.length) {
+    el('deckList').innerHTML = `
+      <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:12px">
+        Chưa có bộ thẻ nào.<br>Trích xuất từ bài giảng hoặc tạo mới!
+      </div>`;
+    return;
+  }
+
+  el('deckList').innerHTML = decks.map(d => {
+    const total    = d.total_cards   || 0;
+    const due      = d.due_cards     || 0;
+    const mastered = d.mastered_cards|| 0;
+    const pct      = total > 0 ? Math.round(mastered / total * 100) : 0;
+    const isActive = d.id === FC.deckId;
+
+    return `
+<div class="deck-item ${isActive ? 'active' : ''}" data-did="${escHtml(d.id)}" data-name="${escHtml(d.name)}">
+  <div class="deck-item-top">
+    <div>
+      <div class="deck-name">${escHtml(d.name)}</div>
+      <div class="deck-meta">${due} cần ôn · ${total} thẻ</div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="deck-pct ${isActive ? 'text-accent' : 'text-muted'}" style="font-size:13px;font-weight:800">${pct}%</span>
+      <button class="btn btn-ghost btn-sm btn-del-deck" data-did="${escHtml(d.id)}" style="padding: 4px 6px; display:inline-flex; align-items:center;" title="Xoá chủ đề">
+        <i data-lucide="trash-2" style="width:13px;height:13px;color:var(--danger);"></i>
+      </button>
+    </div>
+  </div>
+  <div class="deck-bar">
+    <div class="progress-wrap"><div class="progress-bar ${isActive ? 'progress-accent' : 'progress-success'}" style="width:${pct}%"></div></div>
+  </div>
+</div>`;
+  }).join('');
+
+  el('deckList').querySelectorAll('.deck-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      if (e.target.closest('.btn-del-deck')) return;
+      selectDeck(item.dataset.did, item.dataset.name);
+    });
+  });
+
+  el('deckList').querySelectorAll('.btn-del-deck').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const did = btn.dataset.did;
+      if (confirm('Bạn có chắc chắn muốn xóa chủ đề này và toàn bộ thẻ bên trong?')) {
+        try {
+          await API.delete_deck(did);
+          showToast('Đã xóa chủ đề', 'success');
+          if (FC.deckId === did) {
+            FC.deckId = null;
+            if (el('fcDeckTitle')) el('fcDeckTitle').textContent = 'Chọn một chủ đề để bắt đầu';
+            if (el('fcScene')) el('fcScene').innerHTML = '';
+          }
+          loadDecks();
+        } catch (err) {
+          showToast('Lỗi khi xóa chủ đề', 'error');
+        }
+      }
+    });
+  });
+  refreshIcons();
+}
+
+async function selectDeck(deckId, deckName) {
+  FC.deckId = deckId;
+  FC.reviewed = 0;
+  FC.sessionStart = Date.now();
+  if (el('fcDeckTitle')) el('fcDeckTitle').innerHTML = `<i data-lucide="layers" style="width:18px;height:18px;color:var(--accent);"></i> <span>${escHtml(deckName)}</span>`;
+
+  // Reload deck list to update active state
+  const decks = await API.get_decks();
+  renderDeckList(decks);
+  reloadCards();
+}
+
+async function reloadCards() {
+  if (!FC.deckId) return;
+  try {
+    let cards = FC.allMode
+      ? await API.get_all_cards(FC.deckId)
+      : await API.get_due_cards(FC.deckId);
+
+    if (FC.shuffleMode && !FC.allMode) {
+      cards = cards.sort(() => Math.random() - .5);
+    }
+
+    FC.cards = cards;
+    FC.idx = 0;
+    clearInterval(FC.timerInterval);
+    startTimer();
+    showCurrentCard();
+  } catch (e) {
+    showToast('Lỗi tải thẻ: ' + e.message, 'error');
+  }
+}
+
+// ──────────────────────────────────────────
+// Card display
+// ──────────────────────────────────────────
+function showCurrentCard() {
+  if (!el('fcInner')) return;
+
+  disableSRS();
+
+  const total = FC.cards.length;
+  const idx   = FC.idx;
+
+  if (!total || idx >= total) {
+    showCompletionState();
+    return;
+  }
+
+  const card = FC.cards[idx];
+  FC.isFlipped = false;
+  el('fcInner').classList.remove('flipped');
+
+  const progress = idx / total;
+  const progLabel = `${idx + 1} / ${total}`;
+  if (el('fcProgress')) {
+    el('fcProgress').textContent = progLabel;
+    el('fcProgress').className = `badge ${due_badge_class(total - idx)}`;
+  }
+
+  // ── Front face ──
+  el('fcFront').innerHTML = `
+    <div class="card-badge card-badge-front">🔵 MẶT TRƯỚC</div>
+    <div class="card-prog-bar">
+      <div class="card-prog-track"><div class="card-prog-fill" style="width:${Math.round(progress*100)}%"></div></div>
+      <span class="card-prog-label">${progLabel}</span>
+    </div>
+    <div class="card-icon"><i data-lucide="help-circle" style="width:48px;height:48px;color:var(--accent);"></i></div>
+    <div class="card-question">${escHtml(card.front)}</div>
+    <div class="card-flip-cta">Nhấp vào thẻ hoặc nhấn [Space] để lật</div>
+  `;
+
+  // ── Back face ──
+  el('fcBack').innerHTML = `
+    <div class="card-badge card-badge-back">🟢 MẶT SAU</div>
+    <div class="card-icon"><i data-lucide="check-circle-2" style="width:48px;height:48px;color:var(--success);"></i></div>
+    <div class="card-answer">${escHtml(card.back)}</div>
+    <div class="card-flip-cta" style="color:var(--success)">Đánh giá mức độ nhớ bên dưới</div>
+  `;
+
+  updateIntervalPreviews(card);
+  refreshIcons();
+}
+
+function due_badge_class(remaining) {
+  if (remaining <= 0) return 'badge-success';
+  if (remaining <= 3) return 'badge-warning';
+  return 'badge-accent';
+}
+
+function showCompletionState() {
+  clearInterval(FC.timerInterval);
+  if (el('fcProgress')) el('fcProgress').textContent = 'Xong!';
+  if (el('fcProgress')) el('fcProgress').className = 'badge badge-success';
+
+  el('fcFront').innerHTML = `
+    <div class="card-empty" style="border:none;background:transparent;">
+      <i data-lucide="award" style="width:54px;height:54px;color:var(--accent);margin-bottom:8px;"></i>
+      <div class="card-empty-title">Hoàn tất phiên ôn tập!</div>
+      <div class="card-empty-sub">Đã ôn ${FC.reviewed} thẻ · Hẹn gặp lại ngày mai 🚀</div>
+      <button class="btn btn-primary mt-3" id="btnRestartReview" style="display:inline-flex;align-items:center;gap:6px;">
+        <i data-lucide="rotate-ccw" style="width:15px;height:15px;"></i> Ôn lại toàn bộ từ đầu
+      </button>
+    </div>`;
+
+  el('fcInner').classList.remove('flipped');
+  el('fcBack').innerHTML = '';
+
+  const btnRestart = el('btnRestartReview');
+  if (btnRestart) {
+    btnRestart.addEventListener('click', (e) => {
+      e.stopPropagation();
+      restartAllCards();
+    });
+  }
+  refreshIcons();
+}
+
+async function restartAllCards() {
+  if (!FC.deckId) return;
+  FC.allMode = true;
+  if (el('fcAll')) el('fcAll').checked = true;
+  try {
+    let cards = await API.get_all_cards(FC.deckId);
+    if (FC.shuffleMode) {
+      cards = cards.sort(() => Math.random() - 0.5);
+    }
+    FC.cards = cards;
+    FC.idx = 0;
+    FC.reviewed = 0;
+    clearInterval(FC.timerInterval);
+    startTimer();
+    showCurrentCard();
+    showToast(`Đang ôn lại ${cards.length} thẻ`, 'info');
+  } catch (e) {
+    showToast('Lỗi tải lại thẻ: ' + e.message, 'error');
+  }
+}
+
+// ──────────────────────────────────────────
+// Flip animation (CSS class toggle)
+// ──────────────────────────────────────────
+function flipCard(e) {
+  if (e && e.target && e.target.closest('button')) return;
+  const inner = el('fcInner');
+  if (!inner) return;
+  if (!FC.cards.length || FC.idx >= FC.cards.length) return;
+
+  FC.isFlipped = !FC.isFlipped;
+  inner.classList.toggle('flipped', FC.isFlipped);
+
+  if (FC.isFlipped) {
+    enableSRS();
+  } else {
+    disableSRS();
+  }
+}
+
+// ──────────────────────────────────────────
+// SRS rating
+// ──────────────────────────────────────────
+async function updateIntervalPreviews(card) {
+  const ef = card.ease_factor   ?? 2.5;
+  const iv = card.interval_days ?? 0;
+  const rp = card.repetitions   ?? 0;
+
+  const ids = ['ivAgain', 'ivHard', 'ivGood', 'ivEasy'];
+  await Promise.all(ids.map(async (id, rating) => {
+    try {
+      const r = await API.preview_srs(rating, ef, iv, rp);
+      if (el(id)) el(id).textContent = fmtInterval(r.interval_days);
+    } catch (_) {}
+  }));
+}
+
+function enableSRS() {
+  ['srsAgain','srsHard','srsGood','srsEasy'].forEach(id => {
+    if (el(id)) el(id).disabled = false;
+  });
+}
+function disableSRS() {
+  ['srsAgain','srsHard','srsGood','srsEasy'].forEach(id => {
+    if (el(id)) el(id).disabled = true;
+  });
+}
+
+async function rateCard(rating) {
+  if (!FC.cards.length || FC.idx >= FC.cards.length) return;
+  const card = FC.cards[FC.idx];
+
+  disableSRS();
+  try {
+    await API.rate_card(
+      card.id, rating,
+      card.ease_factor   ?? 2.5,
+      card.interval_days ?? 0,
+      card.repetitions   ?? 0
+    );
+    FC.reviewed++;
+    FC.idx++;
+    FC.isFlipped = false;
+    showCurrentCard();
+
+    // Refresh deck list counts
+    const decks = await API.get_decks();
+    renderDeckList(decks);
+    refreshTopBar();
+  } catch (e) {
+    showToast('Lỗi lưu đánh giá: ' + e.message, 'error');
+    enableSRS();
+  }
+}
+
+// ──────────────────────────────────────────
+// Timer
+// ──────────────────────────────────────────
+function startTimer() {
+  FC.sessionStart = Date.now();
+  clearInterval(FC.timerInterval);
+  FC.timerInterval = setInterval(() => {
+    if (!el('fcTimer')) { clearInterval(FC.timerInterval); return; }
+    const sec = Math.floor((Date.now() - FC.sessionStart) / 1000);
+    if (sec < 60) el('fcTimer').textContent = `⏱ ${sec}s`;
+    else el('fcTimer').textContent = `⏱ ${Math.floor(sec/60)}p${(sec%60).toString().padStart(2,'0')}s`;
+  }, 1000);
+}
+
+// ──────────────────────────────────────────
+// Dialogs
+// ──────────────────────────────────────────
+async function createDeckDialog() {
+  const idx = await showModal(
+    '📑 Tạo chủ đề mới',
+    `<label class="label">Tên chủ đề</label>
+     <input class="input" id="newDeckName" placeholder="Nhập tên chủ đề…" autofocus>`,
+    [{ label: 'Huỷ', class: 'btn-ghost' }, { label: 'Tạo mới', class: 'btn-primary' }]
+  );
+  if (idx !== 1) return;
+  const name = el('newDeckName')?.value.trim();
+  if (!name) return showToast('Vui lòng nhập tên chủ đề', 'warning');
+
+  try {
+    const d = await API.create_deck(name);
+    showToast(`✅ Đã tạo chủ đề "${name}"`, 'success');
+    await loadDecks();
+    selectDeck(d.id, name);
+  } catch (e) {
+    showToast('Lỗi tạo chủ đề: ' + e.message, 'error');
+  }
+}
+
+async function addCardDialog() {
+  if (!FC.deckId) return showToast('Hãy chọn một chủ đề trước', 'warning');
+
+  const idx = await showModal(
+    '✍️ Thêm thẻ mới',
+    `<div class="flex-col gap-3">
+      <div>
+        <label class="label">Mặt trước — Câu hỏi</label>
+        <input class="input" id="cardFront" placeholder="Khái niệm hoặc câu hỏi…">
+      </div>
+      <div>
+        <label class="label">Mặt sau — Đáp án</label>
+        <input class="input" id="cardBack" placeholder="Định nghĩa hoặc giải thích…">
+      </div>
+      <div>
+        <label class="label">Gợi ý (tùy chọn)</label>
+        <input class="input" id="cardHint" placeholder="Gợi ý liên tưởng…">
+      </div>
+    </div>`,
+    [{ label: 'Huỷ', class: 'btn-ghost' }, { label: '💾 Lưu thẻ', class: 'btn-primary' }]
+  );
+  if (idx !== 1) return;
+
+  const front = el('cardFront')?.value.trim();
+  const back  = el('cardBack')?.value.trim();
+  const hint  = el('cardHint')?.value.trim() || '';
+
+  if (!front || !back) return showToast('Vui lòng nhập đủ mặt trước và mặt sau', 'warning');
+
+  try {
+    await API.add_card(FC.deckId, front, back, hint);
+    showToast('✅ Đã thêm thẻ mới', 'success');
+    reloadCards();
+  } catch (e) {
+    showToast('Lỗi thêm thẻ: ' + e.message, 'error');
+  }
+}
+
+// ──────────────────────────────────────────
+// Keyboard shortcuts
+// ──────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (State.currentView !== 'flashcard') return;
+  // Ignore if typing in an input
+  if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+
+  switch (e.key) {
+    case ' ':
+    case 'ArrowRight': e.preventDefault(); flipCard(); break;
+    case '1': if (!el('srsAgain')?.disabled) rateCard(0); break;
+    case '2': if (!el('srsHard')?.disabled)  rateCard(1); break;
+    case '3': if (!el('srsGood')?.disabled)  rateCard(2); break;
+    case '4': if (!el('srsEasy')?.disabled)  rateCard(3); break;
+  }
+});
+
+// ──────────────────────────────────────────
+// Register view
+// ──────────────────────────────────────────
+registerView('flashcard', {
+  render: renderFlashcardView,
+  onShow: () => {
+    if (!el('deckList')) renderFlashcardView();
+    else loadDecks();
+  }
+});

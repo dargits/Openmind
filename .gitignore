@@ -1,0 +1,66 @@
+# ══════════════════════════════════════════════════════════════════
+# Open-mind — Git Ignore Configuration
+# ══════════════════════════════════════════════════════════════════
+
+# AI Models & Weights (Heavy files)
+models/*
+!models/.gitkeep
+!models/README.md
+*.gguf
+*.bin
+*.safetensors
+*.onnx
+*.pt
+*.pth
+
+# Local User Data & SQLite Databases
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/*.db-journal
+data/settings.json
+data/cache/
+!data/.gitkeep
+
+# Output files & Temporary Exports
+outputs/*
+!outputs/.gitkeep
+samples/*
+!samples/.gitkeep
+demo_data/cache/
+
+# Python Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Build Artifacts & Standalone Packaging
+build/
+dist/
+*.spec
+*.egg-info/
+.eggs/
+
+# IDE & OS Specific Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log

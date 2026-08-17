@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Open-mind</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SPLASH SCREEN
+══════════════════════════════════════════ -->
+<div id="splash">
+  <div class="splash-card">
+    <div class="splash-logo"><i data-lucide="brain" style="width:48px;height:48px;color:#2563eb;"></i></div>
+    <h1 class="splash-title">Open-mind</h1>
+    <p class="splash-sub">Trợ lý Học tập AI Toàn diện · 100% Offline</p>
+
+    <div class="splash-phases">
+      <div class="phase-pill" id="phase1">① Mô hình giọng nói</div>
+      <div class="phase-pill muted" id="phase2">② Mô hình ngôn ngữ</div>
+    </div>
+
+    <div class="splash-bar-wrap">
+      <div class="splash-bar" id="splashBar" style="width:5%"></div>
+    </div>
+    <p class="splash-status" id="splashStatus">Đang khởi động…</p>
+    <p class="splash-hint" id="splashHint">Vui lòng đợi — không cần kết nối Internet</p>
+    <button class="btn btn-ghost btn-sm hidden" id="splashSkipBtn" style="margin-top:14px;font-size:12px;">Tiếp tục vào ứng dụng →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════ -->
+<div id="app" class="hidden">
+
+  <!-- TOP BAR -->
+  <header id="topbar">
+    <div class="topbar-left">
+      <i data-lucide="brain" class="logo-icon" style="width:24px;height:24px;color:#2563eb;"></i>
+      <span class="logo-text">Open-mind</span>
+    </div>
+    <div class="topbar-right">
+      <div class="stat-pill pill-due" id="topDue" style="display:inline-flex;align-items:center;gap:6px;">
+        <i data-lucide="layers" style="width:14px;height:14px;"></i> <span>— thẻ</span>
+      </div>
+      <div class="stat-pill pill-streak" id="topStreak" style="display:inline-flex;align-items:center;gap:6px;">
+        <i data-lucide="flame" style="width:14px;height:14px;"></i> <span>— ngày</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- BODY -->
+  <div class="app-body">
+
+    <!-- SIDEBAR -->
+    <nav id="sidebar">
+      <div class="nav-group">
+        <button class="nav-item active" data-view="flashcard">
+          <i data-lucide="layers" class="nav-icon"></i>
+          <span class="nav-label">Thẻ ghi nhớ</span>
+        </button>
+
+        <button class="nav-item" data-view="lecture">
+          <i data-lucide="mic" class="nav-icon"></i>
+          <span class="nav-label">Studio Bài giảng</span>
+        </button>
+
+        <button class="nav-item" data-view="library">
+          <i data-lucide="book-open" class="nav-icon"></i>
+          <span class="nav-label">Thư viện</span>
+        </button>
+
+        <button class="nav-item" data-view="stats">
+          <i data-lucide="trending-up" class="nav-icon"></i>
+          <span class="nav-label">Tiến độ &amp; Streak</span>
+        </button>
+
+        <button class="nav-item" data-view="settings">
+          <i data-lucide="settings" class="nav-icon"></i>
+          <span class="nav-label">Cài đặt</span>
+        </button>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="avatar" style="display:flex;align-items:center;justify-content:center;background:#eff6ff;color:#2563eb;width:34px;height:34px;border-radius:50%;">
+          <i data-lucide="user" style="width:18px;height:18px;"></i>
+        </div>
+        <div class="avatar-info">
+          <div class="avatar-name">Học viên (Offline)</div>
+          <div class="avatar-sub">Hồ sơ học tập · Lv.4</div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- VIEWS -->
+    <main id="content">
+      <div id="view-flashcard" class="view"></div>
+      <div id="view-lecture"   class="view hidden"></div>
+      <div id="view-library"   class="view hidden"></div>
+      <div id="view-stats"     class="view hidden"></div>
+      <div id="view-settings"  class="view hidden"></div>
+    </main>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast hidden"></div>
+
+<!-- Modal -->
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div id="modalBox" class="modal-box"></div>
+</div>
+
+<!-- JS -->
+<script src="js/lucide.min.js"></script>
+<script src="js/app.js"></script>
+<script src="js/flashcard.js"></script>
+<script src="js/lecture.js"></script>
+<script src="js/library.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/settings.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+Chào các bạn, hôm nay chúng ta sẽ tìm hiểu về hai cấu trúc dữ liệu quan trọng trong khoa học máy tính: Cây nhị phân tìm kiếm (Binary Search Tree - BST) và Bảng băm (Hash Table). 
+
+Đầu tiên, Cây nhị phân là cấu trúc dữ liệu phân cấp phi tuyến tính, trong đó mỗi nút có tối đa hai nút con là con trái và con phải. Với Cây nhị phân tìm kiếm, quy tắc cốt lõi là: mọi phần tử ở cây con bên trái đều nhỏ hơn nút gốc, và mọi phần tử ở cây con bên phải đều lớn hơn nút gốc. Nhờ tính chất này, độ phức tạp thời gian cho các thao tác tìm kiếm, chèn và xóa trung bình đạt O(log n). Tuy nhiên, nếu cây bị suy biến thành danh sách liên kết, độ phức tạp sẽ rơi vào trường hợp xấu nhất là O(n). 
+
+Tiếp theo, chúng ta nghiên cứu về Bảng băm hay Hash Table. Bảng băm là cấu trúc dữ liệu lưu trữ các cặp khóa-giá trị (Key-Value), cho phép truy xuất dữ liệu với độ phức tạp trung bình lý tưởng là O(1). Trọng tâm của bảng băm là Hàm băm (Hash Function), nhận đầu vào là khóa có độ dài bất kỳ và ánh xạ thành chỉ mục (index) trong mảng số nguyên. 
+
+Một hàm băm tốt phải phân bố khóa đồng đều và giảm thiểu tối đa hiện tượng Đụng độ (Collision). Hai phương pháp xử lý đụng độ phổ biến là Phương pháp kết nối chuỗi (Chaining) dùng danh sách liên kết và Địa chỉ mở (Open Addressing) như Linear Probing. 
+
+Tóm lại, BST phù hợp cho các bài toán cần duy trì thứ tự sắp xếp và tìm kiếm theo dải giá trị, trong khi Hash Table vượt trội về tốc độ tra cứu trực tiếp theo khóa.

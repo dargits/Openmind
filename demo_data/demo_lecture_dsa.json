@@ -1,0 +1,202 @@
+{
+  "title": "Cấu trúc Dữ liệu: Cây Nhị phân & Bảng Băm (Hash Table)",
+  "folder_tag": "CNTT",
+  "duration_sec": 360.0,
+  "full_text": "Chào các bạn, hôm nay chúng ta sẽ tìm hiểu về hai cấu trúc dữ liệu quan trọng trong khoa học máy tính: Cây nhị phân tìm kiếm (Binary Search Tree - BST) và Bảng băm (Hash Table). Đầu tiên, Cây nhị phân là cấu trúc dữ liệu phân cấp phi tuyến tính, trong đó mỗi nút có tối đa hai nút con là con trái và con phải. Với Cây nhị phân tìm kiếm, quy tắc cốt lõi là: mọi phần tử ở cây con bên trái đều nhỏ hơn nút gốc, và mọi phần tử ở cây con bên phải đều lớn hơn nút gốc. Nhờ tính chất này, độ phức tạp thời gian cho các thao tác tìm kiếm, chèn và xóa trung bình đạt O(log n). Tuy nhiên, nếu cây bị suy biến thành danh sách liên kết, độ phức tạp sẽ rơi vào trường hợp xấu nhất là O(n). Tiếp theo, chúng ta nghiên cứu về Bảng băm hay Hash Table. Bảng băm là cấu trúc dữ liệu lưu trữ các cặp khóa-giá trị (Key-Value), cho phép truy xuất dữ liệu với độ phức tạp trung bình lý tưởng là O(1). Trọng tâm của bảng băm là Hàm băm (Hash Function), nhận đầu vào là khóa có độ dài bất kỳ và ánh xạ thành chỉ mục (index) trong mảng số nguyên. Một hàm băm tốt phải phân bố khóa đồng đều và giảm thiểu tối đa hiện tượng Đụng độ (Collision). Hai phương pháp xử lý đụng độ phổ biến là Phương pháp kết nối chuỗi (Chaining) dùng danh sách liên kết và Địa chỉ mở (Open Addressing) như Linear Probing. Tóm lại, BST phù hợp cho các bài toán cần duy trì thứ tự sắp xếp và tìm kiếm theo dải giá trị, trong khi Hash Table vượt trội về tốc độ tra cứu trực tiếp theo khóa.",
+  "transcript": [
+    {
+      "start": 0.0,
+      "end": 45.2,
+      "text": "Chào các bạn, hôm nay chúng ta sẽ tìm hiểu về hai cấu trúc dữ liệu quan trọng trong khoa học máy tính: Cây nhị phân tìm kiếm (Binary Search Tree - BST) và Bảng băm (Hash Table).",
+      "confidence": 0.98
+    },
+    {
+      "start": 45.2,
+      "end": 110.5,
+      "text": "Đầu tiên, Cây nhị phân là cấu trúc dữ liệu phân cấp phi tuyến tính, trong đó mỗi nút có tối đa hai nút con là con trái và con phải.",
+      "confidence": 0.97
+    },
+    {
+      "start": 110.5,
+      "end": 180.0,
+      "text": "Với Cây nhị phân tìm kiếm, mọi phần tử ở cây con bên trái đều nhỏ hơn nút gốc, và cây con bên phải đều lớn hơn nút gốc. Độ phức tạp trung bình là O(log n).",
+      "confidence": 0.96
+    },
+    {
+      "start": 180.0,
+      "end": 260.0,
+      "text": "Tiếp theo là Bảng băm (Hash Table). Bảng băm lưu trữ cặp Key-Value với độ phức tạp truy xuất trung bình O(1) nhờ sử dụng Hàm băm (Hash Function).",
+      "confidence": 0.98
+    },
+    {
+      "start": 260.0,
+      "end": 320.0,
+      "text": "Hiện tượng Đụng độ (Collision) xảy ra khi hai khóa khác nhau sinh ra cùng một mã băm. Ta xử lý bằng Chaining hoặc Open Addressing (Linear Probing).",
+      "confidence": 0.95
+    },
+    {
+      "start": 320.0,
+      "end": 360.0,
+      "text": "Tóm lại, BST phù hợp duy trì thứ tự và tìm theo khoảng, trong khi Hash Table vượt trội về tốc độ tra cứu trực tiếp theo khóa.",
+      "confidence": 0.99
+    }
+  ],
+  "summary": {
+    "overview": "Bài giảng cung cấp kiến thức nền tảng về Cây nhị phân tìm kiếm (BST) và Bảng băm (Hash Table). Nội dung phân tích nguyên lý lưu trữ, độ phức tạp thuật toán O(log n) và O(1), hiện tượng đụng độ (Collision) và các giải pháp xử lý.",
+    "key_takeaways": [
+      "Binary Search Tree (BST): Cây con trái < Gốc < Cây con phải; độ phức tạp trung bình O(log n).",
+      "Hash Table: Cấu trúc Key-Value với thời gian tra cứu trung bình O(1).",
+      "Hash Function: Chuyển đổi khóa bất kỳ thành chỉ mục mảng số nguyên.",
+      "Collision Resolution: Xử lý đụng độ bằng phương pháp Chaining (danh sách liên kết) hoặc Open Addressing (dò tuyến tính).",
+      "Ứng dụng so sánh: BST duy trì thứ tự phần tử; Hash Table tối ưu tốc độ tìm kiếm trực tiếp."
+    ],
+    "sections": [
+      {
+        "title": "1. Tổng quan & Cây nhị phân tìm kiếm (BST)",
+        "timestamp": "00:00",
+        "summary": "Giới thiệu nguyên lý phân nhánh của BST và độ phức tạp O(log n)."
+      },
+      {
+        "title": "2. Bảng băm (Hash Table) & Hàm băm",
+        "timestamp": "03:00",
+        "summary": "Cơ chế ánh xạ Key-Value và tốc độ tra cứu tức thì O(1)."
+      },
+      {
+        "title": "3. Xử lý đụng độ (Collision Resolution) & So sánh",
+        "timestamp": "04:20",
+        "summary": "Giải pháp Chaining, Open Addressing và tiêu chí lựa chọn cấu trúc dữ liệu."
+      }
+    ]
+  },
+  "mindmap": {
+    "id": "root",
+    "topic": "Cấu trúc Dữ liệu & Giải thuật",
+    "children": [
+      {
+        "id": "branch_bst",
+        "topic": "Cây Nhị phân Tìm kiếm (BST)",
+        "children": [
+          { "id": "node_bst_rule", "topic": "Quy tắc: Trái < Gốc < Phải" },
+          { "id": "node_bst_comp", "topic": "Độ phức tạp: O(log n) TB, O(n) xấu nhất" },
+          { "id": "node_bst_use", "topic": "Ứng dụng: Duy trì thứ tự & Tìm theo dải" }
+        ]
+      },
+      {
+        "id": "branch_hash",
+        "topic": "Bảng Băm (Hash Table)",
+        "children": [
+          { "id": "node_hash_kv", "topic": "Lưu trữ Key - Value (Ánh xạ)" },
+          { "id": "node_hash_func", "topic": "Hàm băm: Khóa → Index mảng" },
+          { "id": "node_hash_comp", "topic": "Độ phức tạp lý tưởng: O(1)" },
+          {
+            "id": "node_hash_col",
+            "topic": "Xử lý đụng độ (Collision)",
+            "children": [
+              { "id": "node_col_chain", "topic": "Chaining (Danh sách nối chuỗi)" },
+              { "id": "node_col_open", "topic": "Open Addressing (Dò tuyến tính)" }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "quiz": [
+    {
+      "question": "Trong Cây nhị phân tìm kiếm (BST), phần tử ở cây con bên trái có mối quan hệ như thế nào với nút gốc?",
+      "options": [
+        "A. Luôn nhỏ hơn nút gốc",
+        "B. Luôn lớn hơn nút gốc",
+        "C. Bằng nút gốc",
+        "D. Không có quy tắc cố định"
+      ],
+      "correct_index": 0,
+      "explanation": "Theo định nghĩa của BST, mọi giá trị trong cây con bên trái đều phải nhỏ hơn giá trị tại nút gốc."
+    },
+    {
+      "question": "Độ phức tạp thời gian trung bình cho thao tác tra cứu trên Bảng băm (Hash Table) là bao nhiêu?",
+      "options": [
+        "A. O(n)",
+        "B. O(log n)",
+        "C. O(1)",
+        "D. O(n log n)"
+      ],
+      "correct_index": 2,
+      "explanation": "Nhờ hàm băm tính toán trực tiếp chỉ mục mảng từ khóa, tốc độ truy xuất trung bình của Hash Table đạt O(1)."
+    },
+    {
+      "question": "Hiện tượng 'Đụng độ' (Collision) trong Bảng băm xảy ra khi nào?",
+      "options": [
+        "A. Khi mảng bị tràn bộ nhớ",
+        "B. Khi hai khóa khác nhau tạo ra cùng một chỉ mục băm",
+        "C. Khi khóa bị trùng giá trị",
+        "D. Khi hàm băm trả về số âm"
+      ],
+      "correct_index": 1,
+      "explanation": "Đụng độ xảy ra khi hai khóa đầu vào khác biệt nhau qua hàm băm lại cho ra cùng một địa chỉ index trong mảng."
+    },
+    {
+      "question": "Phương pháp nào sau đây được dùng để giải quyết đụng độ trong Bảng băm?",
+      "options": [
+        "A. Chaining (Nối chuỗi danh sách liên kết)",
+        "B. Depth First Search (DFS)",
+        "C. QuickSort",
+        "D. Binary Search"
+      ],
+      "correct_index": 0,
+      "explanation": "Chaining là kỹ thuật lưu các phần tử bị đụng độ vào cùng một danh sách liên kết tại ô nhớ đó."
+    },
+    {
+      "question": "Khi nào nên ưu tiên chọn Cây nhị phân tìm kiếm (BST) thay vì Bảng băm?",
+      "options": [
+        "A. Khi chỉ cần tìm kiếm chính xác 1 phần tử theo ID",
+        "B. Khi cần duyệt dữ liệu theo thứ tự tăng dần hoặc tìm kiếm theo khoảng giá trị",
+        "C. Khi cần tốc độ nhanh nhất có thể O(1)",
+        "D. Khi bộ nhớ RAM cực kỳ hạn chế"
+      ],
+      "correct_index": 1,
+      "explanation": "BST tự nhiên duy trì thứ tự sắp xếp của các nút, rất thuận tiện khi cần duyệt in-order hoặc tìm các phần tử trong khoảng [min, max]."
+    }
+  ],
+  "flashcards": [
+    {
+      "front": "Cây nhị phân tìm kiếm (BST) là gì?",
+      "back": "Cấu trúc dữ liệu cây trong đó nút con trái < nút gốc < nút con phải.",
+      "hint": "Cây có quy tắc so sánh"
+    },
+    {
+      "front": "Độ phức tạp tìm kiếm trung bình của BST là bao nhiêu?",
+      "back": "O(log n) trong trường hợp cân bằng, O(n) nếu bị suy biến.",
+      "hint": "Chia đôi không gian tìm kiếm"
+    },
+    {
+      "front": "Bảng băm (Hash Table) là gì?",
+      "back": "Cấu trúc dữ liệu lưu cặp Key-Value dựa trên Hàm băm với thời gian truy xuất O(1).",
+      "hint": "Tra cứu tức thì theo khóa"
+    },
+    {
+      "front": "Hàm băm (Hash Function) thực hiện chức năng gì?",
+      "back": "Chuyển đổi dữ liệu đầu vào (khóa) bất kỳ thành một giá trị chỉ mục số nguyên.",
+      "hint": "Ánh xạ khóa vào mảng"
+    },
+    {
+      "front": "Đụng độ (Collision) trong Bảng băm là gì?",
+      "back": "Hiện tượng 2 khóa khác nhau được hàm băm ánh xạ về cùng 1 vị trí index.",
+      "hint": "Trùng địa chỉ mảng"
+    },
+    {
+      "front": "Phương pháp Chaining xử lý đụng độ như thế nào?",
+      "back": "Mỗi ô trong bảng băm chứa một danh sách liên kết lưu các phần tử trùng chỉ mục.",
+      "hint": "Nối chuỗi danh sách liên kết"
+    },
+    {
+      "front": "Địa chỉ mở (Open Addressing) xử lý đụng độ ra sao?",
+      "back": "Tìm kiếm vị trí trống tiếp theo trong bảng băm (ví dụ: Linear Probing).",
+      "hint": "Dò tìm ô trống kế tiếp"
+    },
+    {
+      "front": "So sánh ưu thế của BST và Hash Table?",
+      "back": "BST hỗ trợ duy trì thứ tự và tìm theo khoảng; Hash Table tối ưu tìm kiếm trực tiếp O(1).",
+      "hint": "Thứ tự vs Tốc độ O(1)"
+    }
+  ]
+}

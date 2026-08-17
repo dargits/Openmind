@@ -97,24 +97,25 @@ Open-mind/
 
 ---
 
-## 🚀 Hướng dẫn Cài đặt & Sử dụng
+## 🚀 Hướng dẫn Khởi chạy & Sử dụng (1-Click)
 
-### 1. Kích hoạt môi trường ảo & Cài đặt
-```powershell
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
+Ứng dụng được tích hợp cơ chế **tự động hóa 100%**: tự động khởi tạo môi trường, tự động tải các mô hình AI cần thiết (Whisper & Qwen 2.5) từ Hugging Face Hub nếu chưa có, và tự động nạp dữ liệu mẫu.
 
-### 2. Khởi chạy ứng dụng
+### Cách 1: Chạy 1-Click (Khuyên dùng)
+- **Trên Windows**: Nhấp đúp chuột vào file [`run.bat`](run.bat) (hoặc gõ `.\run.bat` trong CMD/PowerShell).
+- **Trên Linux / macOS**: Chạy `./run.sh` trong Terminal.
+
+### Cách 2: Chạy thủ công bằng Python
 ```powershell
 python main.py
 ```
+*(Nếu chưa có môi trường ảo `venv`, `main.py` sẽ tự động tạo `venv`, cài `requirements.txt` và khởi động ứng dụng).*
 
-### 3. Đóng gói thành file thực thi (.exe)
+### 📦 Đóng gói thành ứng dụng độc lập (.exe)
 ```powershell
-pyinstaller --noconfirm --onedir --windowed --name "OpenMindPro" main.py
+python build_exe.py
 ```
-*(Sau khi đóng gói, sao chép thư mục `models/` và thư mục `data/` vào cùng vị trí file `OpenMindPro.exe`).*
+*(Ứng dụng sau khi đóng gói sẽ nằm trong thư mục `dist/Open-mind/Open-mind.exe`, có thể phân phối trực tiếp cho người dùng).*
 
 ---
 
@@ -153,4 +154,5 @@ Dự án được phân phối dưới giấy phép mã nguồn mở **MIT Licen
 
 
 #   O p e n m i n d  
+ #   O p e n m i n d  
  
