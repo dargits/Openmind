@@ -1,50 +1,50 @@
 @echo off
-@chcp 65001 > nul
-setlocal enabledelayedexpansion
-
-echo ================================================================
-echo           OPEN-MIND — TRỢ LÝ HỌC TẬP AI TOÀN DIỆN
-echo ================================================================
-echo.
+@chcp 65001 >nul
 
 cd /d "%~dp0"
 
-:: 1. Kiểm tra Python
+echo ================================================================
+echo           OPEN-MIND - AI Study Assistant (Offline)
+echo ================================================================
+echo.
+
+REM 1. Kiem tra Python
 where python >nul 2>nul
 if %errorlevel% neq 0 (
-    echo [LỖI] Không tìm thấy Python trên máy tính của bạn!
-    echo Vui lòng cài đặt Python 3.10+ từ https://www.python.org/downloads/
-    echo Lưu ý: Nhớ tick chọn "Add Python to PATH" khi cài đặt.
+    echo [LOI] Khong tim thay Python tren he thong!
+    echo Vui long cai dat Python 3.10+ tu https://www.python.org/downloads/
+    echo Luu y: Nho tick chon Add Python to PATH khi cai dat.
     echo.
     pause
     exit /b 1
 )
 
-:: 2. Kiểm tra & Tạo môi trường ảo venv
+REM 2. Kiem tra va tao moi truong ao venv neu chua co
 if not exist "venv\Scripts\python.exe" (
-    echo [Open-mind] Đang tạo môi trường ảo Python (venv)...
+    echo [Open-mind] Dang tao moi truong ao Python venv...
     python -m venv venv
     if %errorlevel% neq 0 (
-        echo [LỖI] Không thể tạo môi trường ảo venv.
+        echo [LOI] Khong the tao moi truong ao venv.
         pause
         exit /b 1
     )
-    echo [Open-mind] Đang nâng cấp pip và cài đặt thư viện cần thiết...
+    echo [Open-mind] Dang cai dat cac thu vien can thiet tu requirements.txt...
     venv\Scripts\python.exe -m pip install --upgrade pip
     venv\Scripts\python.exe -m pip install -r requirements.txt
     if %errorlevel% neq 0 (
-        echo [CẢNH BÁO] Có thể một số thư viện chưa cài xong, đang thử tiếp tục...
+        echo [CANH BAO] Co the mot so thu vien chua cai dat thanh cong.
     )
-    echo [Open-mind] ✓ Cài đặt môi trường hoàn tất!
+    echo [Open-mind] Cai dat moi truong hoan tat!
     echo.
 )
 
-:: 3. Chạy ứng dụng Open-mind
-echo [Open-mind] Đang khởi động ứng dụng...
+REM 3. Khoi chay ung dung
+echo [Open-mind] Dang khoi dong ung dung...
+echo.
 venv\Scripts\python.exe main.py
 
 if %errorlevel% neq 0 (
     echo.
-    echo [Open-mind] Ứng dụng đã thoát với mã lỗi: %errorlevel%
+    echo [Open-mind] Ung dung da dung lai voi ma loi: %errorlevel%
     pause
 )
