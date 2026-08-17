@@ -3,17 +3,24 @@
 # 🧠 Open-mind
 ### *Offline AI-Powered Academic Lecture Copilot & Active Recall Learning Workspace*
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python Version](https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg)](https://www.python.org/)
-[![AI Runtime](https://img.shields.io/badge/AI%20Runtime-100%25%20Offline-orange.svg)](#)
-[![STT](https://img.shields.io/badge/STT-faster--whisper--small-blueviolet.svg)](https://github.com/SYSTRAN/faster-whisper)
-[![LLM](https://img.shields.io/badge/LLM-Qwen2.5--3B--Instruct-purple.svg)](https://github.com/ggerganov/llama.cpp)
-[![UI](https://img.shields.io/badge/UI-Modern%20Webview-teal.svg)](#)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](#)
-
 <p align="center">
-  <b>Biến mọi file ghi âm bài giảng thành hệ sinh thái học tập tương tác cá nhân hóa — 100% On-Device, Bảo mật tuyệt đối & Không cần kết nối Internet.</b>
+  <b>Biến mọi file ghi âm bài giảng thành hệ sinh thái học tập thông minh — 100% On-Device, Bảo mật tuyệt đối & Không cần kết nối Internet.</b>
 </p>
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+[![Python Version](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![AI Runtime](https://img.shields.io/badge/AI_Runtime-100%25_Offline-success.svg?style=for-the-badge&logo=cpu&logoColor=white)](#)
+[![STT Engine](https://img.shields.io/badge/STT-faster--whisper-8A2BE2.svg?style=for-the-badge&logo=openai&logoColor=white)](https://github.com/SYSTRAN/faster-whisper)
+[![LLM Engine](https://img.shields.io/badge/LLM-Qwen2.5--3B--Instruct_GGUF-FF6F00.svg?style=for-the-badge&logo=huggingface&logoColor=white)](https://github.com/ggerganov/llama.cpp)
+[![UI Runtime](https://img.shields.io/badge/UI-Modern_Webview-008080.svg?style=for-the-badge&logo=googlechrome&logoColor=white)](#)
+[![Cross-Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-555555.svg?style=for-the-badge)](#)
+
+[Khởi động nhanh](#-hướng-dẫn-cài-đặt--khởi-chạy-quick-start) •
+[Tính năng nổi bật](#-tính-năng-cốt-lõi-key-features) •
+[Kiến trúc hệ thống](#-kiến-trúc-hệ-thống-architecture) •
+[Thuật toán cốt lõi](#-thuật-toán-cốt-lõi-core-algorithms) •
+[Benchmark](#-bảng-so-sánh-mô-hình-stt-benchmarks) •
+[Đóng góp](#-đóng-góp-phát-triển-contributing)
 
 </div>
 
@@ -21,192 +28,279 @@
 
 ## 📖 Giới thiệu (Overview)
 
-**Open-mind** là trợ lý học tập AI cục bộ chuyên sâu dành cho sinh viên, giảng viên và người tự học. Ứng dụng tích hợp quy trình xử lý toàn diện từ âm thanh bài giảng thô đến hệ thống ghi nhớ chủ động (*Active Recall & Spaced Repetition*), kết hợp mô hình ngôn ngữ lớn để hỏi đáp ngữ cảnh trực tiếp trên bài giảng mà không phụ thuộc vào bất kỳ dịch vụ đám mây nào.
+**Open-mind** là ứng dụng trợ lý học tập AI cục bộ chuyên sâu (Local AI Copilot) dành cho sinh viên, nghiên cứu sinh, giảng viên và người tự học. 
 
-```
-                  ┌─────────────────────────────────────────────────────────┐
-                  │                 File Ghi âm Bài giảng                   │
-                  └────────────────────────────┬────────────────────────────┘
-                                               ▼
-                         🎙️ Faster-Whisper Small (int8 / CPU)
-                     (Phát hiện tiếng Việt + Thuật ngữ CNTT/Anh)
-                                               │
-                                               ▼
-                              Bản ghi Transcript kèm Timestamps
-                                               │
-                 ┌─────────────────────────────┼─────────────────────────────┐
-                 ▼                             ▼                             ▼
-        📋 Tóm tắt phân cấp          🗂️ Thẻ Flashcard          ❓ Trắc nghiệm AI
-        & Mindmap Tương tác          (Thuật toán SM-2)        (Chấm điểm tức thì)
-                 │                             │                             │
-                 └─────────────────────────────┼─────────────────────────────┘
-                                               ▼
-                              💬 Local RAG Chatbot (Qwen 2.5 3B)
-                              📊 Dashboard Tiến độ & Chuỗi Streak
+Khác biệt hoàn toàn với các giải pháp đám mây (Cloud AI) tiềm ẩn rủi ro lộ lọt dữ liệu và chi phí API đắt đỏ, Open-mind mang toàn bộ sức mạnh của các mô hình AI tiên tiến nhất hiện nay (**faster-whisper** & **Qwen 2.5 3B Instruct**) trực tiếp về máy tính cá nhân của bạn.
+
+Hệ thống cung cấp một quy trình khép kín: từ chuyển đổi âm thanh bài giảng thô thành văn bản có mốc thời gian (*Timestamps*), phục hồi thuật ngữ chuyên ngành tiếng Việt/Anh (*Code-switching*), tóm tắt phân cấp & sinh sơ đồ tư duy (*Mindmap*), trắc nghiệm tự động (*AI Quiz*), hệ thống thẻ ghi nhớ lặp lại ngắt quãng (*Spaced Repetition SM-2*), đến hỏi đáp tra cứu ngữ cảnh trực tiếp trên bài giảng (*Local RAG*).
+
+---
+
+## 🏗️ Kiến trúc Hệ thống (Architecture)
+
+```mermaid
+flowchart TD
+    A[🎙️ File Ghi Âm Bài Giảng<br>MP3 / WAV / M4A / AAC] --> B[⚙️ STT Engine: faster-whisper<br>int8 Quantization + VAD]
+    B --> C[🪄 Vietnamese Phonetic Normalizer<br>Phục hồi thuật ngữ CNTT / Toán]
+    C --> D[(📂 SQLite Database WAL Mode<br>openmind.db)]
+    
+    D --> E[📑 Cấu trúc Transcript & Timestamps]
+    
+    E --> F1[📋 Tóm tắt 3 cấp độ<br>Executive / Key Points / Timeline]
+    E --> F2[🧠 Interactive Mindmap<br>Canvas Pan/Zoom Sơ đồ cây]
+    E --> F3[🗂️ Flashcard Generator<br>SuperMemo-2 Spaced Repetition]
+    E --> F4[❓ AI Quiz Generator<br>3 Cấp độ & Chấm điểm tức thì]
+    E --> F5[💬 Local RAG Engine<br>BM25 + Qwen 2.5 3B Context Retrieval]
+
+    F1 & F2 & F3 & F4 & F5 --> G[🖥️ Modern Desktop Webview UI<br>pywebview + Tailwind/Glassmorphism CSS]
+    
+    G --> H1[📤 Anki Deck CSV/TSV]
+    G --> H2[📄 Printable HTML / PDF Report]
+    G --> H3[💾 Full JSON / Raw TXT Export]
 ```
 
 ---
 
-## ✨ Tính năng Nổi bật (Key Features)
+## ✨ Tính năng Cốt lõi (Key Features)
 
-### 🎙️ 1. Studio Bài giảng & Nhận diện Giọng nói (Speech-to-Text)
-- **Chuẩn hóa mô hình `faster-whisper-small` (~460 MB):** Tối ưu hóa cân bằng giữa tốc độ xử lý nhanh (~3x thời gian thực trên CPU thông thường) và độ chính xác cao đối với bài giảng tiếng Việt.
-- **Xử lý thuật ngữ chuyên ngành (Code-switching):** Bộ quy tắc tiền xử lý và chuẩn hóa ngữ âm tự động khôi phục các thuật ngữ công nghệ thông tin/khoa học máy tính bị phát âm sai (như `MD5`, `SHA-256`, `SQL`, `JWT`, `OOP`, `Interface`, `Complexity`,...).
-- **Đồng bộ âm thanh & Timestamps:** Trình phát đa phương tiện tích hợp cho phép tua trực tiếp đến từng đoạn phát biểu theo mốc thời gian `[MM:SS]`.
+### 🎙️ 1. Nhận diện Giọng nói & Chuẩn hóa Thuật ngữ (Speech-to-Text)
+- **Tối ưu hóa đa mô hình:** Hỗ trợ linh hoạt từ `tiny` (~75MB), `base` (~145MB), `small` (~460MB) đến `medium` (~1.5GB) với cơ chế int8 quantization trên CPU/GPU.
+- **Phục hồi ngữ âm chuyên ngành (Code-switching Engine):** Tự động phát hiện và chuyển đổi các từ phát âm tiếng Việt bồi sang thuật ngữ chuẩn quốc tế (VD: *"mờ đê năm"* ➔ `MD5`, *"ét hát a hai năm sáu"* ➔ `SHA-256`, *"ét quy eo"* ➔ `SQL`, *"chây sơn"* ➔ `JSON`, *"ô ô pi"* ➔ `OOP`, `TCP/IP`, `Docker`, `Interface`,...).
+- **Đồng bộ đa phương tiện:** Trình phát Audio tích hợp tua trực tiếp theo từng phân đoạn câu `[MM:SS]` kèm hiển thị Waveform.
 
-### 📑 2. Tóm tắt Phân cấp & Sơ đồ Tư duy (Interactive Mindmap)
-- **Cấu trúc 3 cấp độ:** 
-  1. *Tóm tắt Tổng quan (Executive Summary)* — nắm bắt bức tranh toàn cảnh bài học.
-  2. *Ý chính Cốt lõi (Key Takeaways)* — ghi nhớ các điểm trọng tâm.
-  3. *Chi tiết theo Mốc thời gian* — đối chiếu nội dung theo mạch giảng của thầy cô.
-- **Mindmap Canvas tương tác:** Tự động phát sinh sơ đồ cây kiến thức trực quan, hỗ trợ kéo rê (pan), cuộn thu phóng (zoom) và khám phá nhánh nội dung.
+### 📑 2. Tóm tắt Phân cấp & Sơ đồ Tư duy (Hierarchical Summary & Mindmap)
+- **Cấu trúc sư phạm 3 tầng:**
+  1. *Tóm tắt Tổng quan (Executive Summary):* Khái quát tinh thần bài học.
+  2. *Ý chính Cốt lõi (Key Takeaways):* Liệt kê luận điểm trọng tâm.
+  3. *Chi tiết theo Mốc thời gian:* Đối chiếu nội dung bám sát từng khoảng thời gian bài giảng.
+- **Interactive Mindmap Canvas:** Tự động trực quan hóa bài giảng thành sơ đồ phân nhánh kiến thức, hỗ trợ kéo rê (pan), phóng to/thu nhỏ (zoom) và thu gọn/mở rộng nhánh.
 
 ### 🗂️ 3. Thẻ Ghi nhớ Thông minh & Thuật toán SM-2 (Spaced Repetition)
-- Tự động trích xuất các cặp khái niệm – định nghĩa trọng tâm từ nội dung bài học.
-- **Thuật toán SuperMemo-2 (SM-2):** Tự động tính toán chu kỳ ôn tập tối ưu cho từng thẻ dựa trên 4 mức độ phản hồi:
-  - 🔴 **Quên (Again)**: Lặp lại ngay trong ngày kế tiếp, thiết lập lại chu kỳ.
-  - 🟠 **Khó (Hard)**: Tăng khoảng cách ôn tập vừa phải (+20%).
-  - 🟢 **Tốt (Good)**: Tính toán chu kỳ chuẩn theo hệ số ghi nhớ `ease_factor`.
-  - 🔵 **Dễ (Easy)**: Thưởng khoảng cách chu kỳ dài hơn và nâng hệ số nhớ.
-- Hàng đợi thông minh tự động nhắc nhở các thẻ đến hạn (*Due Cards*).
+- **Tự động trích xuất cặp khái niệm:** Tạo bộ Flashcards hoàn chỉnh có câu hỏi độc lập ngữ cảnh (*Self-contained*), không sử dụng đại từ mơ hồ.
+- **Thuật toán SuperMemo-2 (SM-2):** Tối ưu hóa chu kỳ nhớ dài hạn với 4 cấp độ phản hồi (*Again*, *Hard*, *Good*, *Easy*), tự động tính toán hệ số ghi nhớ (*Ease Factor*), khoảng cách ngày (*Interval*) và quản lý hàng đợi *Due Today*.
 
-### ❓ 4. Bộ Đề Trắc nghiệm Tự động (AI Quiz Generator)
-- Tự động sinh ngân hàng câu hỏi trắc nghiệm theo 3 cấp độ (Dễ, Trung bình, Khó).
-- Chấm điểm ngay lập tức sau khi nộp bài kèm đáp án đúng và phần giải thích chi tiết lý do.
+### ❓ 4. Ngân hàng Trắc nghiệm Tự động (AI Quiz Generator)
+- Tự động sinh đề kiểm tra 4 lựa chọn theo 3 mức độ nhận thức: **Dễ (Nhận biết)**, **Trung bình (Thông hiểu)**, **Khó (Vận dụng/Phân tích)**.
+- Giao diện làm bài trực quan, chấm điểm tức thì kèm lời giải thích chi tiết cho từng phương án. Lưu trữ lịch sử các lần thi vào database.
 
-### 💬 5. Trợ lý Hỏi-Đáp Bài giảng (Local RAG Chatbot)
-- Sử dụng mô hình **Qwen 2.5 3B Instruct (Q4_K_M GGUF)** chạy hoàn toàn bằng CPU/GPU nội bộ qua `llama.cpp`.
-- Cơ chế tìm kiếm ngữ cảnh cục bộ (*Hybrid Chunking & Retrieval*) trả lời chính xác câu hỏi và trích dẫn trực tiếp mốc thời gian nguồn `[MM:SS]`.
+### 💬 5. Trợ lý Hỏi-Đáp Ngữ cảnh Bài giảng (Local RAG Copilot)
+- Sử dụng mô hình **Qwen 2.5 3B Instruct** chạy hoàn toàn trên máy cục bộ qua `llama.cpp`.
+- Cơ chế **Sliding-window Chunking & BM25 Scoring** trích xuất ngữ cảnh liên quan nhất, trả lời chính xác kèm dẫn chứng mốc thời gian `[MM:SS]` để đối chiếu âm thanh gốc.
 
-### 📊 6. Không gian Học tập & Thống kê Tiến độ (Study Space)
-- Thư viện quản lý tập trung toàn bộ bài giảng với công cụ lọc theo thẻ/môn học.
-- Bảng điều khiển trực quan hiển thị: Chuỗi ngày học liên tục (*Daily Streak*), Tổng thời gian nghiên cứu, Điểm trắc nghiệm trung bình và Biểu đồ hoạt động 7 ngày.
+### 📊 6. Bảng điều khiển Tiến độ (Study Analytics)
+- Thống kê chuỗi ngày học liên tục (*Daily Streak*), tổng thời gian học tập, tổng số thẻ cần ôn trong ngày và biểu đồ phân bổ học tập 7 ngày gần nhất.
 
 ### 📤 7. Xuất Dữ liệu Đa Định dạng (Export Engine)
-- Xuất bộ thẻ tương thích phần mềm **Anki** (`.csv`).
-- Xuất báo cáo học thuật định dạng **HTML Report** sẵn sàng in ấn hoặc lưu file PDF.
-- Xuất bản ghi thô (`.txt`) và gói dữ liệu tổng hợp (`.json`).
+- **Anki Deck (`.csv` / `.tsv`):** Nhập trực tiếp vào phần mềm Anki Desktop/Mobile.
+- **Báo cáo học thuật (`.html`):** Thiết kế sẵn sàng in ấn hoặc lưu PDF chất lượng cao.
+- **Dữ liệu thô:** Xuất bản ghi `.txt` hoặc gói dữ liệu đầy đủ `.json`.
+
+---
+
+## 🔬 Thuật toán Cốt lõi (Core Algorithms)
+
+### 1. Thuật toán Lặp lại Ngắt quãng SuperMemo-2 (SM-2)
+Hệ số ghi nhớ ($EF$) và khoảng thời gian ôn tập kế tiếp ($I$) được tính toán theo công thức:
+
+$$EF' = \max\left(1.3, \; EF + \left(0.1 - (5 - q) \times (0.08 + (5 - q) \times 0.02)\right)\right)$$
+
+$$I(n) = \begin{cases} 
+1 & \text{khi } n = 1 \\ 
+6 & \text{khi } n = 2 \\ 
+\lceil I(n-1) \times EF' \rceil & \text{khi } n > 2 \text{ và } q \ge 3 
+\end{cases}$$
+
+*(Trong đó $q \in \{1, 3, 4, 5\}$ tương ứng với Again, Hard, Good, Easy; khi $q < 3$, chuỗi ôn tập được thiết lập lại từ đầu).*
+
+### 2. Bộ lọc Ngữ cảnh BM25 (Hybrid Chunking & Retrieval)
+Phân đoạn bài giảng thành các chunks linh hoạt $\approx 60\text{s}$, sau đó xếp hạng độ tương quan câu hỏi bằng công thức BM25:
+
+$$\text{Score}(D, Q) = \sum_{i=1}^{N} \text{IDF}(q_i) \cdot \frac{f(q_i, D) \cdot (k_1 + 1)}{f(q_i, D) + k_1 \cdot \left(1 - b + b \cdot \frac{|D|}{\text{avgdl}}\right)}$$
+
+---
+
+## 📊 Bảng So sánh Mô hình STT (Benchmarks)
+
+Được đo lường trên bài giảng CNTT tiếng Việt thực tế (Thời lượng: 10 phút, CPU Intel Core i5 8 nhân, RAM 16GB):
+
+| Model | Dung lượng | Tốc độ RTF* | RAM Đỉnh | Độ chính xác tiếng Việt & Thuật ngữ | Khuyến nghị |
+|:---|:---|:---|:---|:---|:---|
+| **Tiny** | ~75 MB | **~0.10x (10x)** | ~450 MB | Cơ bản, dễ nhầm thuật ngữ | Máy RAM $\le$ 4GB |
+| **Base** | ~145 MB | **~0.16x (6x)** | ~700 MB | Tốt với câu thông dụng | Máy văn phòng nhẹ |
+| **Small** | **~460 MB** | **~0.33x (3x)** | **~1.2 GB** | **Rất cao, bắt chuẩn thuật ngữ CNTT** | **⭐ Mặc định khuyên dùng** |
+| **Medium** | ~1.5 GB | **~0.95x (1x)** | ~3.1 GB | Hoàn hảo nhất, độ trễ cao hơn | Máy cấu hình mạnh |
+
+*\*RTF (Real-Time Factor): Thời gian xử lý / Thời lượng âm thanh. RTF < 1.0 nghĩa là xử lý nhanh hơn thời gian thực phát âm thanh.*
 
 ---
 
 ## 💻 Yêu cầu Hệ thống (System Requirements)
 
-| Tiêu chí | Cấu hình Tối thiểu | Cấu hình Khuyến nghị |
+| Tiêu chí | Cấu hình Tối thiểu | Cấu hình Đề xuất |
 |:---|:---|:---|
-| **Hệ điều hành** | Windows 10/11 (64-bit), Ubuntu 20.04+, macOS 12+ | Windows 11 / macOS (Apple Silicon) / Linux |
-| **Bộ xử lý (CPU)** | Intel Core i3 / AMD Ryzen 3 (4 nhân) | Intel Core i5/i7, AMD Ryzen 5/7 hoặc Apple M-series |
+| **Hệ điều hành** | Windows 10/11 (64-bit), Ubuntu 20.04+, macOS 12+ | Windows 11 / macOS (Apple Silicon M1/M2/M3) / Linux |
+| **Bộ xử lý (CPU)** | Intel Core i3 / AMD Ryzen 3 (4 Cores) | Intel Core i5/i7, AMD Ryzen 5/7 hoặc Apple Silicon |
 | **Bộ nhớ RAM** | 6 GB RAM | 8 GB – 16 GB RAM |
-| **Dung lượng đĩa** | 5 GB khả dụng (chứa Model AI & Database) | 10 GB SSD khả dụng |
-| **Kết nối mạng** | Chỉ cần tải model ở lần khởi chạy đầu | **0% Internet** trong quá trình sử dụng thường ngày |
+| **Ổ cứng** | 5 GB khả dụng (lưu Model AI & Database) | 10 GB SSD khả dụng |
+| **Internet** | Chỉ dùng để tải model AI ở lần chạy đầu tiên | **100% Offline** trong toàn bộ quá trình sử dụng |
 
 ---
 
 ## 🚀 Hướng dẫn Cài đặt & Khởi chạy (Quick Start)
 
-Open-mind được tích hợp cơ chế tự động hóa: tự khởi tạo môi trường ảo Python `venv`, tự cài đặt thư viện cần thiết và tự động tải mô hình AI nếu chưa có.
+Open-mind tích hợp cơ chế **tự động hóa toàn diện**: tự tạo môi trường ảo Python `venv`, tự cài đặt `requirements.txt`, tự tải các model AI và nạp dữ liệu mẫu ban đầu nếu máy chưa có.
 
-### Cách 1: Chạy 1-Click (Khuyên dùng)
-- **Windows:** Nhấp đúp chuột vào file [`run.bat`](run.bat) (hoặc chạy `.\run.bat` trong Terminal).
-- **Linux / macOS:** Mở Terminal và chạy:
+### Cách 1: Khởi chạy 1-Click (Khuyên dùng)
+
+- **Trên Windows:** Nhấp đúp chuột vào file [`run.bat`](run.bat) (hoặc gõ `.\run.bat` trong CMD/PowerShell).
+- **Trên Linux / macOS:** Mở Terminal và chạy:
   ```bash
   chmod +x run.sh
   ./run.sh
   ```
 
-### Cách 2: Chạy qua Lệnh Python
+### Cách 2: Khởi chạy Thủ công bằng Python
+
 ```bash
-# 1. Clone repository
+# 1. Clone mã nguồn dự án
 git clone https://github.com/dargits/Openmind.git
 cd Openmind
 
-# 2. Tạo môi trường ảo và cài đặt dependencies
+# 2. Tạo và kích hoạt môi trường ảo
 python -m venv venv
+
 # Windows:
 venv\Scripts\activate
-# Linux/macOS:
+# Linux / macOS:
 source venv/bin/activate
 
+# 3. Cài đặt các thư viện phụ thuộc
+pip install --upgrade pip
 pip install -r requirements.txt
 
-# 3. Khởi chạy ứng dụng
+# 4. Khởi chạy ứng dụng
 python main.py
 ```
 
+> [!TIP]
+> **Tự động tải Model:** Trong lần khởi chạy đầu tiên, ứng dụng sẽ tự động tải `faster-whisper-small` (~460MB) và `Qwen2.5-3B-Instruct-Q4_K_M.gguf` (~2.0GB) về thư mục `models/`. Sau đó, ứng dụng sẽ tự động kích hoạt cờ `HF_HUB_OFFLINE=1` để hoạt động hoàn toàn không cần Internet.
+
 ---
 
-## 🏗️ Cấu trúc Dự án (Repository Structure)
+## 🗂️ Cấu trúc Mã nguồn (Repository Structure)
 
 ```text
 Open-mind/
-├── core/                       # Các module xử lý logic nền tảng
-│   ├── config.py               # Cấu hình đường dẫn, tham số model & phần cứng
-│   ├── stt_engine.py           # Engine Whisper Small & Bộ chuẩn hóa ngữ âm
-│   ├── llm_engine.py           # Controller Qwen 2.5 LLM & Prompt engineering
-│   ├── flashcard_srs.py        # Triển khai thuật toán SuperMemo-2 (SM-2)
-│   ├── rag_engine.py           # Hybrid Chunking & Trích xuất ngữ cảnh RAG
-│   ├── export_engine.py        # Xuất dữ liệu ra TXT, JSON, Anki CSV, HTML
-│   └── model_manager.py        # Quản lý kiểm tra & tải model AI tự động
-├── data/                       # Quản lý cơ sở dữ liệu & Cài đặt
-│   ├── database.py             # Data Access Layer SQLite (CRUD bài giảng, thẻ, quiz)
-│   └── .gitkeep                # Giữ cấu trúc thư mục (openmind.db được bảo vệ)
-├── demo_data/                  # Dữ liệu bài giảng mẫu phục vụ thử nghiệm
-│   ├── demo_lecture_dsa.json   # Dữ liệu mẫu hoàn chỉnh (transcript, flashcards, quiz)
-│   └── demo_lecture_dsa.txt    # Bản ghi thô của bài giảng mẫu
-├── models/                     # Thư mục chứa trọng số mô hình AI (offline)
-│   └── README.md               # Hướng dẫn tải thủ công model nếu cần
-├── outputs/                    # Thư mục mặc định cho các file xuất ra (.gitkeep)
-├── samples/                    # Thư mục lưu file audio ghi âm thử nghiệm (.gitkeep)
-├── tests/                      # Bộ kiểm thử tự động (Unit Tests)
-│   └── test_core.py            # Kiểm thử Database, SRS SM-2, RAG & Export
-├── tools/                      # Bộ công cụ bổ trợ
-│   ├── benchmark_stt.py        # Công cụ đo đạc hiệu năng STT độc lập
-│   └── seed_demo_data.py       # Script nạp dữ liệu mẫu vào database
-├── ui/
-│   └── web/                    # Giao diện người dùng hiện đại (HTML5/CSS3/Vanilla JS)
-│       ├── css/style.css       # Design System giao diện hiện đại & responsive
-│       ├── js/                 # Bộ điều khiển các trang (lecture, flashcard, stats,...)
-│       └── index.html          # Cấu trúc giao diện Webview chính
-├── app_api.py                  # Cầu nối API giao tiếp hai chiều Python <-> Javascript
-├── main.py                     # Entrypoint khởi chạy ứng dụng Desktop
-├── requirements.txt            # Danh sách thư viện Python phụ thuộc
-├── run.bat                     # Script khởi chạy 1-Click trên Windows
-├── run.sh                      # Script khởi chạy 1-Click trên Linux/macOS
-├── CONTRIBUTING.md             # Quy chuẩn đóng góp mã nguồn
-└── LICENSE                     # Giấy phép mã nguồn mở MIT
+├── 📁 core/                         # Các Engine AI & Logic nền tảng
+│   ├── config.py                   # Cấu hình tham số mô hình, đường dẫn & phần cứng
+│   ├── stt_engine.py               # Engine Whisper STT & Bộ chuẩn hóa ngữ âm tiếng Việt
+│   ├── llm_engine.py               # Bộ điều khiển Qwen 2.5 LLM & Prompt Engineering
+│   ├── rag_engine.py               # Hybrid Chunking & BM25 Context Retrieval
+│   ├── flashcard_srs.py            # Triển khai thuật toán SuperMemo-2 (SM-2)
+│   ├── export_engine.py            # Xuất dữ liệu ra TXT, JSON, Anki CSV, HTML Report
+│   └── model_manager.py            # Quản lý kiểm tra & tải Model AI tự động
+├── 📁 data/                         # Cơ sở dữ liệu SQLite & Cài đặt
+│   ├── database.py                 # Data Access Layer SQLite (WAL Mode, CRUD toàn bộ thực thể)
+│   └── settings.json               # Tệp lưu cấu hình người dùng (Tự tạo)
+├── 📁 demo_data/                    # Dữ liệu bài giảng mẫu phục vụ thử nghiệm
+│   ├── demo_lecture_dsa.json       # Dữ liệu mẫu (Transcript, Flashcards, Quiz)
+│   └── demo_lecture_dsa.txt        # Bản ghi thô bài giảng Cấu trúc dữ liệu & Giải thuật
+├── 📁 models/                       # Thư mục lưu trữ trọng số mô hình AI (Offline)
+│   └── README.md                   # Hướng dẫn chi tiết tải thủ công mô hình
+├── 📁 outputs/                      # Thư mục chứa các tệp đã xuất ra (.gitkeep)
+├── 📁 samples/                      # Thư mục chứa audio ghi âm thử nghiệm (.gitkeep)
+├── 📁 tests/                        # Bộ kiểm thử tự động (Unit Tests)
+│   └── test_core.py                # Test Database CRUD, SM-2 SRS, RAG & Export Engine
+├── 📁 tools/                        # Bộ công cụ phát triển & đo đạc
+│   ├── benchmark_stt.py            # Đo đạc RTF, Peak RAM, WER của mô hình STT
+│   └── seed_demo_data.py           # Nạp lại dữ liệu bài giảng mẫu vào Database
+├── 📁 ui/
+│   └── web/                        # Giao diện người dùng Webview hiện đại
+│       ├── css/style.css           # Design System hiện đại, responsive & glassmorphism
+│       ├── js/
+│       │   ├── app.js              # Router, Navigation & Quản lý Splash Screen
+│       │   ├── lecture.js          # Studio Bài giảng, Audio Player, Transcript, Mindmap
+│       │   ├── flashcard.js        # Giao diện ôn tập thẻ 3D Flip & SM-2 Rating
+│       │   ├── library.js          # Quản lý kho bài giảng & tìm kiếm
+│       │   ├── stats.js            # Thống kê Streak, biểu đồ học tập & tổng kết
+│       │   ├── settings.js         # Quản lý cấu hình phần cứng & model
+│       │   └── lucide.min.js       # Bộ icon vector hiện đại
+│       └── index.html              # Cấu trúc giao diện Webview chính
+├── app_api.py                      # Cầu nối API hai chiều Python ↔ Javascript (pywebview)
+├── main.py                         # Entrypoint khởi chạy ứng dụng Desktop
+├── requirements.txt                # Danh sách thư viện Python phụ thuộc
+├── run.bat                         # Kịch bản khởi chạy 1-Click trên Windows
+├── run.sh                          # Kịch bản khởi chạy 1-Click trên Linux/macOS
+├── CONTRIBUTING.md                 # Hướng dẫn tiêu chuẩn đóng góp mã nguồn
+├── LICENSE                         # Giấy phép mã nguồn mở MIT
+└── README.md                       # Tài liệu tổng quan dự án
 ```
 
 ---
 
-## 🧪 Kiểm thử (Testing & Quality Assurance)
+## 🧪 Kiểm thử & Bộ công cụ (Testing & Tools)
 
-Dự án đi kèm bộ unit test bao phủ toàn bộ các module lõi (Database CRUD, thuật toán SM-2, RAG Engine, Export HTML/Anki/JSON):
+### 1. Chạy Bộ Kiểm thử Tự động (Unit Tests)
+Dự án đi kèm bộ test toàn diện kiểm tra tính đúng đắn của Database, thuật toán SM-2, RAG Engine và Export Engine:
 
 ```bash
-# Chạy bộ unit tests
-python -m unittest tests/test_core.py
+python -m unittest tests/test_core.py -v
 ```
 
-Để đánh giá hiệu năng nhận diện giọng nói STT trên bài giảng thực tế:
+### 2. Đo đạc Hiệu năng STT (Benchmark Tool)
+Đo đạc tốc độ xử lý (*Real-Time Factor*), dung lượng RAM tiêu thụ và tỷ lệ lỗi từ (*Word Error Rate - WER*) trên file âm thanh thực tế:
+
 ```bash
-python tools/benchmark_stt.py --audio samples/lecture_sample.mp3 --reference samples/lecture_ground_truth.txt
+# Đo toàn bộ mô hình STT trên file audio mẫu
+python tools/benchmark_stt.py --audio samples/lecture.mp3 --reference samples/lecture_ground_truth.txt
+
+# Đo riêng mô hình tiny và small
+python tools/benchmark_stt.py --audio samples/lecture.mp3 --models tiny,small
+```
+
+### 3. Nạp lại Dữ liệu Mẫu (Seed Demo Data)
+```bash
+python tools/seed_demo_data.py --force
 ```
 
 ---
 
-## 🔒 Cam kết Quyền riêng tư (Privacy & Security)
+## 🔒 Cam kết Quyền riêng tư & An toàn Dữ liệu (Privacy First)
 
-- **100% Local Execution:** Toàn bộ file ghi âm giọng nói, bản ghi văn bản, câu hỏi trắc nghiệm và lịch sử học tập được lưu trữ và xử lý trực tiếp trên máy của bạn.
-- **Không Telemetry:** Không gửi bất kỳ dữ liệu cá nhân hay dữ liệu học tập nào lên máy chủ bên thứ ba.
-- **Độc lập Mạng:** Sau khi các file mô hình được tải về thư mục `models/`, bạn có thể ngắt hoàn toàn kết nối Wi-Fi/Internet mà ứng dụng vẫn hoạt động 100% công suất.
+- 🛡️ **100% Local Processing:** Toàn bộ file ghi âm giọng nói, bản ghi văn bản, câu hỏi trắc nghiệm và lịch sử học tập được lưu trữ duy nhất trên máy của bạn.
+- 🚫 **Zero Telemetry / No Tracking:** Không gửi bất kỳ dữ liệu phân tích, telemetry hay cookie nào lên máy chủ bên ngoài.
+- 🔌 **Air-Gapped Ready:** Sau khi tải mô hình, ứng dụng hoàn toàn có thể chạy trong môi trường ngắt kết nối Internet tuyệt đối (Air-gapped environment).
+
+---
+
+## 🗺️ Lộ trình Phát triển (Roadmap)
+
+- [x] Tích hợp mô hình Whisper STT đa kích cỡ kèm bộ chuẩn hóa từ vựng CNTT tiếng Việt.
+- [x] Triển khai LLM Qwen 2.5 3B Instruct chạy CPU/GPU nội bộ qua `llama.cpp`.
+- [x] Xây dựng hệ thống ôn tập Spaced Repetition (SuperMemo-2) & Bộ sinh Quiz trắc nghiệm.
+- [x] Sơ đồ tư duy tương tác (Interactive Mindmap Canvas) và xuất báo cáo Anki/HTML.
+- [ ] Hỗ trợ nhận diện người nói (*Speaker Diarization*) phân biệt giảng viên và sinh viên.
+- [ ] Tích hợp trích xuất công thức toán học LaTeX từ bài giảng.
+- [ ] Hỗ trợ tải thêm tài liệu PDF/Slide bài giảng đi kèm để làm giàu ngữ cảnh cho RAG.
 
 ---
 
 ## 🤝 Đóng góp Phát triển (Contributing)
 
-Chúng tôi luôn chào đón các đóng góp từ cộng đồng để phát triển Open-mind ngày một hoàn thiện hơn. Vui lòng xem tài liệu [CONTRIBUTING.md](CONTRIBUTING.md) để nắm rõ quy trình gửi Pull Request, Coding Conventions và báo cáo sự cố (Issues).
+Chúng tôi hoan nghênh mọi đóng góp từ cộng đồng (báo cáo lỗi, cải thiện prompt, bổ sung từ điển ngữ âm hoặc tối ưu UI). Vui lòng tham khảo chi tiết tại tài liệu [**CONTRIBUTING.md**](CONTRIBUTING.md).
+
+1. Fork repository
+2. Tạo nhánh tính năng (`git checkout -b feature/AmazingFeature`)
+3. Commit thay đổi (`git commit -m 'Add some AmazingFeature'`)
+4. Push lên nhánh (`git push origin feature/AmazingFeature`)
+5. Mở một **Pull Request**
 
 ---
 
 ## 📄 Giấy phép (License)
 
-Dự án được phân phối dưới giấy phép **[MIT License](LICENSE)**. Toàn bộ mã nguồn được mở và tự do sử dụng cho mục đích học tập, nghiên cứu cũng như thương mại.
+Dự án được phân phối dưới giấy phép mã nguồn mở **[MIT License](LICENSE)**. Bạn hoàn toàn tự do sử dụng, chỉnh sửa và tích hợp cho các mục đích học tập, nghiên cứu cũng như thương mại.
+
+<div align="center">
+  <sub>Xây dựng với ❤️ dành cho cộng đồng học tập & nghiên cứu. Nếu bạn thấy dự án hữu ích, hãy tặng <b>⭐ Star</b> trên GitHub!</sub>
+</div>
