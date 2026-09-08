@@ -259,15 +259,15 @@ class LLMEngine:
             "QUY TẮC QUAN TRỌNG CHO CÂU HỎI:\n"
             "- Mỗi câu hỏi PHẢI ĐẦY ĐỦ CHỦ NGỮ/VỊ NGỮ, nêu đích danh khái niệm, thuật ngữ (ví dụ: 'Mô hình TCP/IP', 'Giao thức TCP', 'Địa chỉ IP').\n"
             "- TUYỆT ĐỐI KHÔNG viết câu hỏi cộc lốc hoặc mơ hồ như: 'Nó là gì?', 'Nó thực hiện điều gì?'.\n"
-            "- 4 đáp án A, B, C, D phải rõ ràng, chỉ có 1 đáp án đúng duy nhất.\n"
-            "- Phần GIẢI THÍCH (explanation): PHẢI GIẢI THÍCH CHI TIẾT VÀ RÕ RÀNG LÝ DO VÌ SAO ĐÁP ÁN ĐÓ LÀ ĐÚNG dựa trên nội dung bài giảng, nêu rõ cơ chế hoặc căn cứ để người học nắm vững bản chất tri thức.\n\n"
+            "- 4 đáp án A, B, C, D: Phải ngắn gọn, cô đọng (tối đa 15 từ mỗi đáp án), chỉ có 1 đáp án đúng duy nhất. Tránh viết lựa chọn dài dòng.\n"
+            "- Phần GIẢI THÍCH (explanation): CỰC KỲ NGẮN GỌN, súc tích trong 1-2 câu ngắn (tối đa 25-35 từ), chỉ nêu trực tiếp lý do cốt lõi vì sao đáp án đó đúng theo bài giảng. TUYỆT ĐỐI KHÔNG giải thích dài dòng, không kể chuyện, không dùng ví dụ ví von lan man.\n\n"
             "CHỈ trả về mảng JSON hợp lệ, đúng cấu trúc:\n"
             '[\n'
             '  {\n'
             '    "question": "Câu hỏi cụ thể nêu rõ tên chủ thể/thuật ngữ?",\n'
-            '    "options": ["A. Lựa chọn 1", "B. Lựa chọn 2", "C. Lựa chọn 3", "D. Lựa chọn 4"],\n'
+            '    "options": ["A. Lựa chọn 1 ngắn gọn", "B. Lựa chọn 2 ngắn gọn", "C. Lựa chọn 3 ngắn gọn", "D. Lựa chọn 4 ngắn gọn"],\n'
             '    "correct_index": 0,\n'
-            '    "explanation": "Giải thích chi tiết và rõ ràng lý do vì sao đáp án này đúng dựa trên bài giảng..."\n'
+            '    "explanation": "Giải thích ngắn gọn 1-2 câu lý do đáp án đúng."\n'
             '  }\n'
             ']\n\n'
             f"Transcript bài giảng:\n{full_text}"
@@ -289,7 +289,8 @@ class LLMEngine:
                 pass
 
         t0 = time.time()
-        raw = self.call_chat(prompt, max_tokens=1500)
+        max_tokens = min(1200, max(350, num_questions * 140))
+        raw = self.call_chat(prompt, max_tokens=max_tokens)
         duration = time.time() - t0
         print(f"✅ [DEBUG AI - QUIZ FINISHED] Thời gian suy luận: {duration:.2f}s | Output: {len(raw)} ký tự\n")
 
@@ -324,13 +325,13 @@ class LLMEngine:
             f"Dựa vào bài giảng sau, hãy rút trích {num_cards} thẻ ghi nhớ (Flashcards) chất lượng cao.\n\n"
             "YÊU CẦU CHO THẺ:\n"
             "- Mặt trước (front): Nêu rõ câu hỏi tự kiểm tra hoặc tên khái niệm/thuật ngữ cụ thể (ví dụ: 'Mô hình TCP/IP là gì?', 'Chức năng của giao thức IP?'). KHÔNG dùng 'Nó là gì?'.\n"
-            "- Mặt sau (back): Định nghĩa hoặc câu trả lời súc tích, chính xác, nêu bật từ khóa quan trọng.\n"
+            "- Mặt sau (back): Định nghĩa hoặc câu trả lời súc tích, ngắn gọn (tối đa 25 từ), nêu bật từ khóa quan trọng.\n"
             "- Gợi ý (hint): Gợi ý ngắn 3-5 từ giúp liên tưởng nhanh.\n\n"
             "CHỈ trả về mảng JSON hợp lệ:\n"
             '[\n'
             '  {\n'
             '    "front": "Khái niệm hoặc câu hỏi cụ thể nêu rõ tên thuật ngữ?",\n'
-            '    "back": "Định nghĩa / câu trả lời trọng tâm, súc tích",\n'
+            '    "back": "Định nghĩa / câu trả lời trọng tâm, súc tích (1-2 câu ngắn)",\n'
             '    "hint": "Gợi ý nhớ nhanh"\n'
             '  }\n'
             ']\n\n'
@@ -353,7 +354,8 @@ class LLMEngine:
                 pass
 
         t0 = time.time()
-        raw = self.call_chat(prompt, max_tokens=1200)
+        max_tokens = min(1200, max(300, num_cards * 80))
+        raw = self.call_chat(prompt, max_tokens=max_tokens)
         duration = time.time() - t0
         print(f"✅ [DEBUG AI - FLASHCARDS FINISHED] Thời gian suy luận: {duration:.2f}s | Output: {len(raw)} ký tự\n")
 

@@ -515,11 +515,10 @@ async function showQuizModal() {
       <div>
         <label class="label">Số lượng câu hỏi</label>
         <select class="select w-full" id="quizNumSelect" style="font-size:13px;">
-          <option value="3">3 câu — Kiểm tra nhanh</option>
-          <option value="5" selected>5 câu — Tiêu chuẩn</option>
-          <option value="8">8 câu — Toàn diện</option>
-          <option value="10">10 câu — Đầy đủ</option>
-          <option value="15">15 câu — Chuyên sâu</option>
+          <option value="3">3 câu — Siêu nhanh</option>
+          <option value="4" selected>4 câu — Tiêu chuẩn (nhanh & đủ ý)</option>
+          <option value="5">5 câu — Toàn diện</option>
+          <option value="8">8 câu — Nâng cao</option>
         </select>
       </div>
       <div>
