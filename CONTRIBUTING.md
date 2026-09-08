@@ -1,6 +1,6 @@
-# Hướng Dẫn Đóng Góp — Open-mind Pro (Contributing Guide)
+# Hướng Dẫn Đóng Góp — Open-mind (Contributing Guide)
 
-Cảm ơn bạn đã quan tâm đến việc phát triển và đóng góp cho **Open-mind Pro** — dự án mã nguồn mở trợ lý học tập AI cục bộ 100% Offline!
+Cảm ơn bạn đã quan tâm đến việc phát triển và đóng góp cho **Open-mind** — dự án mã nguồn mở trợ lý học tập AI cục bộ 100% Offline!
 
 Tài liệu này cung cấp các nguyên tắc và quy trình chuẩn để bạn có thể gửi ý kiến, báo lỗi hoặc đóng góp mã nguồn (Pull Request) một cách thuận tiện nhất.
 

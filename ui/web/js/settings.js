@@ -1,160 +1,206 @@
-// ─── Settings Controller ──────────────────────────────────────────────────────
+/* ════════════════════════════════════════════
+   Settings View — Open-mind
+   AI Models · Interface · Data management
+════════════════════════════════════════════ */
+'use strict';
 
 let sttModelsMeta = {};
 
 function renderSettingsView() {
-  const container = el('settingsView');
+  const container = el('view-settings');
+  if (!container) return;
   container.innerHTML = `
+<div style="display:flex;flex-direction:column;gap:20px;padding-bottom:24px;">
+
   <div class="page-header">
     <div>
-      <div class="page-title">Cài đặt & Cấu hình Hệ thống</div>
-      <div class="page-subtitle">Quản lý tham số mô hình AI Offline, thiết bị tính toán và dữ liệu ứng dụng.</div>
+      <div class="page-title" style="display:flex;align-items:center;gap:10px;">
+        <i data-lucide="settings" style="width:22px;height:22px;color:#a5b4fc;"></i>
+        Cài đặt & Cấu hình
+      </div>
+      <div class="page-subtitle">Quản lý mô hình AI Offline, thiết bị và dữ liệu ứng dụng</div>
     </div>
     <div style="display:flex;gap:8px;">
-      <button class="btn btn-secondary btn-sm" id="settingsRefresh" style="display:inline-flex;align-items:center;gap:6px;">
+      <button class="btn btn-ghost btn-sm" id="settingsRefresh"
+        style="display:inline-flex;align-items:center;gap:6px;">
         <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Làm mới
       </button>
-      <button class="btn btn-primary btn-sm" id="settingsSave" style="display:inline-flex;align-items:center;gap:6px;">
+      <button class="btn btn-primary btn-sm" id="settingsSave"
+        style="display:inline-flex;align-items:center;gap:6px;">
         <i data-lucide="save" style="width:14px;height:14px;"></i> Lưu cài đặt
       </button>
     </div>
   </div>
 
-  <div class="settings-grid">
-    <!-- STT -->
-    <div class="settings-section">
-      <h3 style="display:flex;align-items:center;gap:8px;">
-        <i data-lucide="mic" style="width:16px;height:16px;color:var(--accent);"></i>
-        <span>Mô hình Nhận dạng Giọng nói (Speech-to-Text)</span>
-      </h3>
-      <div class="settings-row">
-        <span class="settings-key">Mô hình STT chuẩn</span>
-        <div style="display:inline-flex;align-items:center;gap:8px;">
-          <span class="badge badge-accent" style="font-size:12px;font-weight:600;padding:6px 12px;">
-            faster-whisper-small (~460 MB)
-          </span>
-          <span class="badge badge-muted" style="font-size:11px;">Chuẩn hóa cố định</span>
+  <!-- Model status overview -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <!-- STT Status card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <i data-lucide="mic" style="width:16px;height:16px;color:#a5b4fc;"></i>
+          Nhận dạng Giọng nói (STT)
+        </span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="status-dot" id="sttStatusDot" style="background:var(--text-subtle);"></div>
+          <span style="font-size:11px;color:var(--text-muted);" id="sttStatusLabel">—</span>
         </div>
       </div>
-
-      <!-- Trade-off description card -->
-      <div id="whisperTradeoffCard" style="background:#f8fafc;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;margin:8px 0;font-size:12px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-          <span class="badge badge-accent">Tốc độ: Cân bằng (~3x Realtime)</span>
-          <span class="badge badge-muted">RAM tối thiểu: ≥ 6 GB</span>
-        </div>
-        <p style="color:var(--text-muted);line-height:1.5;margin:0;">
-          Mô hình chuẩn <strong>faster-whisper-small</strong> được tối ưu hóa cho bài giảng tiếng Việt học thuật, nhận diện chính xác các thuật ngữ công nghệ tiếng Anh (code-switching) và xử lý mượt mà trên CPU.
-        </p>
+      <div style="background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:var(--radius-md);padding:12px;margin-bottom:14px;font-size:12px;color:var(--text-muted);line-height:1.6;">
+        Mô hình <strong style="color:#a5b4fc;">faster-whisper-small</strong> (~460 MB) được tối ưu cho bài giảng tiếng Việt học thuật, nhận diện chính xác thuật ngữ công nghệ (code-switching) và xử lý mượt trên CPU.
       </div>
-
       <div class="settings-row">
         <span class="settings-key">Thiết bị chạy STT</span>
-        <select class="select" id="inWhisperDevice" style="width:200px">
+        <select class="select" id="inWhisperDevice" style="width:180px;">
           <option value="cpu">CPU</option>
           <option value="cuda">GPU (NVIDIA CUDA)</option>
         </select>
       </div>
       <div class="settings-row">
         <span class="settings-key">Kiểu lượng tử hóa</span>
-        <select class="select" id="inWhisperCompute" style="width:200px">
-          <option value="int8">int8 (Tối ưu CPU & RAM)</option>
-          <option value="float16">float16 (Mặc định GPU)</option>
-          <option value="float32">float32 (Độ chính xác cao)</option>
+        <select class="select" id="inWhisperCompute" style="width:180px;">
+          <option value="int8">int8 — Tối ưu CPU & RAM</option>
+          <option value="float16">float16 — Mặc định GPU</option>
+          <option value="float32">float32 — Chính xác cao</option>
         </select>
       </div>
       <div class="settings-row">
-        <span class="settings-key">Trạng thái STT</span>
+        <span class="settings-key">Trạng thái</span>
         <span class="settings-val" id="setWhisperStatus">—</span>
       </div>
     </div>
 
-    <!-- LLM -->
-    <div class="settings-section">
-      <h3 style="display:flex;align-items:center;gap:8px;">
-        <i data-lucide="bot" style="width:16px;height:16px;color:var(--accent);"></i>
-        <span>Mô hình Ngôn ngữ Lớn (LLM Qwen 2.5)</span>
-      </h3>
-      <div class="settings-row">
-        <span class="settings-key">Mô hình LLM chuẩn</span>
-        <span class="settings-val" style="font-weight:600;">Qwen2.5-3B-Instruct (Q4_K_M GGUF · ~1.9 GB)</span>
+    <!-- LLM Status card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <i data-lucide="bot" style="width:16px;height:16px;color:#22d3ee;"></i>
+          Mô hình Ngôn ngữ (LLM)
+        </span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="status-dot" id="llmStatusDot" style="background:var(--text-subtle);"></div>
+          <span style="font-size:11px;color:var(--text-muted);" id="llmStatusLabel">—</span>
+        </div>
+      </div>
+      <div style="background:var(--teal-light);border:1px solid rgba(6,182,212,0.2);border-radius:var(--radius-md);padding:12px;margin-bottom:14px;font-size:12px;color:var(--text-muted);line-height:1.6;">
+        Mô hình <strong style="color:#22d3ee;">Qwen 2.5 3B Instruct (Q4_K_M)</strong> (~1.9 GB) chạy hoàn toàn cục bộ qua llama.cpp — không gửi dữ liệu ra ngoài.
       </div>
       <div class="settings-row">
-        <span class="settings-key">Số luồng CPU (Threads)</span>
-        <input class="input" type="number" id="inLlmThreads" min="1" max="16" style="width:200px" />
+        <span class="settings-key">Mô hình LLM</span>
+        <span class="settings-val" style="color:#22d3ee;">Qwen2.5-3B Q4_K_M GGUF</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-key">Số luồng CPU</span>
+        <input class="input" type="number" id="inLlmThreads" min="1" max="16"
+          style="width:180px;" placeholder="4">
       </div>
       <div class="settings-row">
         <span class="settings-key">Kích thước Context</span>
-        <select class="select" id="inLlmContext" style="width:200px">
-          <option value="2048">2048 tokens (Tiết kiệm RAM)</option>
-          <option value="4096" selected>4096 tokens (Khuyên dùng)</option>
-          <option value="8192">8192 tokens (Bài giảng dài)</option>
+        <select class="select" id="inLlmContext" style="width:180px;">
+          <option value="2048">2048 tokens — Tiết kiệm RAM</option>
+          <option value="4096" selected>4096 tokens — Khuyên dùng</option>
+          <option value="8192">8192 tokens — Bài giảng dài</option>
         </select>
       </div>
       <div class="settings-row">
-        <span class="settings-key">Trạng thái LLM</span>
+        <span class="settings-key">Trạng thái</span>
         <span class="settings-val" id="setLlmStatus">—</span>
       </div>
     </div>
+  </div>
 
-    <!-- Storage & Data -->
-    <div class="settings-section">
-      <h3 style="display:flex;align-items:center;gap:8px;">
-        <i data-lucide="database" style="width:16px;height:16px;color:var(--accent);"></i>
-        <span>Dữ liệu & Thử nghiệm</span>
-      </h3>
-      <div class="settings-row">
-        <div>
-          <div style="font-weight:500;font-size:13px;">Dữ liệu Học tập Mẫu (Demo Data)</div>
-          <div style="font-size:11px;color:var(--text-muted);">Nạp bài giảng mẫu Cấu trúc dữ liệu & Thuật toán, 8 flashcards SM-2 và lịch sử học tập 7 ngày.</div>
-        </div>
-        <button class="btn btn-secondary btn-sm" id="btnSeedDemo" style="display:inline-flex;align-items:center;gap:6px;">
-          <i data-lucide="sparkles" style="width:14px;height:14px;color:var(--accent);"></i> Nạp dữ liệu mẫu
-        </button>
+  <!-- Data & Privacy -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">
+        <i data-lucide="database" style="width:16px;height:16px;color:#34d399;"></i>
+        Dữ liệu & Quyền riêng tư
+      </span>
+      <span class="badge badge-success">🛡️ 100% Offline</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div style="background:var(--glass-light);border:1px solid var(--glass-border);border-radius:var(--radius-md);padding:14px;text-align:center;">
+        <div style="font-size:20px;margin-bottom:6px;">🛡️</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text);">Local Only</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Dữ liệu chỉ lưu trên máy bạn</div>
       </div>
-      <div class="settings-row">
-        <span class="settings-key">Cơ sở dữ liệu</span>
-        <span class="settings-val">SQLite (data/openmind.db)</span>
+      <div style="background:var(--glass-light);border:1px solid var(--glass-border);border-radius:var(--radius-md);padding:14px;text-align:center;">
+        <div style="font-size:20px;margin-bottom:6px;">🚫</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text);">Zero Telemetry</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Không gửi bất kỳ tracking nào</div>
       </div>
-      <div class="settings-row">
-        <span class="settings-key">Thư mục AI Models</span>
-        <span class="settings-val">models/ (faster-whisper-small & Qwen GGUF)</span>
-      </div>
-      <div class="settings-row">
-        <span class="settings-key">Chế độ hoạt động</span>
-        <span class="settings-val" style="color:var(--success);font-weight:600;">100% Offline (Không gửi dữ liệu ra ngoài)</span>
+      <div style="background:var(--glass-light);border:1px solid var(--glass-border);border-radius:var(--radius-md);padding:14px;text-align:center;">
+        <div style="font-size:20px;margin-bottom:6px;">✈️</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text);">Air-gap Ready</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Hoạt động không cần Internet</div>
       </div>
     </div>
 
-    <!-- About -->
-    <div class="settings-section">
-      <h3 style="display:flex;align-items:center;gap:8px;">
-        <i data-lucide="info" style="width:16px;height:16px;color:var(--accent);"></i>
-        <span>Thông tin Ứng dụng</span>
-      </h3>
-      <div class="settings-row">
+    <div class="settings-row">
+      <div>
+        <div style="font-weight:600;font-size:13px;color:var(--text);">Cơ sở dữ liệu</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">SQLite WAL Mode — data/openmind.db</div>
+      </div>
+      <span class="badge badge-muted">SQLite v3</span>
+    </div>
+    <div class="settings-row">
+      <div>
+        <div style="font-weight:600;font-size:13px;color:var(--text);">Dữ liệu Mẫu (Demo)</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Nạp bài giảng DSA mẫu, 8 flashcards và lịch sử học tập 7 ngày</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" id="btnSeedDemo"
+        style="display:inline-flex;align-items:center;gap:6px;flex-shrink:0;">
+        <i data-lucide="sparkles" style="width:13px;height:13px;color:#a5b4fc;"></i> Nạp demo
+      </button>
+    </div>
+  </div>
+
+  <!-- About -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">
+        <i data-lucide="info" style="width:16px;height:16px;color:#a5b4fc;"></i>
+        Thông tin Ứng dụng
+      </span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+      <div class="settings-row" style="grid-column:1/-1;">
         <span class="settings-key">Tên ứng dụng</span>
-        <span class="settings-val" style="font-weight:700;">Open-mind Pro</span>
+        <span class="settings-val" style="font-family:var(--font-heading);letter-spacing:-0.01em;">Open-mind</span>
       </div>
       <div class="settings-row">
         <span class="settings-key">Phiên bản</span>
-        <span class="settings-val">v2.0.0 (Release)</span>
+        <span class="badge badge-accent">v2.0.0</span>
       </div>
       <div class="settings-row">
         <span class="settings-key">Giấy phép</span>
         <span class="settings-val">MIT License</span>
       </div>
       <div class="settings-row">
-        <span class="settings-key">Công nghệ cốt lõi</span>
-        <span class="settings-val">faster-whisper-small · llama-cpp · SQLite · PyWebView</span>
+        <span class="settings-key">STT Engine</span>
+        <span class="badge badge-muted">faster-whisper-small</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-key">LLM Engine</span>
+        <span class="badge badge-muted">Qwen2.5-3B via llama.cpp</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-key">UI Runtime</span>
+        <span class="badge badge-muted">PyWebView + Vanilla JS</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-key">SRS Algorithm</span>
+        <span class="badge badge-muted">SuperMemo-2 (SM-2)</span>
       </div>
     </div>
   </div>
-  `;
 
-  el('settingsRefresh').addEventListener('click', loadSettings);
-  el('settingsSave').addEventListener('click', saveSettings);
-  el('btnSeedDemo').addEventListener('click', handleSeedDemo);
+</div>`;
+
+  el('settingsRefresh')?.addEventListener('click', loadSettings);
+  el('settingsSave')?.addEventListener('click', saveSettings);
+  el('btnSeedDemo')?.addEventListener('click', handleSeedDemo);
 
   loadSettings();
   refreshIcons();
@@ -183,23 +229,40 @@ async function loadSettings() {
     if (el('inWhisperDevice'))  el('inWhisperDevice').value  = s.whisper_device || 'cpu';
     if (el('inWhisperCompute')) el('inWhisperCompute').value = s.whisper_compute_type || 'int8';
     if (el('inLlmThreads'))     el('inLlmThreads').value     = s.llm_threads || 4;
-    if (el('inLlmContext'))     el('inLlmContext').value     = s.llm_context || 4096;
+    if (el('inLlmContext'))     el('inLlmContext').value      = s.llm_context || 4096;
 
     const whisperOk = s.whisper_model_loaded;
     const llmOk     = s.llm_model_loaded;
+    const llmAvail  = s.llm_available;
 
+    // STT status dot
+    if (el('sttStatusDot')) {
+      el('sttStatusDot').className = `status-dot ${whisperOk ? 'online' : 'offline'}`;
+    }
+    if (el('sttStatusLabel')) {
+      el('sttStatusLabel').textContent = whisperOk ? 'Sẵn sàng' : 'Chưa nạp';
+    }
     if (el('setWhisperStatus')) {
       el('setWhisperStatus').innerHTML = whisperOk
-        ? `<span style="color:var(--success)">Đã sẵn sàng (small)</span>`
-        : `<span style="color:var(--warning)">Sẽ tự nạp khi ghi âm/chuyển văn bản</span>`;
+        ? `<span style="color:#34d399;font-weight:700;">✅ Đã sẵn sàng</span>`
+        : `<span style="color:#fbbf24;">⏳ Sẽ tự nạp khi cần</span>`;
+    }
+
+    // LLM status dot
+    if (el('llmStatusDot')) {
+      el('llmStatusDot').className = `status-dot ${llmOk ? 'online' : llmAvail ? 'loading' : 'offline'}`;
+    }
+    if (el('llmStatusLabel')) {
+      el('llmStatusLabel').textContent = llmOk ? 'Đã nạp' : llmAvail ? 'Sẵn sàng' : 'Không tìm thấy';
     }
     if (el('setLlmStatus')) {
       el('setLlmStatus').innerHTML = llmOk
-        ? `<span style="color:var(--success)">Đã nạp</span>`
-        : s.llm_available
-          ? `<span style="color:var(--warning)">Sẽ nạp khi tạo bài giảng/hỏi đáp</span>`
-          : `<span style="color:var(--danger)">Không tìm thấy file model GGUF</span>`;
+        ? `<span style="color:#34d399;font-weight:700;">✅ Đã nạp</span>`
+        : llmAvail
+          ? `<span style="color:#fbbf24;">⏳ Sẽ nạp khi tạo nội dung</span>`
+          : `<span style="color:#f87171;">❌ Không tìm thấy GGUF</span>`;
     }
+
     refreshIcons();
   } catch (e) {
     showToast('Lỗi tải cài đặt: ' + e.message, 'error');
@@ -209,13 +272,13 @@ async function loadSettings() {
 async function saveSettings() {
   try {
     const newSettings = {
-      whisper_size: 'small',
-      whisper_device: el('inWhisperDevice').value,
-      whisper_compute_type: el('inWhisperCompute').value,
-      llm_threads: parseInt(el('inLlmThreads').value) || 4,
-      llm_context_size: parseInt(el('inLlmContext').value) || 4096,
+      whisper_size:        'small',
+      whisper_device:       el('inWhisperDevice')?.value  || 'cpu',
+      whisper_compute_type: el('inWhisperCompute')?.value || 'int8',
+      llm_threads:          parseInt(el('inLlmThreads')?.value) || 4,
+      llm_context_size:     parseInt(el('inLlmContext')?.value) || 4096,
     };
-    const res = await API.save_settings(newSettings);
+    const res = await API.save_settings?.(newSettings) || {};
     if (res.error) throw new Error(res.error);
     showToast('Đã lưu cấu hình thành công!', 'success');
   } catch (e) {
