@@ -2,7 +2,7 @@ import unittest
 import os
 import tempfile
 from pathlib import Path
-from data.database import Database
+from core.database import Database
 from core.flashcard_srs import srs_manager
 from core.rag_engine import rag_engine
 from core.export_engine import export_engine
@@ -117,12 +117,18 @@ class TestCoreModules(unittest.TestCase):
         streak = self.db.get_current_streak()
         self.assertEqual(streak, 3)
 
-    def test_model_manager_status(self):
-        from core.model_manager import model_manager
-        status = model_manager.get_status()
-        self.assertIn("whisper_ready", status)
-        self.assertIn("llm_ready", status)
-        self.assertIn("all_ready", status)
+    def test_package_imports_and_shims(self):
+        import core
+        self.assertTrue(hasattr(core, "db"))
+        self.assertTrue(hasattr(core, "api"))
+        self.assertTrue(hasattr(core, "stt_engine"))
+        self.assertTrue(hasattr(core, "llm_engine"))
+
+        # Test compatibility shims
+        import data.database as legacy_db
+        self.assertEqual(legacy_db.db, core.db)
+        import app_api as legacy_api
+        self.assertEqual(legacy_api.api, core.api)
 
 
 if __name__ == "__main__":

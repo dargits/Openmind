@@ -191,43 +191,40 @@ python main.py
 
 ```text
 Open-mind/
-├── 📁 core/                         # Các Engine AI & Logic nền tảng
-│   ├── config.py                   # Cấu hình tham số mô hình, đường dẫn & phần cứng
+├── 📁 core/                         # Toàn bộ lõi ứng dụng & nghiệp vụ phần mềm
+│   ├── __init__.py                 # Khởi tạo package core, export các engine chính
+│   ├── config.py                   # Cấu hình hệ thống, tham số model & hardware
+│   ├── database.py                 # Data Access Layer SQLite (WAL Mode, CRUD)
+│   ├── api.py                      # Cầu nối API hai chiều Python ↔ Javascript (pywebview)
 │   ├── stt_engine.py               # Engine Whisper STT & Bộ chuẩn hóa ngữ âm tiếng Việt
-│   ├── llm_engine.py               # Bộ điều khiển Qwen 2.5 LLM & Prompt Engineering
-│   ├── rag_engine.py               # Hybrid Chunking & BM25 Context Retrieval
+│   ├── llm_engine.py               # Bộ điều khiển Qwen 2.5 LLM & Prompt Templates
+│   ├── rag_engine.py               # Sliding-window Chunking & BM25 Context Retrieval
 │   ├── flashcard_srs.py            # Triển khai thuật toán SuperMemo-2 (SM-2)
 │   ├── export_engine.py            # Xuất dữ liệu ra TXT, JSON, Anki CSV, HTML Report
 │   └── model_manager.py            # Quản lý kiểm tra & tải Model AI tự động
-├── 📁 data/                         # Cơ sở dữ liệu SQLite & Cài đặt
-│   ├── database.py                 # Data Access Layer SQLite (WAL Mode, CRUD toàn bộ thực thể)
-│   └── settings.json               # Tệp lưu cấu hình người dùng (Tự tạo)
-├── 📁 demo_data/                    # Dữ liệu bài giảng mẫu phục vụ thử nghiệm
-│   ├── demo_lecture_dsa.json       # Dữ liệu mẫu (Transcript, Flashcards, Quiz)
-│   └── demo_lecture_dsa.txt        # Bản ghi thô bài giảng Cấu trúc dữ liệu & Giải thuật
+├── 📁 ui/
+│   └── web/                        # Giao diện người dùng Webview hiện đại (SPA)
+│       ├── css/style.css           # Design System hiện đại, responsive & glassmorphism
+│       ├── js/                     # Logic giao diện & tương tác người dùng
+│       ├── logo.jpg                # Logo thương hiệu ứng dụng
+│       └── index.html              # Cấu trúc giao diện Webview chính
+├── 📁 data/                         # Thư mục lưu trữ dữ liệu runtime (Tách biệt khỏi code)
+│   ├── openmind.db                 # Database SQLite người dùng (Tự sinh)
+│   ├── settings.json               # Cấu hình người dùng cá nhân (Tự sinh)
+│   └── .gitkeep
 ├── 📁 models/                       # Thư mục lưu trữ trọng số mô hình AI (Offline)
 │   └── README.md                   # Hướng dẫn chi tiết tải thủ công mô hình
+├── 📁 demo_data/                    # Dữ liệu bài giảng mẫu phục vụ thử nghiệm
+│   └── demo_lecture_dsa.json       # Dữ liệu mẫu hoàn chỉnh (Transcript, Flashcards, Quiz)
 ├── 📁 outputs/                      # Thư mục chứa các tệp đã xuất ra (.gitkeep)
 ├── 📁 samples/                      # Thư mục chứa audio ghi âm thử nghiệm (.gitkeep)
 ├── 📁 tests/                        # Bộ kiểm thử tự động (Unit Tests)
+│   ├── __init__.py
 │   └── test_core.py                # Test Database CRUD, SM-2 SRS, RAG & Export Engine
 ├── 📁 tools/                        # Bộ công cụ phát triển & đo đạc
 │   ├── benchmark_stt.py            # Đo đạc RTF, Peak RAM, WER của mô hình STT
 │   └── seed_demo_data.py           # Nạp lại dữ liệu bài giảng mẫu vào Database
-├── 📁 ui/
-│   └── web/                        # Giao diện người dùng Webview hiện đại
-│       ├── css/style.css           # Design System hiện đại, responsive & glassmorphism
-│       ├── js/
-│       │   ├── app.js              # Router, Navigation & Quản lý Splash Screen
-│       │   ├── lecture.js          # Studio Bài giảng, Audio Player, Transcript, Mindmap
-│       │   ├── flashcard.js        # Giao diện ôn tập thẻ 3D Flip & SM-2 Rating
-│       │   ├── library.js          # Quản lý kho bài giảng & tìm kiếm
-│       │   ├── stats.js            # Thống kê Streak, biểu đồ học tập & tổng kết
-│       │   ├── settings.js         # Quản lý cấu hình phần cứng & model
-│       │   └── lucide.min.js       # Bộ icon vector hiện đại
-│       └── index.html              # Cấu trúc giao diện Webview chính
-├── app_api.py                      # Cầu nối API hai chiều Python ↔ Javascript (pywebview)
-├── main.py                         # Entrypoint khởi chạy ứng dụng Desktop
+├── main.py                         # Entrypoint chính khởi chạy ứng dụng Desktop
 ├── requirements.txt                # Danh sách thư viện Python phụ thuộc
 ├── run.bat                         # Kịch bản khởi chạy 1-Click trên Windows
 ├── run.sh                          # Kịch bản khởi chạy 1-Click trên Linux/macOS

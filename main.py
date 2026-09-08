@@ -59,7 +59,7 @@ for folder in ["data", "models", "outputs", "samples"]:
 
 # Tự động kiểm tra & nạp dữ liệu mẫu ban đầu nếu cơ sở dữ liệu trống
 try:
-    from data.database import db
+    from core.database import db
     from tools.seed_demo_data import seed_demo_data
     if len(db.list_lectures()) == 0:
         print("[Open-mind] Đang nạp dữ liệu học tập mẫu ban đầu...")
@@ -68,7 +68,7 @@ except Exception as e:
     print(f"[Open-mind] Khởi tạo DB demo: {e}")
 
 import webview
-from app_api import api
+from core.api import api
 
 
 def main():
