@@ -74,7 +74,8 @@ if DEFAULT_WHISPER_SIZE not in WHISPER_MODELS_METADATA:
 
 WHISPER_DEVICE = _settings.get("whisper_device", "cpu")
 WHISPER_COMPUTE_TYPE = _settings.get("whisper_compute_type", "int8")
-WHISPER_BEAM_SIZE = int(_settings.get("whisper_beam_size", 2))
+WHISPER_BEAM_SIZE = int(_settings.get("whisper_beam_size", 1))       # 1 = Greedy search (nhanh gấp đôi beam_size=2)
+WHISPER_CPU_THREADS = int(_settings.get("whisper_cpu_threads", min(16, max(4, os.cpu_count() or 8))))
 WHISPER_VAD_MIN_SILENCE_MS = 500    # ms of silence to split segments
 WHISPER_LANGUAGE = "vi"
 
@@ -83,7 +84,8 @@ WHISPER_LANGUAGE = "vi"
 # ──────────────────────────────────────────────────────────────────
 LLM_MODEL_FILENAME = "qwen2.5-3b-instruct-q4_k_m.gguf"
 LLM_CONTEXT_SIZE = int(_settings.get("llm_context_size", 4096))
-LLM_THREADS = int(_settings.get("llm_threads", max(4, (os.cpu_count() or 4) - 1)))
+# Tối ưu hóa số luồng sinh từ (n_threads) trên P-cores để đạt tokens/giây tối đa
+LLM_THREADS = int(_settings.get("llm_threads", min(8, max(4, (os.cpu_count() or 4) // 2))))
 
 # Enable offline mode for Hugging Face Hub if local models exist
 if (MODELS_DIR / f"faster-whisper-{DEFAULT_WHISPER_SIZE}").exists() and (MODELS_DIR / LLM_MODEL_FILENAME).exists():

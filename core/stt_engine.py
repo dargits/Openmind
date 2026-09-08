@@ -1,3 +1,4 @@
+import os
 import re
 from pathlib import Path
 from typing import Callable, Optional, List, Dict, Any
@@ -138,11 +139,14 @@ class STTEngine:
             del self.model
             self.model = None
 
+        cpu_threads = getattr(cfg, "WHISPER_CPU_THREADS", min(16, max(4, os.cpu_count() or 8)))
         try:
             self.model = WhisperModel(
                 whisper_path,
                 device=cfg.WHISPER_DEVICE,
                 compute_type=cfg.WHISPER_COMPUTE_TYPE,
+                cpu_threads=cpu_threads,
+                num_workers=2,
             )
             return self.model
         except Exception as e:
@@ -154,6 +158,8 @@ class STTEngine:
                     whisper_path,
                     device="cpu",
                     compute_type="int8",
+                    cpu_threads=cpu_threads,
+                    num_workers=2,
                 )
                 return self.model
             raise RuntimeError(f"Không thể tải mô hình giọng nói '{size}'. Lỗi: {e}")
@@ -199,7 +205,8 @@ class STTEngine:
                 vad_filter=True,
                 vad_parameters=dict(min_silence_duration_ms=_silence),
                 initial_prompt=combined_prompt,
-                condition_on_previous_text=True,
+                condition_on_previous_text=False,
+                temperature=0.0,
                 no_speech_threshold=0.55,
                 compression_ratio_threshold=2.4,
                 log_prob_threshold=-0.9,
