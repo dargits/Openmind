@@ -117,8 +117,10 @@ class LLMEngine:
                 self.model = None
                 gc.collect()
 
-            ctx_size = min(2048, LLM_CONTEXT_SIZE) if LLM_CONTEXT_SIZE <= 2048 else 2048
-            threads = min(4, LLM_THREADS)
+            ctx_size = max(2048, min(8192, LLM_CONTEXT_SIZE))
+            # Tối ưu hóa số luồng CPU cho inference nhanh hơn 2-3x
+            available_cpus = os.cpu_count() or 4
+            threads = max(4, min(10, LLM_THREADS or available_cpus))
 
             self.model = Llama(
                 model_path=str(model_path),
@@ -138,7 +140,7 @@ class LLMEngine:
                     model_path=str(model_path),
                     n_ctx=2048,
                     n_batch=256,
-                    n_threads=2,
+                    n_threads=4,
                     n_gpu_layers=0,
                     verbose=False,
                 )
@@ -200,6 +202,15 @@ class LLMEngine:
                     return json.loads(match.group(1))
                 except Exception:
                     pass
+            # Phục hồi nếu mảng JSON bị cắt ngang cuối dòng
+            if "[" in cleaned:
+                sub = cleaned[cleaned.find("["):]
+                last_brace = sub.rfind("}")
+                if last_brace != -1:
+                    try:
+                        return json.loads(sub[:last_brace+1] + "]")
+                    except Exception:
+                        pass
         return None
 
     # ==================== 1. TÓM TẮT PHÂN CẤP (HIERARCHICAL SUMMARY) ====================
@@ -240,44 +251,58 @@ class LLMEngine:
 
     # ==================== 2. SINH QUIZ TRẮC NGHIỆM ĐA ĐỘ KHÓ ====================
     def generate_quiz(self, transcript_text: str, num_questions: int = 5, difficulty: str = "trung bình") -> List[Dict[str, Any]]:
-        pruned_text = TranscriptPruner.prune_transcript(transcript_text, max_chars=4000)
+        pruned_text = TranscriptPruner.prune_transcript(transcript_text, max_chars=3200)
         prompt = (
             f"Dựa CHỈ VÀO nội dung bài giảng dưới đây, hãy tạo {num_questions} câu hỏi trắc nghiệm 4 đáp án bằng tiếng Việt "
             f"ở mức độ '{difficulty}'.\n\n"
             "QUY TẮC QUAN TRỌNG CHO CÂU HỎI:\n"
-            "- Mỗi câu hỏi PHẢI ĐẦY ĐỦ CHỦ NGỮ/VỊ NGỮ, nêu đích danh khái niệm, thuật ngữ (ví dụ: 'Hàm băm MD5', 'Giao thức TCP/IP', 'Cơ sở dữ liệu SQL').\n"
-            "- TUYỆT ĐỐI KHÔNG viết câu hỏi cộc lốc hoặc mơ hồ như: 'Nó là gì?', 'Nó thực hiện điều gì?', 'Phương pháp này có ưu điểm gì?'.\n"
-            "- 4 đáp án A, B, C, D phải rõ ràng, phân biệt được đúng sai dựa trên bài giảng.\n\n"
+            "- Mỗi câu hỏi PHẢI ĐẦY ĐỦ CHỦ NGỮ/VỊ NGỮ, nêu đích danh khái niệm, thuật ngữ (ví dụ: 'Mô hình TCP/IP', 'Giao thức TCP', 'Địa chỉ IP').\n"
+            "- TUYỆT ĐỐI KHÔNG viết câu hỏi cộc lốc hoặc mơ hồ như: 'Nó là gì?', 'Nó thực hiện điều gì?'.\n"
+            "- 4 đáp án A, B, C, D phải rõ ràng, chỉ có 1 đáp án đúng.\n"
+            "- Phần giải thích (explanation) viết ngắn gọn súc tích trong 1 câu.\n\n"
             "CHỈ trả về mảng JSON hợp lệ, đúng cấu trúc:\n"
             '[\n'
             '  {\n'
             '    "question": "Câu hỏi cụ thể nêu rõ tên chủ thể/thuật ngữ?",\n'
             '    "options": ["A. Lựa chọn 1", "B. Lựa chọn 2", "C. Lựa chọn 3", "D. Lựa chọn 4"],\n'
             '    "correct_index": 0,\n'
-            '    "explanation": "Giải thích chi tiết tại sao đáp án này đúng dựa trên nội dung bài giảng."\n'
+            '    "explanation": "Giải thích ngắn gọn 1 câu vì sao đáp án này đúng."\n'
             '  }\n'
             ']\n\n'
             f"Transcript bài giảng:\n{pruned_text}"
         )
 
-        raw = self.call_chat(prompt, max_tokens=1000)
+        raw = self.call_chat(prompt, max_tokens=900)
         parsed = self._extract_json(raw)
+        if isinstance(parsed, dict):
+            for key in ["questions", "quiz", "data", "items"]:
+                if key in parsed and isinstance(parsed[key], list):
+                    parsed = parsed[key]
+                    break
+            else:
+                vals = list(parsed.values())
+                if vals and isinstance(vals[0], list):
+                    parsed = vals[0]
+
         if isinstance(parsed, list):
-            # Clean up questions if any vague pronoun slipped through
+            valid_questions = []
             for q in parsed:
-                q_text = q.get("question", "")
-                if re.match(r"^(nó|điều này|cái này)\s+", q_text, re.IGNORECASE):
-                    q["question"] = re.sub(r"^(nó|điều này|cái này)\s+", "Thuật ngữ / Khái niệm trong bài giảng ", q_text, flags=re.IGNORECASE)
-            return parsed
+                if isinstance(q, dict) and "question" in q and "options" in q:
+                    q_text = q.get("question", "")
+                    if re.match(r"^(nó|điều này|cái này)\s+", q_text, re.IGNORECASE):
+                        q["question"] = re.sub(r"^(nó|điều này|cái này)\s+", "Thuật ngữ / Khái niệm trong bài giảng ", q_text, flags=re.IGNORECASE)
+                    valid_questions.append(q)
+            if valid_questions:
+                return valid_questions
         return []
 
     # ==================== 3. SINH FLASHCARDS ====================
     def generate_flashcards(self, transcript_text: str, num_cards: int = 8) -> List[Dict[str, str]]:
-        pruned_text = TranscriptPruner.prune_transcript(transcript_text, max_chars=4000)
+        pruned_text = TranscriptPruner.prune_transcript(transcript_text, max_chars=3200)
         prompt = (
             f"Dựa vào bài giảng sau, hãy rút trích {num_cards} thẻ ghi nhớ (Flashcards) chất lượng cao.\n\n"
             "YÊU CẦU CHO THẺ:\n"
-            "- Mặt trước (front): Nêu rõ câu hỏi tự kiểm tra hoặc tên khái niệm/thuật ngữ cụ thể (ví dụ: 'Hàm băm MD5 là gì?', 'Đặc điểm của SHA-256?'). KHÔNG dùng 'Nó là gì?'.\n"
+            "- Mặt trước (front): Nêu rõ câu hỏi tự kiểm tra hoặc tên khái niệm/thuật ngữ cụ thể (ví dụ: 'Mô hình TCP/IP là gì?', 'Chức năng của giao thức IP?'). KHÔNG dùng 'Nó là gì?'.\n"
             "- Mặt sau (back): Định nghĩa hoặc câu trả lời súc tích, chính xác, nêu bật từ khóa quan trọng.\n"
             "- Gợi ý (hint): Gợi ý ngắn 3-5 từ giúp liên tưởng nhanh.\n\n"
             "CHỈ trả về mảng JSON hợp lệ:\n"
@@ -291,14 +316,28 @@ class LLMEngine:
             f"Transcript bài giảng:\n{pruned_text}"
         )
 
-        raw = self.call_chat(prompt, max_tokens=1000)
+        raw = self.call_chat(prompt, max_tokens=850)
         parsed = self._extract_json(raw)
+        if isinstance(parsed, dict):
+            for key in ["flashcards", "cards", "data", "items"]:
+                if key in parsed and isinstance(parsed[key], list):
+                    parsed = parsed[key]
+                    break
+            else:
+                vals = list(parsed.values())
+                if vals and isinstance(vals[0], list):
+                    parsed = vals[0]
+
         if isinstance(parsed, list):
+            valid_cards = []
             for c in parsed:
-                f_text = c.get("front", "")
-                if re.match(r"^(nó|điều này|cái này)\s+", f_text, re.IGNORECASE):
-                    c["front"] = re.sub(r"^(nó|điều này|cái này)\s+", "Khái niệm ", f_text, flags=re.IGNORECASE)
-            return parsed
+                if isinstance(c, dict) and "front" in c and "back" in c:
+                    f_text = c.get("front", "")
+                    if re.match(r"^(nó|điều này|cái này)\s+", f_text, re.IGNORECASE):
+                        c["front"] = re.sub(r"^(nó|điều này|cái này)\s+", "Khái niệm ", f_text, flags=re.IGNORECASE)
+                    valid_cards.append(c)
+            if valid_cards:
+                return valid_cards
         return []
 
     # ==================== 4. SINH CÂY SƠ ĐỒ TƯ DUY (MINDMAP) ====================

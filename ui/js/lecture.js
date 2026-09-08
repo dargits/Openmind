@@ -435,15 +435,33 @@ async function showQuizModal() {
   const numQuestions = parseInt(el('quizNumSelect')?.value) || 5;
   const difficulty = el('quizDiffSelect')?.value || 'trung bình';
 
-  showStatus(`AI đang sinh ${numQuestions} câu hỏi (${difficulty})…`, 0.25);
+  showStatus(`AI đang phân tích và sinh ${numQuestions} câu hỏi (${difficulty})…`, 0.25);
   LEC.quizData = null;
   LEC.quizAnswers = {};
   switchTabTo('quiz');
+
+  let seconds = 0;
+  if (LEC._quizTimer) clearInterval(LEC._quizTimer);
+  LEC._quizTimer = setInterval(() => {
+    seconds++;
+    const tEl = el('quizElapsedTimer');
+    if (tEl) {
+      const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const ss = String(seconds % 60).padStart(2, '0');
+      tEl.textContent = `Thời gian đã chạy: ${mm}:${ss}`;
+    }
+  }, 1000);
+
   if (el('quizBox')) el('quizBox').innerHTML = `
-<div class="empty-state" style="height:100%;">
-  <i data-lucide="loader-2" class="spin" style="width:36px;height:36px;color:#4f46e5;"></i>
-  <div class="empty-title" style="margin-top:12px;">Đang biên soạn ${numQuestions} câu hỏi…</div>
-  <div class="empty-sub">Vui lòng đợi — AI đang phân tích nội dung bài giảng</div>
+<div class="empty-state" style="height:100%;padding:40px 20px;">
+  <i data-lucide="loader-2" class="spin" style="width:40px;height:40px;color:#4f46e5;"></i>
+  <div class="empty-title" style="margin-top:16px;font-size:16px;font-weight:700;">Đang biên soạn ${numQuestions} câu hỏi trắc nghiệm…</div>
+  <div class="empty-sub" style="margin-top:6px;max-width:540px;margin-left:auto;margin-right:auto;color:#64748b;line-height:1.5;">
+    Mô hình AI đang phân tích toàn bộ nội dung bài giảng 100% offline trên CPU. Quá trình này thường mất khoảng 25 - 50 giây.
+  </div>
+  <div id="quizElapsedTimer" style="margin-top:16px;display:inline-block;padding:6px 16px;background:rgba(99,102,241,0.08);color:#4f46e5;font-weight:700;font-size:13px;border-radius:20px;border:1px solid rgba(99,102,241,0.2);">
+    Thời gian đã chạy: 00:00
+  </div>
 </div>`;
   refreshIcons();
 
@@ -452,6 +470,7 @@ async function showQuizModal() {
 
 EventBus.on('quiz:done', ({ quiz }) => {
   hideStatus();
+  if (LEC._quizTimer) { clearInterval(LEC._quizTimer); LEC._quizTimer = null; }
   const questions = Array.isArray(quiz) ? quiz : (quiz.questions || []);
   LEC.quizData = questions;
   renderQuiz(questions);
@@ -461,7 +480,20 @@ EventBus.on('quiz:done', ({ quiz }) => {
 
 EventBus.on('quiz:error', ({ message }) => {
   hideStatus();
-  showToast('Lỗi sinh quiz: ' + message, 'error', 4000);
+  if (LEC._quizTimer) { clearInterval(LEC._quizTimer); LEC._quizTimer = null; }
+  showToast('Lỗi sinh quiz: ' + message, 'error', 5000);
+  if (el('quizBox')) {
+    el('quizBox').innerHTML = `
+<div class="empty-state" style="height:100%;padding:40px 20px;">
+  <i data-lucide="alert-triangle" style="width:42px;height:42px;color:#ef4444;"></i>
+  <div class="empty-title" style="margin-top:14px;color:#b91c1c;font-weight:700;">Không thể tạo câu hỏi trắc nghiệm</div>
+  <div class="empty-sub" style="max-width:520px;margin:8px auto 20px;color:#64748b;line-height:1.5;">${escapeHtml(message)}</div>
+  <button class="btn btn-primary" onclick="openQuizModal()" style="display:inline-flex;align-items:center;gap:8px;">
+    <i data-lucide="rotate-ccw" style="width:16px;height:16px;"></i> Thử lại
+  </button>
+</div>`;
+    refreshIcons();
+  }
 });
 
 function renderQuiz(questions) {
