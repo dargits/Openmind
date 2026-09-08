@@ -1,3 +1,5 @@
+import os
+import time
 import json
 import re
 from pathlib import Path
@@ -250,7 +252,8 @@ class LLMEngine:
         }
 
     # ==================== 2. SINH QUIZ TRẮC NGHIỆM ĐA ĐỘ KHÓ ====================
-    def generate_quiz(self, transcript_text: str, num_questions: int = 5, difficulty: str = "trung bình") -> List[Dict[str, Any]]:
+    def generate_quiz(self, transcript_text: str, num_questions: int = 5, difficulty: str = "trung bình",
+                      on_prompt: Optional[Callable[[str], None]] = None) -> List[Dict[str, Any]]:
         pruned_text = TranscriptPruner.prune_transcript(transcript_text, max_chars=3200)
         prompt = (
             f"Dựa CHỈ VÀO nội dung bài giảng dưới đây, hãy tạo {num_questions} câu hỏi trắc nghiệm 4 đáp án bằng tiếng Việt "
@@ -272,7 +275,26 @@ class LLMEngine:
             f"Transcript bài giảng:\n{pruned_text}"
         )
 
+        print("\n" + "═" * 70)
+        print(f"🤖 [DEBUG AI - GENERATE QUIZ] Số câu hỏi: {num_questions} | Độ khó: {difficulty}")
+        print(f"📝 [PROMPT SENT TO LLM]:")
+        print("─" * 70)
+        print(prompt)
+        print("─" * 70)
+        print(f"📊 Thống kê prompt: {len(prompt)} ký tự | ~{len(prompt.split())} từ")
+        print("═" * 70 + "\n")
+
+        if on_prompt:
+            try:
+                on_prompt(prompt)
+            except Exception:
+                pass
+
+        t0 = time.time()
         raw = self.call_chat(prompt, max_tokens=900)
+        duration = time.time() - t0
+        print(f"✅ [DEBUG AI - QUIZ FINISHED] Thời gian suy luận: {duration:.2f}s | Output: {len(raw)} ký tự\n")
+
         parsed = self._extract_json(raw)
         if isinstance(parsed, dict):
             for key in ["questions", "quiz", "data", "items"]:
@@ -297,7 +319,8 @@ class LLMEngine:
         return []
 
     # ==================== 3. SINH FLASHCARDS ====================
-    def generate_flashcards(self, transcript_text: str, num_cards: int = 8) -> List[Dict[str, str]]:
+    def generate_flashcards(self, transcript_text: str, num_cards: int = 8,
+                            on_prompt: Optional[Callable[[str], None]] = None) -> List[Dict[str, str]]:
         pruned_text = TranscriptPruner.prune_transcript(transcript_text, max_chars=3200)
         prompt = (
             f"Dựa vào bài giảng sau, hãy rút trích {num_cards} thẻ ghi nhớ (Flashcards) chất lượng cao.\n\n"
@@ -316,7 +339,26 @@ class LLMEngine:
             f"Transcript bài giảng:\n{pruned_text}"
         )
 
+        print("\n" + "═" * 70)
+        print(f"🤖 [DEBUG AI - GENERATE FLASHCARDS] Số lượng thẻ: {num_cards}")
+        print(f"📝 [PROMPT SENT TO LLM]:")
+        print("─" * 70)
+        print(prompt)
+        print("─" * 70)
+        print(f"📊 Thống kê prompt: {len(prompt)} ký tự | ~{len(prompt.split())} từ")
+        print("═" * 70 + "\n")
+
+        if on_prompt:
+            try:
+                on_prompt(prompt)
+            except Exception:
+                pass
+
+        t0 = time.time()
         raw = self.call_chat(prompt, max_tokens=850)
+        duration = time.time() - t0
+        print(f"✅ [DEBUG AI - FLASHCARDS FINISHED] Thời gian suy luận: {duration:.2f}s | Output: {len(raw)} ký tự\n")
+
         parsed = self._extract_json(raw)
         if isinstance(parsed, dict):
             for key in ["flashcards", "cards", "data", "items"]:

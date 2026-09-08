@@ -680,6 +680,16 @@ function setSplashStatus(text, phase, progress) {
 EventBus.on('splash:status', ({ text, phase, progress }) => setSplashStatus(text, phase, progress));
 EventBus.on('splash:done', () => dismissSplash());
 
+// Lắng nghe log debug prompt từ AI
+EventBus.on('debug:prompt', ({ type, title, prompt }) => {
+  const typeLabel = type === 'quiz' ? 'QUIZ (TRẮC NGHIỆM)' : 'FLASHCARDS (THẺ GHI NHỚ)';
+  console.group(`%c🤖 [DEBUG AI PROMPT] ${typeLabel} — ${title || 'Bài giảng'}`, 'color: #4f46e5; font-weight: bold; font-size: 13px; padding: 2px 6px; background: #e0e7ff; border-radius: 4px;');
+  console.log(`%c📝 Nội dung Prompt gửi tới LLM:`, 'color: #0f172a; font-weight: bold;');
+  console.log(prompt);
+  console.log(`%c📊 Độ dài: ${prompt.length} ký tự (~${prompt.split(/\s+/).length} từ)`, 'color: #64748b; font-style: italic;');
+  console.groupEnd();
+});
+
 // ──────────────────────────────────────────
 // Boot
 // ──────────────────────────────────────────

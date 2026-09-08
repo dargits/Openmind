@@ -300,8 +300,11 @@ class API:
                     self._push("quiz:error", {"message": "Bài giảng chưa có nội dung văn bản để tạo câu hỏi."})
                     return
 
+                def handle_prompt(p: str):
+                    self._push("debug:prompt", {"type": "quiz", "title": lec.get("title", ""), "prompt": p})
+
                 self._push("llm:status", {"text": f"Đang sinh {num_questions} câu hỏi trắc nghiệm ({difficulty})…"})
-                quiz = llm_engine.generate_quiz(lec["full_text"], int(num_questions), difficulty)
+                quiz = llm_engine.generate_quiz(lec["full_text"], int(num_questions), difficulty, on_prompt=handle_prompt)
                 if quiz:
                     self._push("quiz:done", {"quiz": quiz})
                 else:
@@ -324,8 +327,11 @@ class API:
                     self._push("flashcards:error", {"message": "Bài giảng chưa có nội dung văn bản để rút trích thẻ."})
                     return
 
+                def handle_prompt(p: str):
+                    self._push("debug:prompt", {"type": "flashcards", "title": lec.get("title", ""), "prompt": p})
+
                 self._push("llm:status", {"text": f"Đang rút trích {num_cards} thẻ ghi nhớ flashcards…"})
-                cards = llm_engine.generate_flashcards(lec["full_text"], int(num_cards))
+                cards = llm_engine.generate_flashcards(lec["full_text"], int(num_cards), on_prompt=handle_prompt)
                 if cards:
                     deck_name = f"Thẻ: {lec['title']}"
                     deck_id = db.create_deck(deck_name, "Tự động trích xuất từ bài giảng", lecture_id)
