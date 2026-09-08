@@ -167,7 +167,7 @@ function renderDeckList(decks) {
   <div class="deck-item-top">
     <div style="flex:1;min-width:0;">
       <div class="deck-name">${escHtml(d.name)}</div>
-      <div class="deck-meta">${due > 0 ? `<span style="color:#fbbf24;">${due} cần ôn</span> · ` : ''}${total} thẻ</div>
+      <div class="deck-meta">${due > 0 ? `<span style="color:#d97706;font-weight:700;">${due} cần ôn</span> · ` : ''}${total} thẻ</div>
     </div>
     <div class="flex items-center gap-2">
       <span class="deck-pct ${isActive ? 'text-accent' : 'text-muted'}" style="font-size:12px;font-weight:800;">${pct}%</span>
@@ -336,19 +336,19 @@ function showCompletionState() {
     <div class="card-empty" style="gap:0;">
       <div style="font-size:54px;margin-bottom:12px;animation:float 3s ease-in-out infinite;">🏆</div>
       <div class="card-empty-title" style="font-size:22px;">Hoàn tất phiên ôn tập!</div>
-      <div class="card-empty-sub" style="margin:8px 0 20px;">Đã ôn <strong style="color:var(--text);">${FC.reviewed}</strong> thẻ · Độ chính xác <strong style="color:${acc >= 80 ? '#34d399' : '#fbbf24'};">${acc}%</strong></div>
+      <div class="card-empty-sub" style="margin:8px 0 20px;">Đã ôn <strong style="color:var(--text);">${FC.reviewed}</strong> thẻ · Độ chính xác <strong style="color:${acc >= 80 ? '#059669' : '#d97706'};">${acc}%</strong></div>
 
       <div style="display:flex;gap:20px;margin-bottom:20px;">
         <div style="text-align:center;">
-          <div style="font-size:22px;font-weight:800;color:#34d399;">${FC.correct}</div>
+          <div style="font-size:22px;font-weight:800;color:#059669;">${FC.correct}</div>
           <div class="text-xs text-muted">Nhớ tốt</div>
         </div>
         <div style="text-align:center;">
-          <div style="font-size:22px;font-weight:800;color:#f87171;">${FC.wrong}</div>
+          <div style="font-size:22px;font-weight:800;color:#dc2626;">${FC.wrong}</div>
           <div class="text-xs text-muted">Cần ôn lại</div>
         </div>
         <div style="text-align:center;">
-          <div style="font-size:22px;font-weight:800;color:#a5b4fc;">${elapsed < 60 ? elapsed+'s' : Math.floor(elapsed/60)+'p'}</div>
+          <div style="font-size:22px;font-weight:800;color:#4f46e5;">${elapsed < 60 ? elapsed+'s' : Math.floor(elapsed/60)+'p'}</div>
           <div class="text-xs text-muted">Thời gian</div>
         </div>
       </div>
@@ -493,7 +493,7 @@ function launchConfetti() {
   container.className = 'confetti-container';
   document.body.appendChild(container);
 
-  const colors = ['#6366f1','#8b5cf6','#34d399','#fbbf24','#f87171','#22d3ee'];
+  const colors = ['#4f46e5','#7c3aed','#059669','#d97706','#dc2626','#0891b2'];
   for (let i = 0; i < 36; i++) {
     const piece = document.createElement('div');
     piece.className = 'confetti-piece';

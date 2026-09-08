@@ -9,13 +9,13 @@ const LIB = {
   searchQuery: '',
 };
 
-// Tag color palettes
+// Tag color palettes (Light theme optimized)
 const TAG_PALETTES = {
-  'CNTT':     { bg: 'linear-gradient(135deg,rgba(99,102,241,0.25),rgba(139,92,246,0.15))', border: 'rgba(99,102,241,0.3)', icon: '💻', color: '#a5b4fc' },
-  'Toán':     { bg: 'linear-gradient(135deg,rgba(16,185,129,0.2),rgba(6,182,212,0.12))',  border: 'rgba(16,185,129,0.3)', icon: '📐', color: '#34d399' },
-  'Vật lý':   { bg: 'linear-gradient(135deg,rgba(6,182,212,0.2),rgba(99,102,241,0.12))',  border: 'rgba(6,182,212,0.3)',  icon: '⚛️', color: '#22d3ee' },
-  'Ngoại ngữ':{ bg: 'linear-gradient(135deg,rgba(245,158,11,0.2),rgba(239,68,68,0.10))',  border: 'rgba(245,158,11,0.3)', icon: '🌐', color: '#fbbf24' },
-  'General':  { bg: 'linear-gradient(135deg,rgba(139,92,246,0.2),rgba(99,102,241,0.12))', border: 'rgba(139,92,246,0.3)', icon: '📖', color: '#c4b5fd' },
+  'CNTT':     { bg: 'linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%)', border: '#c7d2fe', icon: '💻', color: '#4338ca', badgeBg: '#ffffff', badgeBorder: '#c7d2fe' },
+  'Toán':     { bg: 'linear-gradient(135deg, #d1fae5 0%, #cffafe 100%)', border: '#a7f3d0', icon: '📐', color: '#047857', badgeBg: '#ffffff', badgeBorder: '#a7f3d0' },
+  'Vật lý':   { bg: 'linear-gradient(135deg, #cffafe 0%, #e0e7ff 100%)', border: '#a5f3fc', icon: '⚛️', color: '#0e7490', badgeBg: '#ffffff', badgeBorder: '#a5f3fc' },
+  'Ngoại ngữ':{ bg: 'linear-gradient(135deg, #fef3c7 0%, #fee2e2 100%)', border: '#fde68a', icon: '🌐', color: '#b45309', badgeBg: '#ffffff', badgeBorder: '#fde68a' },
+  'General':  { bg: 'linear-gradient(135deg, #ede9fe 0%, #fce7f3 100%)', border: '#ddd6fe', icon: '📖', color: '#6d28d9', badgeBg: '#ffffff', badgeBorder: '#ddd6fe' },
 };
 
 function getPalette(tag) {
@@ -29,15 +29,15 @@ async function renderLibraryView() {
   <div class="page-header">
     <div>
       <div class="page-title" style="display:flex;align-items:center;gap:10px;">
-        <i data-lucide="book-open" style="width:22px;height:22px;color:#a5b4fc;"></i>
+        <i data-lucide="book-open" style="width:22px;height:22px;color:#4f46e5;"></i>
         Thư viện Bài giảng
       </div>
-      <div class="page-subtitle" id="libSubtitle">Đang tải…</div>
+      <div class="page-subtitle" id="libSubtitle" style="color:var(--text-muted);font-weight:500;">Đang tải…</div>
     </div>
     <div style="position:relative;display:flex;align-items:center;">
-      <i data-lucide="search" style="position:absolute;left:12px;width:15px;height:15px;color:var(--text-muted);pointer-events:none;"></i>
+      <i data-lucide="search" style="position:absolute;left:12px;width:15px;height:15px;color:var(--text-subtle);pointer-events:none;"></i>
       <input class="input" id="libSearch" placeholder="Tìm kiếm bài giảng…"
-        style="width:240px;padding-left:36px;">
+        style="width:250px;padding-left:36px;background:#ffffff;border:1px solid #cbd5e1;box-shadow:0 1px 2px rgba(0,0,0,0.04);">
     </div>
   </div>
 
@@ -137,17 +137,17 @@ async function loadLibrary() {
   <div class="lec-cover" style="background:${palette.bg};border-bottom:1px solid ${palette.border};">
     <span style="font-size:28px;position:relative;z-index:1;">${palette.icon}</span>
     <div style="position:relative;z-index:1;">
-      <div class="lec-tag"><span class="badge badge-muted" style="color:${palette.color};background:rgba(0,0,0,0.25);border-color:rgba(255,255,255,0.1);">${escHtml(tag)}</span></div>
+      <div class="lec-tag"><span class="badge" style="color:${palette.color};background:${palette.badgeBg};border:1px solid ${palette.badgeBorder};box-shadow:0 1px 3px rgba(0,0,0,0.06);font-weight:700;">${escHtml(tag)}</span></div>
     </div>
   </div>
   <div class="lec-body">
-    <div class="lec-title">${escHtml(lec.title || 'Bài giảng')}</div>
+    <div class="lec-title" title="${escHtml(lec.title || '')}">${escHtml(lec.title || 'Bài giảng')}</div>
     <div class="lec-meta">
-      <span style="display:inline-flex;align-items:center;gap:4px;">
-        <i data-lucide="clock" style="width:12px;height:12px;"></i> ${dur}
+      <span style="display:inline-flex;align-items:center;gap:5px;">
+        <i data-lucide="clock" style="width:13px;height:13px;"></i> ${dur}
       </span>
-      <span style="display:inline-flex;align-items:center;gap:4px;">
-        <i data-lucide="calendar" style="width:12px;height:12px;"></i> ${date}
+      <span style="display:inline-flex;align-items:center;gap:5px;">
+        <i data-lucide="calendar" style="width:13px;height:13px;"></i> ${date}
       </span>
     </div>
     <div class="lec-actions">
@@ -156,6 +156,7 @@ async function loadLibrary() {
         <i data-lucide="play" style="width:13px;height:13px;"></i> Mở học
       </button>
       <button class="btn btn-ghost btn-sm lib-del" data-lid="${escHtml(lec.id)}" data-title="${escHtml(lec.title || '')}"
+        title="Xóa bài giảng"
         style="display:inline-flex;align-items:center;padding:6px 10px;">
         <i data-lucide="trash-2" style="width:13px;height:13px;color:var(--danger);"></i>
       </button>

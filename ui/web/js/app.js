@@ -342,14 +342,14 @@ async function renderDashboardView() {
   <div>
     <div class="section-header" style="margin-bottom:14px;">
       <h2 class="section-title" style="font-size:16px;">
-        <i data-lucide="zap" style="width:18px;height:18px;color:#a5b4fc;"></i>
+        <i data-lucide="zap" style="width:18px;height:18px;color:#4f46e5;"></i>
         Truy cập nhanh
       </h2>
     </div>
     <div class="quick-actions">
       <div class="qa-card qa-primary" id="qaFlashcard">
-        <div class="qa-icon" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.2);">
-          <i data-lucide="layers" style="width:22px;height:22px;color:#a5b4fc;"></i>
+        <div class="qa-icon" style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.25);">
+          <i data-lucide="layers" style="width:22px;height:22px;color:#4f46e5;"></i>
         </div>
         <div>
           <div class="qa-title">Ôn Flashcard</div>
@@ -358,8 +358,8 @@ async function renderDashboardView() {
       </div>
 
       <div class="qa-card" id="qaLecture">
-        <div class="qa-icon" style="background:rgba(6,182,212,0.12);border:1px solid rgba(6,182,212,0.2);">
-          <i data-lucide="mic" style="width:22px;height:22px;color:#22d3ee;"></i>
+        <div class="qa-icon" style="background:rgba(6,182,212,0.12);border:1px solid rgba(6,182,212,0.25);">
+          <i data-lucide="mic" style="width:22px;height:22px;color:#0891b2;"></i>
         </div>
         <div>
           <div class="qa-title">Studio Bài giảng</div>
@@ -368,8 +368,8 @@ async function renderDashboardView() {
       </div>
 
       <div class="qa-card" id="qaLibrary">
-        <div class="qa-icon" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.2);">
-          <i data-lucide="book-open" style="width:22px;height:22px;color:#34d399;"></i>
+        <div class="qa-icon" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25);">
+          <i data-lucide="book-open" style="width:22px;height:22px;color:#059669;"></i>
         </div>
         <div>
           <div class="qa-title">Thư viện</div>
@@ -386,7 +386,7 @@ async function renderDashboardView() {
     <div class="card">
       <div class="card-header">
         <span class="card-title">
-          <i data-lucide="clock" style="width:16px;height:16px;color:#a5b4fc;"></i>
+          <i data-lucide="clock" style="width:16px;height:16px;color:#4f46e5;"></i>
           Bài giảng gần đây
         </span>
         <button class="btn btn-ghost btn-sm" id="dashViewAllLib"
@@ -405,7 +405,7 @@ async function renderDashboardView() {
     <div class="card">
       <div class="card-header">
         <span class="card-title">
-          <i data-lucide="flame" style="width:16px;height:16px;color:#f87171;"></i>
+          <i data-lucide="flame" style="width:16px;height:16px;color:#dc2626;"></i>
           Streak & Hoạt động
         </span>
         <span class="badge badge-danger" id="dashStreakBadge">🔥 0 ngày</span>
@@ -474,22 +474,22 @@ async function loadDashboardData() {
     // ── Stat cards ──
     const statCards = [
       {
-        icon: 'layers', color: '#a5b4fc', bg: 'rgba(99,102,241,0.12)',
+        icon: 'layers', color: '#4f46e5', bg: 'rgba(99,102,241,0.10)',
         val: stats.due_today ?? 0, unit: 'thẻ',
         label: 'Cần ôn hôm nay', sub: `${stats.total_cards ?? 0} tổng số thẻ`,
       },
       {
-        icon: 'flame', color: '#f87171', bg: 'rgba(239,68,68,0.12)',
+        icon: 'flame', color: '#dc2626', bg: 'rgba(239,68,68,0.10)',
         val: streak, unit: 'ngày',
         label: 'Streak học tập', sub: `${stats.active_days ?? 0} ngày học`,
       },
       {
-        icon: 'check-circle-2', color: '#34d399', bg: 'rgba(16,185,129,0.12)',
+        icon: 'check-circle-2', color: '#059669', bg: 'rgba(16,185,129,0.10)',
         val: stats.avg_quiz_score ?? 0, unit: '%',
         label: 'Điểm Quiz TB', sub: `${stats.total_quizzes ?? 0} bài kiểm tra`,
       },
       {
-        icon: 'book-open', color: '#22d3ee', bg: 'rgba(6,182,212,0.12)',
+        icon: 'book-open', color: '#0891b2', bg: 'rgba(6,182,212,0.10)',
         val: stats.total_lectures ?? 0, unit: 'bài',
         label: 'Bài giảng', sub: `${Math.round((stats.total_study_minutes ?? 0))} phút học`,
       },
@@ -519,8 +519,8 @@ async function loadDashboardData() {
 
     // ── Mini stats ──
     const miniStats = [
-      { label: 'Thẻ đã học', val: stats.total_cards ?? 0, color: '#a5b4fc' },
-      { label: 'Thời gian học', val: `${Math.round(stats.total_study_minutes ?? 0)}p`, color: '#34d399' },
+      { label: 'Thẻ đã học', val: stats.total_cards ?? 0, color: '#4f46e5' },
+      { label: 'Thời gian học', val: `${Math.round(stats.total_study_minutes ?? 0)}p`, color: '#059669' },
     ];
     if (el('dashMiniStats')) {
       el('dashMiniStats').innerHTML = miniStats.map(m => `
@@ -549,11 +549,11 @@ async function loadDashboardData() {
         });
       } else {
         const tagColors = {
-          'CNTT': ['rgba(99,102,241,0.15)','#a5b4fc'],
-          'Toán': ['rgba(16,185,129,0.15)','#34d399'],
-          'Vật lý': ['rgba(6,182,212,0.15)','#22d3ee'],
-          'Ngoại ngữ': ['rgba(245,158,11,0.15)','#fbbf24'],
-          'General': ['rgba(139,92,246,0.15)','#c4b5fd'],
+          'CNTT': ['#e0e7ff','#4338ca'],
+          'Toán': ['#d1fae5','#047857'],
+          'Vật lý': ['#cffafe','#0e7490'],
+          'Ngoại ngữ': ['#fef3c7','#b45309'],
+          'General': ['#ede9fe','#6d28d9'],
         };
         el('dashRecentLectures').innerHTML = lectures.slice(0, 4).map(lec => {
           const tag = lec.folder_tag || 'General';

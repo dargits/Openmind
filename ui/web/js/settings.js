@@ -15,7 +15,7 @@ function renderSettingsView() {
   <div class="page-header">
     <div>
       <div class="page-title" style="display:flex;align-items:center;gap:10px;">
-        <i data-lucide="settings" style="width:22px;height:22px;color:#a5b4fc;"></i>
+        <i data-lucide="settings" style="width:22px;height:22px;color:#4f46e5;"></i>
         Cài đặt & Cấu hình
       </div>
       <div class="page-subtitle">Quản lý mô hình AI Offline, thiết bị và dữ liệu ứng dụng</div>
@@ -38,7 +38,7 @@ function renderSettingsView() {
     <div class="card">
       <div class="card-header">
         <span class="card-title">
-          <i data-lucide="mic" style="width:16px;height:16px;color:#a5b4fc;"></i>
+          <i data-lucide="mic" style="width:16px;height:16px;color:#4f46e5;"></i>
           Nhận dạng Giọng nói (STT)
         </span>
         <div style="display:flex;align-items:center;gap:6px;">
@@ -46,8 +46,8 @@ function renderSettingsView() {
           <span style="font-size:11px;color:var(--text-muted);" id="sttStatusLabel">—</span>
         </div>
       </div>
-      <div style="background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:var(--radius-md);padding:12px;margin-bottom:14px;font-size:12px;color:var(--text-muted);line-height:1.6;">
-        Mô hình <strong style="color:#a5b4fc;">faster-whisper-small</strong> (~460 MB) được tối ưu cho bài giảng tiếng Việt học thuật, nhận diện chính xác thuật ngữ công nghệ (code-switching) và xử lý mượt trên CPU.
+      <div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.18);border-radius:var(--radius-md);padding:12px;margin-bottom:14px;font-size:12px;color:var(--text-muted);line-height:1.6;">
+        Mô hình <strong style="color:#4338ca;">faster-whisper-small</strong> (~460 MB) được tối ưu cho bài giảng tiếng Việt học thuật, nhận diện chính xác thuật ngữ công nghệ (code-switching) và xử lý mượt trên CPU.
       </div>
       <div class="settings-row">
         <span class="settings-key">Thiết bị chạy STT</span>
@@ -74,7 +74,7 @@ function renderSettingsView() {
     <div class="card">
       <div class="card-header">
         <span class="card-title">
-          <i data-lucide="bot" style="width:16px;height:16px;color:#22d3ee;"></i>
+          <i data-lucide="bot" style="width:16px;height:16px;color:#0891b2;"></i>
           Mô hình Ngôn ngữ (LLM)
         </span>
         <div style="display:flex;align-items:center;gap:6px;">
@@ -82,12 +82,12 @@ function renderSettingsView() {
           <span style="font-size:11px;color:var(--text-muted);" id="llmStatusLabel">—</span>
         </div>
       </div>
-      <div style="background:var(--teal-light);border:1px solid rgba(6,182,212,0.2);border-radius:var(--radius-md);padding:12px;margin-bottom:14px;font-size:12px;color:var(--text-muted);line-height:1.6;">
-        Mô hình <strong style="color:#22d3ee;">Qwen 2.5 3B Instruct (Q4_K_M)</strong> (~1.9 GB) chạy hoàn toàn cục bộ qua llama.cpp — không gửi dữ liệu ra ngoài.
+      <div style="background:rgba(6,182,212,0.06);border:1px solid rgba(6,182,212,0.18);border-radius:var(--radius-md);padding:12px;margin-bottom:14px;font-size:12px;color:var(--text-muted);line-height:1.6;">
+        Mô hình <strong style="color:#0e7490;">Qwen 2.5 3B Instruct (Q4_K_M)</strong> (~1.9 GB) chạy hoàn toàn cục bộ qua llama.cpp — không gửi dữ liệu ra ngoài.
       </div>
       <div class="settings-row">
         <span class="settings-key">Mô hình LLM</span>
-        <span class="settings-val" style="color:#22d3ee;">Qwen2.5-3B Q4_K_M GGUF</span>
+        <span class="settings-val" style="color:#0891b2;font-weight:700;">Qwen2.5-3B Q4_K_M GGUF</span>
       </div>
       <div class="settings-row">
         <span class="settings-key">Số luồng CPU</span>
@@ -113,7 +113,7 @@ function renderSettingsView() {
   <div class="card">
     <div class="card-header">
       <span class="card-title">
-        <i data-lucide="database" style="width:16px;height:16px;color:#34d399;"></i>
+        <i data-lucide="database" style="width:16px;height:16px;color:#059669;"></i>
         Dữ liệu & Quyền riêng tư
       </span>
       <span class="badge badge-success">🛡️ 100% Offline</span>
@@ -151,7 +151,7 @@ function renderSettingsView() {
       </div>
       <button class="btn btn-secondary btn-sm" id="btnSeedDemo"
         style="display:inline-flex;align-items:center;gap:6px;flex-shrink:0;">
-        <i data-lucide="sparkles" style="width:13px;height:13px;color:#a5b4fc;"></i> Nạp demo
+        <i data-lucide="sparkles" style="width:13px;height:13px;color:#4f46e5;"></i> Nạp demo
       </button>
     </div>
   </div>
@@ -160,7 +160,7 @@ function renderSettingsView() {
   <div class="card">
     <div class="card-header">
       <span class="card-title">
-        <i data-lucide="info" style="width:16px;height:16px;color:#a5b4fc;"></i>
+        <i data-lucide="info" style="width:16px;height:16px;color:#4f46e5;"></i>
         Thông tin Ứng dụng
       </span>
     </div>
@@ -244,8 +244,8 @@ async function loadSettings() {
     }
     if (el('setWhisperStatus')) {
       el('setWhisperStatus').innerHTML = whisperOk
-        ? `<span style="color:#34d399;font-weight:700;">✅ Đã sẵn sàng</span>`
-        : `<span style="color:#fbbf24;">⏳ Sẽ tự nạp khi cần</span>`;
+        ? `<span style="color:#059669;font-weight:700;">✅ Đã sẵn sàng</span>`
+        : `<span style="color:#d97706;font-weight:600;">⏳ Sẽ tự nạp khi cần</span>`;
     }
 
     // LLM status dot
@@ -257,10 +257,10 @@ async function loadSettings() {
     }
     if (el('setLlmStatus')) {
       el('setLlmStatus').innerHTML = llmOk
-        ? `<span style="color:#34d399;font-weight:700;">✅ Đã nạp</span>`
+        ? `<span style="color:#059669;font-weight:700;">✅ Đã nạp</span>`
         : llmAvail
-          ? `<span style="color:#fbbf24;">⏳ Sẽ nạp khi tạo nội dung</span>`
-          : `<span style="color:#f87171;">❌ Không tìm thấy GGUF</span>`;
+          ? `<span style="color:#d97706;font-weight:600;">⏳ Sẽ nạp khi tạo nội dung</span>`
+          : `<span style="color:#dc2626;font-weight:700;">❌ Không tìm thấy GGUF</span>`;
     }
 
     refreshIcons();

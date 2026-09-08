@@ -25,7 +25,7 @@ function renderLectureView() {
     <!-- Before file is picked -->
     <div id="lecUploadZone" class="upload-zone" style="${LEC.audioPath ? 'display:none;' : ''}">
       <div class="upload-zone-icon">
-        <i data-lucide="music" style="width:26px;height:26px;color:#a5b4fc;"></i>
+        <i data-lucide="music" style="width:26px;height:26px;color:#4f46e5;"></i>
       </div>
       <div style="flex:1;text-align:left;">
         <div class="upload-zone-title">Kéo & thả file âm thanh vào đây</div>
@@ -40,8 +40,8 @@ function renderLectureView() {
     <!-- After file is picked -->
     <div id="lecAudioRow" style="${!LEC.audioPath ? 'display:none;' : ''}display:flex;gap:10px;align-items:center;">
       <div class="upload-zone-file" style="flex:1;">
-        <div style="width:36px;height:36px;border-radius:9px;background:rgba(99,102,241,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <i data-lucide="music" style="width:18px;height:18px;color:#a5b4fc;"></i>
+        <div style="width:36px;height:36px;border-radius:9px;background:rgba(99,102,241,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i data-lucide="music" style="width:18px;height:18px;color:#4f46e5;"></i>
         </div>
         <div style="flex:1;min-width:0;">
           <div class="audio-filename" id="lecFileName">Chưa chọn file</div>
@@ -85,7 +85,7 @@ function renderLectureView() {
 
   <!-- Status / Progress Bar -->
   <div class="status-bar" id="lecStatusBar" style="display:none;">
-    <i data-lucide="loader-2" class="spin" style="width:18px;height:18px;color:#a5b4fc;flex-shrink:0;"></i>
+    <i data-lucide="loader-2" class="spin" style="width:18px;height:18px;color:#4f46e5;flex-shrink:0;"></i>
     <span class="status-text" id="lecStatusText">Đang xử lý bài giảng…</span>
     <div class="progress-inline">
       <div class="progress-wrap" style="height:6px;">
@@ -136,8 +136,8 @@ function renderLectureView() {
         <div style="display:flex;flex-direction:column;height:100%;gap:12px;">
           <div class="chat-history" id="chatHistory">
             <div class="chat-msg chat-ai" style="max-width:92%;display:flex;gap:10px;">
-              <div style="width:28px;height:28px;border-radius:8px;background:var(--accent-dim);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <i data-lucide="bot" style="width:15px;height:15px;color:#a5b4fc;"></i>
+              <div style="width:28px;height:28px;border-radius:8px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i data-lucide="bot" style="width:15px;height:15px;color:#4f46e5;"></i>
               </div>
               <div>Xin chào! Tôi là trợ lý AI học tập cục bộ. Hãy đặt câu hỏi về nội dung bài giảng, tôi sẽ tìm kiếm ngữ cảnh và trả lời kèm <strong>mốc thời gian</strong> để bạn đối chiếu với âm thanh gốc.</div>
             </div>
@@ -255,8 +255,8 @@ async function loadLecture(lectureId) {
     if (el('chatHistory')) {
       el('chatHistory').innerHTML = `
 <div class="chat-msg chat-ai" style="max-width:92%;display:flex;gap:10px;">
-  <div style="width:28px;height:28px;border-radius:8px;background:var(--accent-dim);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-    <i data-lucide="bot" style="width:15px;height:15px;color:#a5b4fc;"></i>
+  <div style="width:28px;height:28px;border-radius:8px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+    <i data-lucide="bot" style="width:15px;height:15px;color:#4f46e5;"></i>
   </div>
   <div>Đã tải bài giảng <strong>${escHtml(lec.title || '')}</strong>. Bạn có thể đặt câu hỏi về nội dung bài giảng này!</div>
 </div>`;
@@ -322,7 +322,7 @@ async function startTranscribe() {
   if (el('transcriptBox')) {
     el('transcriptBox').innerHTML = `
 <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;color:var(--text-muted);">
-  <i data-lucide="loader-2" class="spin" style="width:36px;height:36px;color:#a5b4fc;"></i>
+  <i data-lucide="loader-2" class="spin" style="width:36px;height:36px;color:#4f46e5;"></i>
   <div style="font-weight:700;color:var(--text);">Đang lắng nghe và trích xuất từng câu nói…</div>
   <div style="font-size:12px;">Quá trình này có thể mất vài phút tùy độ dài bài giảng</div>
 </div>`;
@@ -441,7 +441,7 @@ async function showQuizModal() {
   switchTabTo('quiz');
   if (el('quizBox')) el('quizBox').innerHTML = `
 <div class="empty-state" style="height:100%;">
-  <i data-lucide="loader-2" class="spin" style="width:36px;height:36px;color:#a5b4fc;"></i>
+  <i data-lucide="loader-2" class="spin" style="width:36px;height:36px;color:#4f46e5;"></i>
   <div class="empty-title" style="margin-top:12px;">Đang biên soạn ${numQuestions} câu hỏi…</div>
   <div class="empty-sub">Vui lòng đợi — AI đang phân tích nội dung bài giảng</div>
 </div>`;
@@ -473,8 +473,8 @@ function renderQuiz(questions) {
 
   el('quizBox').innerHTML = `
 <div style="display:flex;flex-direction:column;gap:16px;padding:4px;max-width:820px;margin:0 auto;">
-  <div style="display:flex;justify-content:space-between;align-items:center;background:var(--accent-dim);border:1px solid var(--accent-border);padding:14px 20px;border-radius:var(--radius-lg);">
-    <span style="font-weight:800;font-size:14px;color:#a5b4fc;display:flex;align-items:center;gap:8px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.20);padding:14px 20px;border-radius:var(--radius-lg);">
+    <span style="font-weight:800;font-size:14px;color:#4338ca;display:flex;align-items:center;gap:8px;">
       <i data-lucide="file-text" style="width:16px;height:16px;"></i> BÀI KIỂM TRA TRẮC NGHIỆM
     </span>
     <span class="badge badge-accent">${questions.length} câu hỏi</span>
@@ -565,7 +565,7 @@ async function submitQuiz() {
       const c = document.createElement('div');
       c.className = 'confetti-container';
       document.body.appendChild(c);
-      const colors = ['#6366f1', '#8b5cf6', '#34d399', '#fbbf24', '#f87171', '#22d3ee'];
+      const colors = ['#4f46e5', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0891b2'];
       for (let i = 0; i < 28; i++) {
         const p = document.createElement('div');
         p.className = 'confetti-piece';
@@ -638,8 +638,8 @@ async function sendChat() {
   thinkEl.className = 'chat-msg chat-ai chat-thinking';
   thinkEl.style.cssText = 'max-width:92%;display:flex;gap:10px;align-items:flex-start;';
   thinkEl.innerHTML = `
-    <div style="width:28px;height:28px;border-radius:8px;background:var(--accent-dim);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-      <i data-lucide="bot" style="width:15px;height:15px;color:#a5b4fc;"></i>
+    <div style="width:28px;height:28px;border-radius:8px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.20);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <i data-lucide="bot" style="width:15px;height:15px;color:#4f46e5;"></i>
     </div>
     <div class="typing-indicator">
       <div class="typing-dot"></div>
@@ -677,8 +677,8 @@ function appendChat(role, htmlContent) {
     div.innerHTML = `<div class="chat-user" style="margin-left:auto;">${htmlContent}</div>`;
   } else {
     div.innerHTML = `
-      <div style="width:28px;height:28px;border-radius:8px;background:var(--accent-dim);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <i data-lucide="bot" style="width:15px;height:15px;color:#a5b4fc;"></i>
+      <div style="width:28px;height:28px;border-radius:8px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.20);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i data-lucide="bot" style="width:15px;height:15px;color:#4f46e5;"></i>
       </div>
       <div class="chat-ai">${htmlContent}</div>`;
   }

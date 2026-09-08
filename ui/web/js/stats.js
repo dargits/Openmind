@@ -11,7 +11,7 @@ async function renderStatsView() {
   <div class="page-header">
     <div>
       <div class="page-title" style="display:flex;align-items:center;gap:10px;">
-        <i data-lucide="trending-up" style="width:22px;height:22px;color:#a5b4fc;"></i>
+        <i data-lucide="trending-up" style="width:22px;height:22px;color:#4f46e5;"></i>
         Tiến độ & Thống kê
       </div>
       <div class="page-subtitle">Theo dõi hành trình học tập của bạn</div>
@@ -40,7 +40,7 @@ async function renderStatsView() {
   <!-- Bar chart -->
   <div class="chart-wrap">
     <div class="chart-title">
-      <i data-lucide="calendar" style="width:17px;height:17px;color:#a5b4fc;"></i>
+      <i data-lucide="calendar" style="width:17px;height:17px;color:#4f46e5;"></i>
       Hoạt động học tập 14 ngày gần nhất
     </div>
     <div class="chart-bars" id="statsChart"></div>
@@ -52,7 +52,7 @@ async function renderStatsView() {
     <div class="card">
       <div class="card-header">
         <span class="card-title">
-          <i data-lucide="award" style="width:16px;height:16px;color:#fbbf24;"></i>
+          <i data-lucide="award" style="width:16px;height:16px;color:#d97706;"></i>
           Thành tích
         </span>
       </div>
@@ -63,7 +63,7 @@ async function renderStatsView() {
     <div class="card">
       <div class="card-header">
         <span class="card-title">
-          <i data-lucide="clock" style="width:16px;height:16px;color:#a5b4fc;"></i>
+          <i data-lucide="clock" style="width:16px;height:16px;color:#4f46e5;"></i>
           Phiên học gần đây
         </span>
       </div>
@@ -95,25 +95,25 @@ function renderMetrics(stats) {
   if (!el('statsMetrics')) return;
   const cards = [
     {
-      icon: 'clock', color: '#a5b4fc', bg: 'rgba(99,102,241,0.12)',
+      icon: 'clock', color: '#4f46e5', bg: 'rgba(99,102,241,0.10)',
       val: `${stats.total_study_minutes ?? 0}`, unit: 'phút',
       label: 'Thời gian học',
       sub: `${stats.active_days ?? 0} ngày học tích cực`,
     },
     {
-      icon: 'layers', color: '#fbbf24', bg: 'rgba(245,158,11,0.12)',
+      icon: 'layers', color: '#d97706', bg: 'rgba(245,158,11,0.10)',
       val: `${stats.due_today ?? 0}`, unit: 'thẻ',
       label: 'Thẻ cần ôn hôm nay',
       sub: `Tổng ${stats.total_cards ?? 0} flashcard`,
     },
     {
-      icon: 'check-circle-2', color: '#34d399', bg: 'rgba(16,185,129,0.12)',
+      icon: 'check-circle-2', color: '#059669', bg: 'rgba(16,185,129,0.10)',
       val: `${stats.avg_quiz_score ?? 0}`, unit: '%',
       label: 'Điểm Quiz Trung bình',
       sub: `${stats.total_quizzes ?? 0} bài kiểm tra`,
     },
     {
-      icon: 'flame', color: '#f87171', bg: 'rgba(239,68,68,0.12)',
+      icon: 'flame', color: '#dc2626', bg: 'rgba(239,68,68,0.10)',
       val: `${stats.streak ?? 0}`, unit: 'ngày',
       label: 'Chuỗi Streak học tập',
       sub: `${stats.total_lectures ?? 0} bài giảng đã xử lý`,
@@ -138,9 +138,9 @@ function renderStates(states) {
   if (!el('statsStates')) return;
   const total = Object.values(states).reduce((a, b) => a + b, 0) || 1;
   const items = [
-    { key: 'new',      icon: 'sparkles',    label: 'Thẻ mới',     color: '#a5b4fc' },
-    { key: 'learning', icon: 'book-open',   label: 'Đang học',    color: '#fbbf24' },
-    { key: 'review',   icon: 'shield-check',label: 'Đã thuộc',    color: '#34d399' },
+    { key: 'new',      icon: 'sparkles',    label: 'Thẻ mới',     color: '#4f46e5' },
+    { key: 'learning', icon: 'book-open',   label: 'Đang học',    color: '#d97706' },
+    { key: 'review',   icon: 'shield-check',label: 'Đã thuộc',    color: '#059669' },
   ];
   el('statsStates').innerHTML = items.map(it => {
     const count = states[it.key] || 0;
@@ -191,7 +191,7 @@ function renderChart(history) {
   <div class="chart-bar-wrap">
     <div class="chart-bar ${isToday ? 'today' : ''}" style="height:${heightPct}%"></div>
   </div>
-  <div class="chart-date" style="${isToday ? 'color:#a5b4fc;font-weight:700;' : ''}">${isToday ? 'Hôm nay' : d.label}</div>
+  <div class="chart-date" style="${isToday ? 'color:#4f46e5;font-weight:700;' : ''}">${isToday ? 'Hôm nay' : d.label}</div>
 </div>`;
   }).join('');
 }
@@ -218,7 +218,7 @@ function renderActivity(history) {
 <div style="display:flex;align-items:center;gap:12px;padding:10px 0;${i < recent.length-1 ? 'border-bottom:1px solid var(--glass-border);' : ''}">
   <div style="width:8px;height:8px;border-radius:50%;background:${isToday ? 'var(--accent)' : 'var(--success)'};flex-shrink:0;box-shadow:0 0 6px ${isToday ? 'rgba(99,102,241,0.5)' : 'rgba(16,185,129,0.4)'};"></div>
   <div style="font-weight:600;width:90px;font-size:13px;">${d.session_date}</div>
-  <div style="color:#a5b4fc;font-weight:700;font-size:13px;">${items} mục</div>
+  <div style="color:#4f46e5;font-weight:700;font-size:13px;">${items} mục</div>
   <div class="text-muted text-sm">⏱ ${mins}p</div>
   ${isToday ? '<span class="badge badge-accent" style="margin-left:auto;">Hôm nay</span>' : ''}
 </div>`;
