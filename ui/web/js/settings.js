@@ -116,22 +116,24 @@ function renderSettingsView() {
         <i data-lucide="database" style="width:16px;height:16px;color:#059669;"></i>
         Dữ liệu & Quyền riêng tư
       </span>
-      <span class="badge badge-success">🛡️ 100% Offline</span>
+      <span class="badge badge-success" style="display:inline-flex;align-items:center;gap:4px;">
+        <i data-lucide="shield-check" style="width:12px;height:12px;"></i> 100% Offline
+      </span>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
       <div style="background:var(--glass-light);border:1px solid var(--glass-border);border-radius:var(--radius-md);padding:14px;text-align:center;">
-        <div style="font-size:20px;margin-bottom:6px;">🛡️</div>
+        <div style="display:flex;justify-content:center;margin-bottom:6px;"><i data-lucide="hard-drive" style="width:22px;height:22px;color:#4f46e5;"></i></div>
         <div style="font-size:12px;font-weight:700;color:var(--text);">Local Only</div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Dữ liệu chỉ lưu trên máy bạn</div>
       </div>
       <div style="background:var(--glass-light);border:1px solid var(--glass-border);border-radius:var(--radius-md);padding:14px;text-align:center;">
-        <div style="font-size:20px;margin-bottom:6px;">🚫</div>
+        <div style="display:flex;justify-content:center;margin-bottom:6px;"><i data-lucide="shield-alert" style="width:22px;height:22px;color:#059669;"></i></div>
         <div style="font-size:12px;font-weight:700;color:var(--text);">Zero Telemetry</div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Không gửi bất kỳ tracking nào</div>
       </div>
       <div style="background:var(--glass-light);border:1px solid var(--glass-border);border-radius:var(--radius-md);padding:14px;text-align:center;">
-        <div style="font-size:20px;margin-bottom:6px;">✈️</div>
+        <div style="display:flex;justify-content:center;margin-bottom:6px;"><i data-lucide="plane" style="width:22px;height:22px;color:#0891b2;"></i></div>
         <div style="font-size:12px;font-weight:700;color:var(--text);">Air-gap Ready</div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Hoạt động không cần Internet</div>
       </div>
@@ -244,8 +246,8 @@ async function loadSettings() {
     }
     if (el('setWhisperStatus')) {
       el('setWhisperStatus').innerHTML = whisperOk
-        ? `<span style="color:#059669;font-weight:700;">✅ Đã sẵn sàng</span>`
-        : `<span style="color:#d97706;font-weight:600;">⏳ Sẽ tự nạp khi cần</span>`;
+        ? `<span style="color:#059669;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="check-circle-2" style="width:14px;height:14px;"></i> Đã sẵn sàng</span>`
+        : `<span style="color:#d97706;font-weight:600;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="clock" style="width:14px;height:14px;"></i> Sẽ tự nạp khi cần</span>`;
     }
 
     // LLM status dot
@@ -257,10 +259,10 @@ async function loadSettings() {
     }
     if (el('setLlmStatus')) {
       el('setLlmStatus').innerHTML = llmOk
-        ? `<span style="color:#059669;font-weight:700;">✅ Đã nạp</span>`
+        ? `<span style="color:#059669;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="check-circle-2" style="width:14px;height:14px;"></i> Đã nạp</span>`
         : llmAvail
-          ? `<span style="color:#d97706;font-weight:600;">⏳ Sẽ nạp khi tạo nội dung</span>`
-          : `<span style="color:#dc2626;font-weight:700;">❌ Không tìm thấy GGUF</span>`;
+          ? `<span style="color:#d97706;font-weight:600;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="clock" style="width:14px;height:14px;"></i> Sẽ nạp khi tạo nội dung</span>`
+          : `<span style="color:#dc2626;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="alert-circle" style="width:14px;height:14px;"></i> Không tìm thấy GGUF</span>`;
     }
 
     refreshIcons();

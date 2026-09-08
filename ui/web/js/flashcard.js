@@ -96,19 +96,19 @@ function renderFlashcardView() {
     <!-- SRS Rating Bar -->
     <div class="srs-bar" id="fcSrsBar" style="flex-shrink:0;">
       <button class="srs-btn srs-again" id="srsAgain" disabled>
-        <span>😰 QUÊN</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;"><i data-lucide="rotate-ccw" style="width:14px;height:14px;"></i> QUÊN</span>
         <span class="srs-interval" id="ivAgain">1 ngày</span>
       </button>
       <button class="srs-btn srs-hard" id="srsHard" disabled>
-        <span>😅 KHÓ</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;"><i data-lucide="frown" style="width:14px;height:14px;"></i> KHÓ</span>
         <span class="srs-interval" id="ivHard">—</span>
       </button>
       <button class="srs-btn srs-good" id="srsGood" disabled>
-        <span>😊 TỐT</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;"><i data-lucide="smile" style="width:14px;height:14px;"></i> TỐT</span>
         <span class="srs-interval" id="ivGood">—</span>
       </button>
       <button class="srs-btn srs-easy" id="srsEasy" disabled>
-        <span>🚀 DỄ</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;"><i data-lucide="zap" style="width:14px;height:14px;"></i> DỄ</span>
         <span class="srs-interval" id="ivEasy">—</span>
       </button>
     </div>
@@ -148,7 +148,7 @@ function renderDeckList(decks) {
   if (!decks.length) {
     el('deckList').innerHTML = `
       <div class="empty-state" style="padding:32px 12px;gap:8px;">
-        <div style="font-size:32px;opacity:0.35;">📚</div>
+        <i data-lucide="layers" style="width:36px;height:36px;color:var(--text-subtle);margin:0 auto 4px;display:block;"></i>
         <div style="font-size:13px;font-weight:700;color:var(--text);">Chưa có bộ thẻ nào</div>
         <div class="text-xs text-muted">Trích xuất từ bài giảng hoặc tạo mới!</div>
       </div>`;
@@ -199,7 +199,7 @@ function renderDeckList(decks) {
       const idx = await showModal(
         'Xoá chủ đề',
         `<p style="color:var(--text-muted);">Bạn chắc muốn xoá chủ đề này và <strong style="color:var(--danger);">toàn bộ thẻ bên trong</strong>?</p>`,
-        [{ label: 'Huỷ', class: 'btn-ghost' }, { label: '🗑️ Xoá', class: 'btn-danger' }]
+        [{ label: 'Huỷ', class: 'btn-ghost' }, { label: 'Xoá chủ đề', class: 'btn-danger' }]
       );
       if (idx !== 1) return;
       try {
@@ -295,7 +295,7 @@ function showCurrentCard() {
       <i data-lucide="help-circle" style="width:44px;height:44px;color:var(--accent);opacity:0.7;"></i>
     </div>
     <div class="card-question">${escHtml(card.front)}</div>
-    ${hasHint ? `<button class="card-hint-btn" id="fcHintBtn">💡 Hiện gợi ý</button>` : ''}
+    ${hasHint ? `<button class="card-hint-btn" id="fcHintBtn" style="display:inline-flex;align-items:center;gap:4px;"><i data-lucide="lightbulb" style="width:13px;height:13px;"></i> Hiện gợi ý</button>` : ''}
     <div class="card-flip-cta">Nhấp hoặc [Space] để lật →</div>
   `;
 
@@ -315,9 +315,10 @@ function showCurrentCard() {
       el('fcHintBtn').replaceWith((() => {
         const d = document.createElement('div');
         d.className = 'card-hint-text';
-        d.textContent = `💡 ${card.hint}`;
+        d.innerHTML = `<span style="display:inline-flex;align-items:center;gap:4px;"><i data-lucide="lightbulb" style="width:13px;height:13px;"></i> ${escHtml(card.hint)}</span>`;
         return d;
       })());
+      refreshIcons();
     });
   }
 
@@ -330,11 +331,11 @@ function showCompletionState() {
   const elapsed = Math.round((Date.now() - FC.sessionStart) / 1000);
   const acc = FC.reviewed > 0 ? Math.round((FC.correct / FC.reviewed) * 100) : 0;
 
-  if (el('fcProgress')) { el('fcProgress').textContent = 'Xong! 🎉'; el('fcProgress').className = 'badge badge-success'; }
+  if (el('fcProgress')) { el('fcProgress').innerHTML = `<i data-lucide="check" style="width:12px;height:12px;margin-right:3px;"></i>Xong!`; el('fcProgress').className = 'badge badge-success'; }
 
   el('fcFront').innerHTML = `
     <div class="card-empty" style="gap:0;">
-      <div style="font-size:54px;margin-bottom:12px;animation:float 3s ease-in-out infinite;">🏆</div>
+      <div style="margin-bottom:12px;animation:float 3s ease-in-out infinite;display:flex;justify-content:center;"><i data-lucide="trophy" style="width:54px;height:54px;color:#d97706;"></i></div>
       <div class="card-empty-title" style="font-size:22px;">Hoàn tất phiên ôn tập!</div>
       <div class="card-empty-sub" style="margin:8px 0 20px;">Đã ôn <strong style="color:var(--text);">${FC.reviewed}</strong> thẻ · Độ chính xác <strong style="color:${acc >= 80 ? '#059669' : '#d97706'};">${acc}%</strong></div>
 
@@ -441,14 +442,14 @@ async function rateCard(rating) {
     // Again — shake
     el('fcInner')?.classList.add('shake');
     setTimeout(() => el('fcInner')?.classList.remove('shake'), 500);
-    showMicroFeedback('😰 Cố lên lần sau!', 'warning');
+    showMicroFeedback('Cố lên lần sau!', 'warning');
     FC.wrong++;
   } else if (rating >= 2) {
     // Good/Easy — positive
-    showMicroFeedback(rating === 3 ? '🚀 Xuất sắc!' : '😊 Rất tốt!', 'success');
+    showMicroFeedback(rating === 3 ? 'Xuất sắc!' : 'Rất tốt!', 'success');
     FC.correct++;
   } else {
-    showMicroFeedback('😅 Khá tốt!', 'info');
+    showMicroFeedback('Khá tốt!', 'info');
     FC.correct++;
   }
 
@@ -518,8 +519,8 @@ function startTimer() {
   FC.timerInterval = setInterval(() => {
     if (!el('fcTimer')) { clearInterval(FC.timerInterval); return; }
     const sec = Math.floor((Date.now() - FC.sessionStart) / 1000);
-    if (sec < 60) el('fcTimer').textContent = `⏱ ${sec}s`;
-    else el('fcTimer').textContent = `⏱ ${Math.floor(sec/60)}p${(sec%60).toString().padStart(2,'0')}s`;
+    if (sec < 60) el('fcTimer').innerHTML = `<i data-lucide="clock" style="width:12px;height:12px;display:inline-block;vertical-align:middle;margin-right:3px;"></i>${sec}s`;
+    else el('fcTimer').innerHTML = `<i data-lucide="clock" style="width:12px;height:12px;display:inline-block;vertical-align:middle;margin-right:3px;"></i>${Math.floor(sec/60)}p${(sec%60).toString().padStart(2,'0')}s`;
   }, 1000);
 }
 
@@ -528,10 +529,10 @@ function startTimer() {
 // ──────────────────────────────────────────
 async function createDeckDialog() {
   const idx = await showModal(
-    '📑 Tạo chủ đề mới',
+    'Tạo chủ đề mới',
     `<label class="label">Tên chủ đề</label>
      <input class="input" id="newDeckName" placeholder="VD: Lập trình Python, Giải tích…" autofocus>`,
-    [{ label: 'Huỷ', class: 'btn-ghost' }, { label: '✅ Tạo mới', class: 'btn-primary' }]
+    [{ label: 'Huỷ', class: 'btn-ghost' }, { label: 'Tạo mới', class: 'btn-primary' }]
   );
   if (idx !== 1) return;
   const name = el('newDeckName')?.value.trim();
@@ -551,7 +552,7 @@ async function addCardDialog() {
   if (!FC.deckId) return showToast('Hãy chọn một chủ đề trước', 'warning');
 
   const idx = await showModal(
-    '✍️ Thêm thẻ mới',
+    'Thêm thẻ mới',
     `<div class="flex-col gap-3">
       <div>
         <label class="label">Mặt trước — Câu hỏi</label>
@@ -566,7 +567,7 @@ async function addCardDialog() {
         <input class="input" id="cardHint" placeholder="Gợi ý liên tưởng khi cần…">
       </div>
     </div>`,
-    [{ label: 'Huỷ', class: 'btn-ghost' }, { label: '💾 Lưu thẻ', class: 'btn-primary' }]
+    [{ label: 'Huỷ', class: 'btn-ghost' }, { label: 'Lưu thẻ', class: 'btn-primary' }]
   );
   if (idx !== 1) return;
 

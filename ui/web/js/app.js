@@ -204,10 +204,10 @@ function escHtml(str) {
 
 function greetingText() {
   const h = new Date().getHours();
-  if (h < 6)  return '🌙 Chào buổi khuya';
-  if (h < 12) return '🌅 Chào buổi sáng';
-  if (h < 18) return '☀️ Chào buổi chiều';
-  return '🌆 Chào buổi tối';
+  if (h < 6)  return 'Chào buổi khuya';
+  if (h < 12) return 'Chào buổi sáng';
+  if (h < 18) return 'Chào buổi chiều';
+  return 'Chào buổi tối';
 }
 
 // Compute XP/level from total cards reviewed
@@ -266,7 +266,7 @@ async function refreshTopBar() {
     }
     if (el('topStreak')) {
       const s = info.streak || 0;
-      el('topStreak').innerHTML = `<span class="flame-icon">🔥</span> <span>${s} ngày streak</span>`;
+      el('topStreak').innerHTML = `<i data-lucide="flame" class="flame-icon" style="width:13px;height:13px;"></i> <span>${s} ngày streak</span>`;
     }
 
     // Sidebar due badge
@@ -408,7 +408,7 @@ async function renderDashboardView() {
           <i data-lucide="flame" style="width:16px;height:16px;color:#dc2626;"></i>
           Streak & Hoạt động
         </span>
-        <span class="badge badge-danger" id="dashStreakBadge">🔥 0 ngày</span>
+        <span class="badge badge-danger" id="dashStreakBadge" style="display:inline-flex;align-items:center;gap:3px;"><i data-lucide="flame" style="width:12px;height:12px;"></i> 0 ngày</span>
       </div>
       <div id="dashHeatmap" style="overflow-x:auto;">
         <div class="flex items-center gap-2" style="padding:14px;color:var(--text-muted);font-size:13px;">
@@ -450,10 +450,10 @@ async function loadDashboardData() {
     const streak = info.streak || 0;
 
     if (due > 0) {
-      el('dashHeroTitle').textContent = `Bạn có ${due} thẻ cần ôn hôm nay 💪`;
+      el('dashHeroTitle').textContent = `Bạn có ${due} thẻ cần ôn hôm nay`;
       el('dashHeroSub').textContent = `Học đều đặn giúp ghi nhớ lâu bền — chỉ cần vài phút!`;
     } else {
-      el('dashHeroTitle').textContent = `Tuyệt vời! Không còn thẻ nào hôm nay 🎉`;
+      el('dashHeroTitle').textContent = `Tuyệt vời! Không còn thẻ nào hôm nay`;
       el('dashHeroSub').textContent = `Bạn đã hoàn thành việc ôn tập. Tiếp tục học thêm bài giảng mới!`;
     }
 
@@ -512,7 +512,7 @@ async function loadDashboardData() {
     if (el('qaLibSub')) el('qaLibSub').textContent = `${stats.total_lectures ?? 0} bài giảng đã xử lý`;
 
     // ── Streak badge ──
-    if (el('dashStreakBadge')) el('dashStreakBadge').textContent = `🔥 ${streak} ngày`;
+    if (el('dashStreakBadge')) el('dashStreakBadge').innerHTML = `<i data-lucide="flame" style="width:13px;height:13px;display:inline-block;vertical-align:middle;margin-right:3px;"></i>${streak} ngày`;
 
     // ── Heatmap (14 days) ──
     renderDashHeatmap(stats.daily_history || []);
@@ -535,7 +535,7 @@ async function loadDashboardData() {
       if (!lectures.length) {
         el('dashRecentLectures').innerHTML = `
 <div class="empty-state" style="padding:28px 16px;gap:10px;">
-  <div style="font-size:32px;opacity:0.35;">🎙️</div>
+  <i data-lucide="mic-off" style="width:36px;height:36px;color:var(--text-subtle);margin:0 auto 4px;display:block;"></i>
   <div style="font-size:13px;font-weight:700;color:var(--text);">Chưa có bài giảng</div>
   <button class="btn btn-primary btn-sm" id="dashSeedDemo"
     style="display:inline-flex;align-items:center;gap:5px;margin-top:4px;">
@@ -561,8 +561,8 @@ async function loadDashboardData() {
           const dur = fmtDuration(lec.duration_sec || 0);
           return `
 <div class="recent-lecture-item" data-lid="${escHtml(lec.id)}">
-  <div class="lecture-thumb" style="background:${bg};">
-    <span style="color:${clr};font-size:18px;">🎙️</span>
+  <div class="lecture-thumb" style="background:${bg};display:flex;align-items:center;justify-content:center;">
+    <i data-lucide="mic" style="width:18px;height:18px;color:${clr};"></i>
   </div>
   <div class="lecture-info">
     <div class="lecture-name">${escHtml(lec.title || 'Bài giảng')}</div>

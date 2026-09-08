@@ -204,7 +204,7 @@ function renderActivity(history) {
   if (!recent.length) {
     el('statsActivity').innerHTML = `
 <div class="empty-state" style="padding:28px 16px;">
-  <div style="font-size:32px;opacity:0.35;">📊</div>
+  <i data-lucide="bar-chart-2" style="width:36px;height:36px;color:var(--text-subtle);margin:0 auto 6px;display:block;"></i>
   <div class="text-sm text-muted">Chưa có phiên học nào được ghi nhận</div>
 </div>`;
     return;
@@ -219,7 +219,7 @@ function renderActivity(history) {
   <div style="width:8px;height:8px;border-radius:50%;background:${isToday ? 'var(--accent)' : 'var(--success)'};flex-shrink:0;box-shadow:0 0 6px ${isToday ? 'rgba(99,102,241,0.5)' : 'rgba(16,185,129,0.4)'};"></div>
   <div style="font-weight:600;width:90px;font-size:13px;">${d.session_date}</div>
   <div style="color:#4f46e5;font-weight:700;font-size:13px;">${items} mục</div>
-  <div class="text-muted text-sm">⏱ ${mins}p</div>
+  <div class="text-muted text-sm" style="display:inline-flex;align-items:center;gap:3px;"><i data-lucide="clock" style="width:12px;height:12px;"></i>${mins}p</div>
   ${isToday ? '<span class="badge badge-accent" style="margin-left:auto;">Hôm nay</span>' : ''}
 </div>`;
   }).join('');
@@ -235,24 +235,26 @@ function renderAchievements(stats) {
   const studyMins  = stats.total_study_minutes || 0;
 
   const achievements = [
-    { icon: '🔥', name: 'Streak 3 ngày',    desc: '3 ngày liên tiếp',  earned: streak >= 3 },
-    { icon: '⚡', name: 'Streak 7 ngày',    desc: 'Học liên tục 1 tuần', earned: streak >= 7 },
-    { icon: '🏅', name: 'Streak 30 ngày',   desc: 'Kiên trì 1 tháng',   earned: streak >= 30 },
-    { icon: '🃏', name: '10 thẻ đầu tiên', desc: 'Bắt đầu hành trình', earned: totalCards >= 10 },
-    { icon: '📚', name: '100 thẻ ghi nhớ', desc: 'Thu thập kiến thức',  earned: totalCards >= 100 },
-    { icon: '🎙️', name: 'Bài giảng đầu tiên', desc: 'Xử lý âm thanh',  earned: totalLecs >= 1 },
-    { icon: '🎯', name: 'Quiz xuất sắc',   desc: 'Điểm TB ≥ 80%',       earned: quizScore >= 80 },
-    { icon: '⏰', name: 'Học 1 tiếng',     desc: 'Tổng 60 phút học',    earned: studyMins >= 60 },
+    { icon: 'flame',      name: 'Streak 3 ngày',     desc: '3 ngày liên tiếp',    earned: streak >= 3,        color: '#dc2626' },
+    { icon: 'zap',        name: 'Streak 7 ngày',     desc: 'Học liên tục 1 tuần', earned: streak >= 7,        color: '#d97706' },
+    { icon: 'award',      name: 'Streak 30 ngày',    desc: 'Kiên trì 1 tháng',    earned: streak >= 30,       color: '#4f46e5' },
+    { icon: 'layers',     name: '10 thẻ đầu tiên',   desc: 'Bắt đầu hành trình',  earned: totalCards >= 10,   color: '#059669' },
+    { icon: 'book-open',  name: '100 thẻ ghi nhớ',   desc: 'Thu thập kiến thức',  earned: totalCards >= 100,  color: '#0891b2' },
+    { icon: 'mic',        name: 'Bài giảng đầu tiên',desc: 'Xử lý âm thanh',      earned: totalLecs >= 1,     color: '#7c3aed' },
+    { icon: 'target',     name: 'Quiz xuất sắc',     desc: 'Điểm TB ≥ 80%',       earned: quizScore >= 80,    color: '#dc2626' },
+    { icon: 'clock',      name: 'Học 1 tiếng',       desc: 'Tổng 60 phút học',    earned: studyMins >= 60,    color: '#059669' },
   ];
 
   el('statsAchievements').innerHTML = achievements.map(a => `
-<div class="achievement-badge ${a.earned ? 'earned' : ''}" title="${a.earned ? '✅ Đã đạt' : '🔒 Chưa đạt'}">
-  <div class="ach-icon" style="opacity:${a.earned ? 1 : 0.3};">${a.icon}</div>
+<div class="achievement-badge ${a.earned ? 'earned' : ''}" title="${a.earned ? 'Đã đạt' : 'Chưa đạt'}">
+  <div class="ach-icon" style="opacity:${a.earned ? 1 : 0.35};display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:${a.earned ? 'rgba(255,255,255,0.8)' : 'transparent'};">
+    <i data-lucide="${a.icon}" style="width:20px;height:20px;color:${a.earned ? a.color : 'var(--text-subtle)'};"></i>
+  </div>
   <div>
     <div class="ach-name" style="color:${a.earned ? 'var(--text)' : 'var(--text-muted)'};">${a.name}</div>
     <div class="ach-desc">${a.desc}</div>
   </div>
-  ${a.earned ? '<span style="margin-left:auto;font-size:14px;">✅</span>' : ''}
+  ${a.earned ? '<i data-lucide="check-circle-2" style="width:16px;height:16px;color:var(--success);margin-left:auto;flex-shrink:0;"></i>' : ''}
 </div>`).join('');
 }
 

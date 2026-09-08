@@ -9,13 +9,13 @@ const LIB = {
   searchQuery: '',
 };
 
-// Tag color palettes (Light theme optimized)
+// Tag color palettes (Light theme optimized with Lucide icons)
 const TAG_PALETTES = {
-  'CNTT':     { bg: 'linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%)', border: '#c7d2fe', icon: '💻', color: '#4338ca', badgeBg: '#ffffff', badgeBorder: '#c7d2fe' },
-  'Toán':     { bg: 'linear-gradient(135deg, #d1fae5 0%, #cffafe 100%)', border: '#a7f3d0', icon: '📐', color: '#047857', badgeBg: '#ffffff', badgeBorder: '#a7f3d0' },
-  'Vật lý':   { bg: 'linear-gradient(135deg, #cffafe 0%, #e0e7ff 100%)', border: '#a5f3fc', icon: '⚛️', color: '#0e7490', badgeBg: '#ffffff', badgeBorder: '#a5f3fc' },
-  'Ngoại ngữ':{ bg: 'linear-gradient(135deg, #fef3c7 0%, #fee2e2 100%)', border: '#fde68a', icon: '🌐', color: '#b45309', badgeBg: '#ffffff', badgeBorder: '#fde68a' },
-  'General':  { bg: 'linear-gradient(135deg, #ede9fe 0%, #fce7f3 100%)', border: '#ddd6fe', icon: '📖', color: '#6d28d9', badgeBg: '#ffffff', badgeBorder: '#ddd6fe' },
+  'CNTT':     { bg: 'linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%)', border: '#c7d2fe', icon: 'laptop', color: '#4338ca', badgeBg: '#ffffff', badgeBorder: '#c7d2fe' },
+  'Toán':     { bg: 'linear-gradient(135deg, #d1fae5 0%, #cffafe 100%)', border: '#a7f3d0', icon: 'calculator', color: '#047857', badgeBg: '#ffffff', badgeBorder: '#a7f3d0' },
+  'Vật lý':   { bg: 'linear-gradient(135deg, #cffafe 0%, #e0e7ff 100%)', border: '#a5f3fc', icon: 'atom', color: '#0e7490', badgeBg: '#ffffff', badgeBorder: '#a5f3fc' },
+  'Ngoại ngữ':{ bg: 'linear-gradient(135deg, #fef3c7 0%, #fee2e2 100%)', border: '#fde68a', icon: 'globe', color: '#b45309', badgeBg: '#ffffff', badgeBorder: '#fde68a' },
+  'General':  { bg: 'linear-gradient(135deg, #ede9fe 0%, #fce7f3 100%)', border: '#ddd6fe', icon: 'book-open', color: '#6d28d9', badgeBg: '#ffffff', badgeBorder: '#ddd6fe' },
 };
 
 function getPalette(tag) {
@@ -44,11 +44,11 @@ async function renderLibraryView() {
   <!-- Filter chips -->
   <div class="filter-chips" id="libFilterChips">
     <div class="filter-chip active" data-folder="">Tất cả</div>
-    <div class="filter-chip" data-folder="CNTT">💻 CNTT</div>
-    <div class="filter-chip" data-folder="Toán">📐 Toán</div>
-    <div class="filter-chip" data-folder="Vật lý">⚛️ Vật lý</div>
-    <div class="filter-chip" data-folder="Ngoại ngữ">🌐 Ngoại ngữ</div>
-    <div class="filter-chip" data-folder="General">📖 General</div>
+    <div class="filter-chip" data-folder="CNTT"><i data-lucide="laptop" style="width:13px;height:13px;margin-right:4px;"></i>CNTT</div>
+    <div class="filter-chip" data-folder="Toán"><i data-lucide="calculator" style="width:13px;height:13px;margin-right:4px;"></i>Toán</div>
+    <div class="filter-chip" data-folder="Vật lý"><i data-lucide="atom" style="width:13px;height:13px;margin-right:4px;"></i>Vật lý</div>
+    <div class="filter-chip" data-folder="Ngoại ngữ"><i data-lucide="globe" style="width:13px;height:13px;margin-right:4px;"></i>Ngoại ngữ</div>
+    <div class="filter-chip" data-folder="General"><i data-lucide="book-open" style="width:13px;height:13px;margin-right:4px;"></i>General</div>
   </div>
 
   <!-- Grid -->
@@ -96,7 +96,7 @@ async function loadLibrary() {
       el('libGrid').innerHTML = `
 <div style="grid-column:1/-1;">
   <div class="empty-state">
-    <div class="empty-icon">🎙️</div>
+    <div class="empty-icon"><i data-lucide="mic-off" style="width:48px;height:48px;color:var(--text-subtle);"></i></div>
     <div class="empty-title">${LIB.searchQuery ? 'Không tìm thấy bài giảng' : 'Chưa có bài giảng nào'}</div>
     <div class="empty-sub">${LIB.searchQuery
         ? `Không có kết quả cho "<strong>${escHtml(LIB.searchQuery)}</strong>"`
@@ -135,7 +135,9 @@ async function loadLibrary() {
       return `
 <div class="lecture-card" data-lid="${escHtml(lec.id)}">
   <div class="lec-cover" style="background:${palette.bg};border-bottom:1px solid ${palette.border};">
-    <span style="font-size:28px;position:relative;z-index:1;">${palette.icon}</span>
+    <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.75);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.06);position:relative;z-index:1;border:1px solid rgba(255,255,255,0.9);">
+      <i data-lucide="${palette.icon}" style="width:24px;height:24px;color:${palette.color};"></i>
+    </div>
     <div style="position:relative;z-index:1;">
       <div class="lec-tag"><span class="badge" style="color:${palette.color};background:${palette.badgeBg};border:1px solid ${palette.badgeBorder};box-shadow:0 1px 3px rgba(0,0,0,0.06);font-weight:700;">${escHtml(tag)}</span></div>
     </div>
@@ -178,8 +180,8 @@ async function loadLibrary() {
     refreshIcons();
   } catch (e) {
     el('libGrid').innerHTML = `
-<div style="grid-column:1/-1;padding:32px;color:var(--danger);">
-  ⚠️ Lỗi tải thư viện: ${escHtml(e.message)}
+<div style="grid-column:1/-1;padding:32px;color:var(--danger);display:flex;align-items:center;gap:8px;">
+  <i data-lucide="alert-triangle" style="width:16px;height:16px;"></i> Lỗi tải thư viện: ${escHtml(e.message)}
 </div>`;
   }
 }
@@ -193,8 +195,8 @@ async function deleteLecture(lectureId, title) {
   const idx = await showModal(
     'Xoá bài giảng',
     `<p style="color:var(--text-muted);">Bạn chắc muốn xoá bài giảng <strong style="color:var(--text);">${escHtml(title)}</strong>?<br>
-     <span style="color:var(--danger);font-size:12px;margin-top:6px;display:block;">⚠️ Thao tác này không thể hoàn tác — toàn bộ transcript, quiz, thẻ liên quan sẽ bị xoá.</span></p>`,
-    [{ label: 'Huỷ', class: 'btn-ghost' }, { label: '🗑️ Xoá vĩnh viễn', class: 'btn-danger' }]
+     <span style="color:var(--danger);font-size:12px;margin-top:6px;display:flex;align-items:center;gap:4px;"><i data-lucide="alert-triangle" style="width:13px;height:13px;"></i> Thao tác này không thể hoàn tác — toàn bộ transcript, quiz, thẻ liên quan sẽ bị xoá.</span></p>`,
+    [{ label: 'Huỷ', class: 'btn-ghost' }, { label: 'Xoá vĩnh viễn', class: 'btn-danger' }]
   );
   if (idx !== 1) return;
   try {

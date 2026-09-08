@@ -54,11 +54,11 @@ function renderLectureView() {
         <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i> Đổi file
       </button>
       <select class="select" id="lecFolder" style="width:140px;font-size:13px;">
-        <option value="General">📖 General</option>
-        <option value="CNTT">💻 CNTT</option>
-        <option value="Toán">📐 Toán</option>
-        <option value="Vật lý">⚛️ Vật lý</option>
-        <option value="Ngoại ngữ">🌐 Ngoại ngữ</option>
+        <option value="General">General</option>
+        <option value="CNTT">CNTT</option>
+        <option value="Toán">Toán</option>
+        <option value="Vật lý">Vật lý</option>
+        <option value="Ngoại ngữ">Ngoại ngữ</option>
       </select>
     </div>
   </div>
@@ -113,7 +113,7 @@ function renderLectureView() {
       <div class="tab-panel" id="tab-transcript">
         <div id="transcriptBox" style="height:100%;overflow-y:auto;display:flex;flex-direction:column;gap:3px;padding:2px;">
           <div class="empty-state" style="height:100%;">
-            <div class="empty-icon">🎙️</div>
+            <div class="empty-icon"><i data-lucide="mic-off" style="width:48px;height:48px;color:var(--text-subtle);"></i></div>
             <div class="empty-title">Chưa có bản ghi âm</div>
             <div class="empty-sub">Chọn file âm thanh và nhấn "① Phiên âm bài giảng" để bắt đầu</div>
           </div>
@@ -124,7 +124,7 @@ function renderLectureView() {
       <div class="tab-panel hidden" id="tab-quiz">
         <div id="quizBox" style="overflow-y:auto;height:100%;padding:2px 2px;">
           <div class="empty-state" style="height:100%;">
-            <div class="empty-icon">📝</div>
+            <div class="empty-icon"><i data-lucide="help-circle" style="width:48px;height:48px;color:var(--text-subtle);"></i></div>
             <div class="empty-title">Chưa có bài kiểm tra</div>
             <div class="empty-sub">Nhấn "② Tạo Quiz trắc nghiệm" để AI tự động biên soạn câu hỏi</div>
           </div>
@@ -244,7 +244,7 @@ async function loadLecture(lectureId) {
       if (el('transcriptBox')) {
         el('transcriptBox').innerHTML = `
 <div class="empty-state" style="height:100%;">
-  <div class="empty-icon">📄</div>
+  <div class="empty-icon"><i data-lucide="file-text" style="width:48px;height:48px;color:var(--text-subtle);"></i></div>
   <div class="empty-title">${escHtml(lec.title || 'Bài giảng')}</div>
   <div class="empty-sub">Chưa có bản ghi phiên âm. Nhấn "① Phiên âm bài giảng" để bắt đầu.</div>
 </div>`;
@@ -266,7 +266,7 @@ async function loadLecture(lectureId) {
     if (el('quizBox')) {
       el('quizBox').innerHTML = `
 <div class="empty-state" style="height:100%;">
-  <div class="empty-icon">📝</div>
+  <div class="empty-icon"><i data-lucide="help-circle" style="width:48px;height:48px;color:var(--text-subtle);"></i></div>
   <div class="empty-title">Chưa có bài kiểm tra</div>
   <div class="empty-sub">Nhấn "② Tạo Quiz trắc nghiệm" để AI tự động biên soạn câu hỏi từ bài giảng này</div>
 </div>`;
@@ -404,7 +404,7 @@ async function showQuizModal() {
   if (!LEC.lectureId) return showToast('Hãy phiên âm bài giảng trước khi tạo kiểm tra', 'warning');
 
   const idx = await showModal(
-    '🎯 Tùy chỉnh Bài kiểm tra Trắc nghiệm',
+    'Tùy chỉnh Bài kiểm tra Trắc nghiệm',
     `<div class="flex-col gap-4">
       <div>
         <label class="label">Số lượng câu hỏi</label>
@@ -427,7 +427,7 @@ async function showQuizModal() {
     </div>`,
     [
       { label: 'Huỷ', class: 'btn-ghost' },
-      { label: '🚀 Tạo câu hỏi', class: 'btn-primary' }
+      { label: 'Tạo câu hỏi', class: 'btn-primary' }
     ]
   );
   if (idx !== 1) return;
@@ -492,13 +492,14 @@ function renderQuiz(questions) {
     ).join('')}
   </div>
   <div class="quiz-explanation" id="qexp-${i}">
-    💡 <strong>Giải thích:</strong> ${escHtml(q.explanation || q.reason || '')}
+    <i data-lucide="lightbulb" style="width:14px;height:14px;color:var(--warning);display:inline-block;vertical-align:middle;margin-right:4px;"></i><strong>Giải thích:</strong> ${escHtml(q.explanation || q.reason || '')}
   </div>
 </div>`;
   }).join('')}
 
-  <button class="btn btn-primary btn-full" id="btnSubmitQuiz" style="padding:14px;font-size:15px;font-weight:800;">
-    ✅ Nộp bài & Chấm điểm
+  <button class="btn btn-primary btn-full" id="btnSubmitQuiz" style="padding:14px;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;">
+    <i data-lucide="check-circle-2" style="width:18px;height:18px;"></i>
+    <span>Nộp bài & Chấm điểm</span>
   </button>
 </div>`;
 
@@ -544,7 +545,7 @@ async function submitQuiz() {
   el('btnSubmitQuiz')?.remove();
   const pct = Math.round(score / questions.length * 100);
   const cls = pct >= 80 ? 'badge-success' : pct >= 50 ? 'badge-warning' : 'badge-danger';
-  const msg = pct >= 80 ? '🎉 Xuất sắc! Bạn đã nắm rất vững bài học.' : pct >= 50 ? '👍 Khá tốt! Hãy xem lại các câu sai.' : '📚 Cần xem lại bài giảng và ôn tập thêm nhé.';
+  const msg = pct >= 80 ? 'Xuất sắc! Bạn đã nắm rất vững bài học.' : pct >= 50 ? 'Khá tốt! Hãy xem lại các câu trả lời chưa đúng.' : 'Cần xem lại bài giảng và ôn tập thêm nhé.';
 
   const resultEl = document.createElement('div');
   resultEl.innerHTML = `
@@ -584,7 +585,7 @@ async function showCardsModal() {
   if (!LEC.lectureId) return showToast('Hãy phiên âm bài giảng trước khi tạo thẻ ghi nhớ', 'warning');
 
   const idx = await showModal(
-    '📑 Tạo Bộ Flashcards từ Bài giảng',
+    'Tạo Bộ Flashcards từ Bài giảng',
     `<div class="flex-col gap-3">
       <div>
         <label class="label">Số lượng thẻ muốn rút trích</label>
@@ -597,12 +598,12 @@ async function showCardsModal() {
         </select>
       </div>
       <p class="text-muted text-sm" style="font-size:12px;line-height:1.6;background:var(--glass-light);padding:12px;border-radius:var(--radius-md);border:1px solid var(--glass-border);">
-        🤖 AI sẽ tự động trích xuất các <strong>định nghĩa, thuật ngữ</strong> và <strong>khái niệm quan trọng</strong> kèm gợi ý liên tưởng chuẩn Spaced Repetition (SM-2).
+        AI sẽ tự động trích xuất các <strong>định nghĩa, thuật ngữ</strong> và <strong>khái niệm quan trọng</strong> kèm gợi ý liên tưởng chuẩn Spaced Repetition (SM-2).
       </p>
     </div>`,
     [
       { label: 'Huỷ', class: 'btn-ghost' },
-      { label: '🚀 Tạo thẻ ngay', class: 'btn-primary' }
+      { label: 'Tạo thẻ ngay', class: 'btn-primary' }
     ]
   );
   if (idx !== 1) return;
@@ -656,7 +657,7 @@ async function sendChat() {
 EventBus.on('rag:done', ({ answer, citations }) => {
   qs('.chat-thinking')?.remove();
   const citHtml = citations?.length
-    ? `<div class="chat-citation">📌 Mốc thời gian: ${citations.map(c =>
+    ? `<div class="chat-citation"><span style="display:inline-flex;align-items:center;gap:4px;"><i data-lucide="clock" style="width:12px;height:12px;color:var(--accent);"></i> Mốc thời gian:</span> ${citations.map(c =>
       `<span class="chat-citation-chip">${fmtDuration(c.start)}</span>`
     ).join('')}</div>`
     : '';
@@ -665,7 +666,7 @@ EventBus.on('rag:done', ({ answer, citations }) => {
 
 EventBus.on('rag:error', ({ message }) => {
   qs('.chat-thinking')?.remove();
-  appendChat('ai', `⚠️ ${escHtml(message)}`);
+  appendChat('ai', `<span style="display:inline-flex;align-items:center;gap:5px;color:var(--danger);"><i data-lucide="alert-triangle" style="width:14px;height:14px;"></i> ${escHtml(message)}</span>`);
 });
 
 function appendChat(role, htmlContent) {
@@ -694,12 +695,12 @@ function appendChat(role, htmlContent) {
 async function showExportMenu() {
   if (!LEC.lectureId) return showToast('Cần có bài giảng để xuất', 'warning');
   const idx = await showModal(
-    '📤 Xuất dữ liệu bài học',
+    'Xuất dữ liệu bài học',
     `<p class="text-muted" style="font-size:13px;margin-bottom:4px;">Chọn định dạng xuất mong muốn:</p>`,
     [
-      { label: '📄 Văn bản (.txt)', class: 'btn-ghost' },
-      { label: '🌐 Báo cáo HTML', class: 'btn-ghost' },
-      { label: '📦 Gói JSON', class: 'btn-ghost' },
+      { label: 'Văn bản (.txt)', class: 'btn-ghost' },
+      { label: 'Báo cáo HTML', class: 'btn-ghost' },
+      { label: 'Gói JSON', class: 'btn-ghost' },
       { label: 'Huỷ', class: 'btn-ghost' },
     ]
   );
