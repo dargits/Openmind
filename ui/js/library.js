@@ -132,6 +132,21 @@ async function loadLibrary() {
       const dur     = fmtDuration(lec.duration_sec || 0);
       const date    = fmtDate(lec.created_at);
 
+      // Badges tiến trình học tập
+      const badges = [];
+      if (lec.has_quiz || lec.quiz_count > 0) {
+        badges.push(`<span class="badge lib-badge-jump" data-lid="${escHtml(lec.id)}" data-tab="quiz" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;cursor:pointer;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px;" title="Nhấn để mở bài Quiz trắc nghiệm"><i data-lucide="check-circle-2" style="width:11px;height:11px;"></i> ${lec.quiz_count || 5} câu Quiz</span>`);
+      }
+      if (lec.flashcard_count > 0) {
+        badges.push(`<span class="badge lib-badge-jump" data-lid="${escHtml(lec.id)}" data-tab="flashcards" style="background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;cursor:pointer;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px;" title="Nhấn để mở bộ thẻ ghi nhớ"><i data-lucide="layers" style="width:11px;height:11px;"></i> ${lec.flashcard_count} thẻ nhớ</span>`);
+      }
+      if (lec.has_summary) {
+        badges.push(`<span class="badge lib-badge-jump" data-lid="${escHtml(lec.id)}" data-tab="summary" style="background:#fef3c7;color:#b45309;border:1px solid #fde68a;cursor:pointer;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px;" title="Nhấn để xem tóm tắt & mindmap"><i data-lucide="file-text" style="width:11px;height:11px;"></i> Tóm tắt</span>`);
+      }
+      if (!badges.length) {
+        badges.push(`<span class="badge" style="background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0;font-size:11px;">Chưa tạo quiz/thẻ</span>`);
+      }
+
       return `
 <div class="lecture-card" data-lid="${escHtml(lec.id)}">
   <div class="lec-cover" style="background:${palette.bg};border-bottom:1px solid ${palette.border};">
@@ -152,10 +167,16 @@ async function loadLibrary() {
         <i data-lucide="calendar" style="width:13px;height:13px;"></i> ${date}
       </span>
     </div>
+
+    <!-- Learning status badges -->
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 10px 0;">
+      ${badges.join('')}
+    </div>
+
     <div class="lec-actions">
       <button class="btn btn-primary btn-sm lib-open" data-lid="${escHtml(lec.id)}"
         style="flex:1;justify-content:center;display:inline-flex;align-items:center;gap:5px;">
-        <i data-lucide="play" style="width:13px;height:13px;"></i> Mở học
+        <i data-lucide="book-open" style="width:13px;height:13px;"></i> Vào học bài
       </button>
       <button class="btn btn-ghost btn-sm lib-del" data-lid="${escHtml(lec.id)}" data-title="${escHtml(lec.title || '')}"
         title="Xóa bài giảng"
@@ -169,6 +190,12 @@ async function loadLibrary() {
 
     el('libGrid').querySelectorAll('.lib-open').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); openLecture(btn.dataset.lid); });
+    });
+    el('libGrid').querySelectorAll('.lib-badge-jump').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        openLecture(btn.dataset.lid, btn.dataset.tab);
+      });
     });
     el('libGrid').querySelectorAll('.lib-del').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); deleteLecture(btn.dataset.lid, btn.dataset.title); });
@@ -186,9 +213,9 @@ async function loadLibrary() {
   }
 }
 
-function openLecture(lectureId) {
+function openLecture(lectureId, initialTab = 'transcript') {
   switchView('lecture');
-  if (typeof loadLecture === 'function') loadLecture(lectureId);
+  if (typeof loadLecture === 'function') loadLecture(lectureId, initialTab);
 }
 
 async function deleteLecture(lectureId, title) {

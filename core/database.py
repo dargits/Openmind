@@ -181,21 +181,41 @@ class Database:
     def list_lectures(self, folder_tag: Optional[str] = None, search_query: str = "") -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            query = "SELECT id, title, audio_path, duration_sec, folder_tag, created_at FROM lectures WHERE 1=1"
+            query = """
+            SELECT l.id, l.title, l.audio_path, l.duration_sec, l.folder_tag, l.created_at,
+                   l.quiz_json,
+                   CASE WHEN l.summary_json IS NOT NULL AND l.summary_json != '' AND l.summary_json != '{}' THEN 1 ELSE 0 END AS has_summary,
+                   CASE WHEN l.quiz_json IS NOT NULL AND l.quiz_json != '' AND l.quiz_json != '[]' THEN 1 ELSE 0 END AS has_quiz,
+                   (SELECT COUNT(*) FROM flashcards f WHERE f.lecture_id = l.id) AS flashcard_count,
+                   (SELECT COUNT(*) FROM decks d WHERE d.lecture_id = l.id) AS deck_count,
+                   (SELECT MAX(score * 100 / total_questions) FROM quiz_attempts qa WHERE qa.lecture_id = l.id) AS best_quiz_score
+            FROM lectures l
+            WHERE 1=1
+            """
             params = []
             if folder_tag and folder_tag != "All":
-                query += " AND folder_tag = ?"
+                query += " AND l.folder_tag = ?"
                 params.append(folder_tag)
             if search_query:
-                query += " AND (title LIKE ? OR full_text LIKE ?)"
+                query += " AND (l.title LIKE ? OR l.full_text LIKE ?)"
                 params.extend([f"%{search_query}%", f"%{search_query}%"])
-            query += " ORDER BY created_at DESC"
+            query += " ORDER BY l.created_at DESC"
             cursor.execute(query, params)
-            return [dict(r) for r in cursor.fetchall()]
+            rows = []
+            for r in cursor.fetchall():
+                d = dict(r)
+                quiz_list = json.loads(d.pop("quiz_json") or "[]")
+                d["quiz_count"] = len(quiz_list) if isinstance(quiz_list, list) else 0
+                rows.append(d)
+            return rows
 
     def delete_lecture(self, lecture_id: str):
         with self.get_connection() as conn:
             cursor = conn.cursor()
+            # Xóa dọn dẹp sạch sẽ các dữ liệu liên đới để tránh mồ côi
+            cursor.execute("DELETE FROM flashcards WHERE lecture_id = ?", (lecture_id,))
+            cursor.execute("DELETE FROM decks WHERE lecture_id = ?", (lecture_id,))
+            cursor.execute("DELETE FROM quiz_attempts WHERE lecture_id = ?", (lecture_id,))
             cursor.execute("DELETE FROM lectures WHERE id = ?", (lecture_id,))
             conn.commit()
 
@@ -209,7 +229,19 @@ class Database:
             conn.commit()
         return deck_id
 
-    def list_decks(self) -> List[Dict[str, Any]]:
+    def update_deck(self, deck_id: str, name: str, description: Optional[str] = None) -> bool:
+        """Đổi tên và mô tả của bộ thẻ flashcard."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            if description is not None:
+                cursor.execute("UPDATE decks SET name = ?, description = ? WHERE id = ?", (name, description, deck_id))
+            else:
+                cursor.execute("UPDATE decks SET name = ? WHERE id = ?", (name, deck_id))
+            conn.commit()
+            return cursor.rowcount > 0
+
+    def get_lecture_decks(self, lecture_id: str) -> List[Dict[str, Any]]:
+        """Lấy tất cả các bộ thẻ Flashcard thuộc về một bài giảng."""
         today = date.today().isoformat()
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -220,6 +252,38 @@ class Database:
                    SUM(CASE WHEN f.state = 'review' THEN 1 ELSE 0 END) AS mastered_cards
             FROM decks d
             LEFT JOIN flashcards f ON d.id = f.deck_id
+            WHERE d.lecture_id = ?
+            GROUP BY d.id
+            ORDER BY d.created_at DESC
+            """, (today, lecture_id))
+            return [dict(r) for r in cursor.fetchall()]
+
+    def get_lecture_flashcards(self, lecture_id: str) -> List[Dict[str, Any]]:
+        """Lấy toàn bộ thẻ ghi nhớ thuộc về bài giảng (kèm tên bộ thẻ)."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+            SELECT f.*, d.name AS deck_name
+            FROM flashcards f
+            LEFT JOIN decks d ON f.deck_id = d.id
+            WHERE f.lecture_id = ?
+            ORDER BY f.created_at ASC
+            """, (lecture_id,))
+            return [dict(r) for r in cursor.fetchall()]
+
+    def list_decks(self) -> List[Dict[str, Any]]:
+        today = date.today().isoformat()
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+            SELECT d.*,
+                   l.title AS lecture_title,
+                   COUNT(f.id) AS total_cards,
+                   SUM(CASE WHEN f.due_date <= ? THEN 1 ELSE 0 END) AS due_cards,
+                   SUM(CASE WHEN f.state = 'review' THEN 1 ELSE 0 END) AS mastered_cards
+            FROM decks d
+            LEFT JOIN lectures l ON d.lecture_id = l.id
+            LEFT JOIN flashcards f ON d.id = f.deck_id
             GROUP BY d.id
             ORDER BY d.created_at DESC
             """, (today,))
@@ -228,6 +292,7 @@ class Database:
     def delete_deck(self, deck_id: str):
         with self.get_connection() as conn:
             cursor = conn.cursor()
+            cursor.execute("DELETE FROM flashcards WHERE deck_id = ?", (deck_id,))
             cursor.execute("DELETE FROM decks WHERE id = ?", (deck_id,))
             conn.commit()
 

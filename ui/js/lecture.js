@@ -64,22 +64,26 @@ function renderLectureView() {
   </div>
 
   <!-- Workflow Stepper -->
-  <div style="flex-shrink:0;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;" id="lecStepRow">
+  <div style="flex-shrink:0;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;" id="lecStepRow">
     <button class="step-action-btn ${LEC.lectureId ? '' : 'active-step'}" id="btnTranscribe" ${LEC.isTranscribing ? 'disabled' : ''}>
       <i data-lucide="mic" style="width:15px;height:15px;"></i>
-      <span>① Phiên âm bài giảng</span>
+      <span>① Phiên âm</span>
+    </button>
+    <button class="step-action-btn" id="btnSummary" ${!LEC.lectureId ? 'disabled' : ''}>
+      <i data-lucide="sparkles" style="width:15px;height:15px;"></i>
+      <span>② Tóm tắt AI</span>
     </button>
     <button class="step-action-btn" id="btnQuiz" ${!LEC.lectureId ? 'disabled' : ''}>
       <i data-lucide="check-square" style="width:15px;height:15px;"></i>
-      <span>② Tạo Quiz trắc nghiệm</span>
+      <span>③ Tạo Quiz</span>
     </button>
     <button class="step-action-btn" id="btnCards" ${!LEC.lectureId ? 'disabled' : ''}>
       <i data-lucide="layers" style="width:15px;height:15px;"></i>
-      <span>③ Tạo Flashcards</span>
+      <span>④ Tạo Thẻ nhớ</span>
     </button>
     <button class="step-action-btn" id="btnExport" ${!LEC.lectureId ? 'disabled' : ''}>
       <i data-lucide="download" style="width:15px;height:15px;"></i>
-      <span>④ Xuất dữ liệu</span>
+      <span>⑤ Xuất dữ liệu</span>
     </button>
   </div>
 
@@ -100,8 +104,14 @@ function renderLectureView() {
       <button class="tab-btn active" data-tab="transcript">
         <i data-lucide="file-text" style="width:14px;height:14px;"></i> Bản ghi văn bản
       </button>
+      <button class="tab-btn" data-tab="summary">
+        <i data-lucide="sparkles" style="width:14px;height:14px;"></i> Tóm tắt & Sơ đồ
+      </button>
       <button class="tab-btn" data-tab="quiz">
         <i data-lucide="check-circle-2" style="width:14px;height:14px;"></i> Bài kiểm tra
+      </button>
+      <button class="tab-btn" data-tab="flashcards">
+        <i data-lucide="layers" style="width:14px;height:14px;"></i> Thẻ ghi nhớ
       </button>
       <button class="tab-btn" data-tab="chat">
         <i data-lucide="message-square" style="width:14px;height:14px;"></i> Hỏi-đáp AI
@@ -115,23 +125,51 @@ function renderLectureView() {
           <div class="empty-state" style="height:100%;">
             <div class="empty-icon"><i data-lucide="mic-off" style="width:48px;height:48px;color:var(--text-subtle);"></i></div>
             <div class="empty-title">Chưa có bản ghi âm</div>
-            <div class="empty-sub">Chọn file âm thanh và nhấn "① Phiên âm bài giảng" để bắt đầu</div>
+            <div class="empty-sub">Chọn file âm thanh và nhấn "① Phiên âm" để bắt đầu</div>
           </div>
         </div>
       </div>
 
-      <!-- 2. Quiz Panel -->
+      <!-- 2. Summary & Mindmap Panel -->
+      <div class="tab-panel hidden" id="tab-summary">
+        <div id="summaryBox" style="overflow-y:auto;height:100%;padding:4px 2px;">
+          <div class="empty-state" style="height:100%;">
+            <div class="empty-icon"><i data-lucide="sparkles" style="width:48px;height:48px;color:var(--text-subtle);"></i></div>
+            <div class="empty-title">Chưa có bản tóm tắt bài giảng</div>
+            <div class="empty-sub">Nhấn "② Tóm tắt AI" để tự động rút trích ý chính và vẽ sơ đồ tư duy</div>
+            <button class="btn btn-primary mt-3" onclick="triggerSummaryGeneration()" style="display:inline-flex;align-items:center;gap:6px;">
+              <i data-lucide="sparkles" style="width:14px;height:14px;"></i> Tóm tắt ngay
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Quiz Panel -->
       <div class="tab-panel hidden" id="tab-quiz">
         <div id="quizBox" style="overflow-y:auto;height:100%;padding:2px 2px;">
           <div class="empty-state" style="height:100%;">
             <div class="empty-icon"><i data-lucide="help-circle" style="width:48px;height:48px;color:var(--text-subtle);"></i></div>
             <div class="empty-title">Chưa có bài kiểm tra</div>
-            <div class="empty-sub">Nhấn "② Tạo Quiz trắc nghiệm" để AI tự động biên soạn câu hỏi</div>
+            <div class="empty-sub">Nhấn "③ Tạo Quiz" để AI tự động biên soạn câu hỏi trắc nghiệm</div>
           </div>
         </div>
       </div>
 
-      <!-- 3. Chat Q&A Panel -->
+      <!-- 4. Flashcards Panel -->
+      <div class="tab-panel hidden" id="tab-flashcards">
+        <div id="flashcardsBox" style="overflow-y:auto;height:100%;padding:4px 2px;">
+          <div class="empty-state" style="height:100%;">
+            <div class="empty-icon"><i data-lucide="layers" style="width:48px;height:48px;color:var(--text-subtle);"></i></div>
+            <div class="empty-title">Chưa có thẻ ghi nhớ</div>
+            <div class="empty-sub">Nhấn "④ Tạo Thẻ nhớ" để AI trích xuất các định nghĩa quan trọng từ bài giảng</div>
+            <button class="btn btn-primary mt-3" onclick="showCardsModal()" style="display:inline-flex;align-items:center;gap:6px;">
+              <i data-lucide="layers" style="width:14px;height:14px;"></i> Trích xuất thẻ ngay
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Chat Q&A Panel -->
       <div class="tab-panel hidden" id="tab-chat">
         <div style="display:flex;flex-direction:column;height:100%;gap:12px;">
           <div class="chat-history" id="chatHistory">
@@ -179,12 +217,12 @@ function renderLectureView() {
     zone.addEventListener('drop', async e => {
       e.preventDefault();
       zone.classList.remove('drag-over');
-      // pywebview doesn't support native drop, but we handle the event gracefully
       showToast('Kéo thả không được hỗ trợ — vui lòng dùng nút "Chọn file"', 'info');
     });
   }
 
   el('btnTranscribe').addEventListener('click', startTranscribe);
+  el('btnSummary')?.addEventListener('click', triggerSummaryGeneration);
   el('btnQuiz').addEventListener('click', showQuizModal);
   el('btnCards').addEventListener('click', showCardsModal);
   el('btnExport').addEventListener('click', showExportMenu);
@@ -195,11 +233,7 @@ function renderLectureView() {
   // Tab navigation
   qsa('.tab-btn', el('view-lecture')).forEach(btn => {
     btn.addEventListener('click', () => {
-      qsa('.tab-btn', el('view-lecture')).forEach(b => b.classList.remove('active'));
-      qsa('.tab-panel', el('view-lecture')).forEach(p => p.classList.add('hidden'));
-      btn.classList.add('active');
-      el(`tab-${btn.dataset.tab}`).classList.remove('hidden');
-      LEC.activeTab = btn.dataset.tab;
+      switchTabTo(btn.dataset.tab);
     });
   });
 
@@ -208,7 +242,7 @@ function renderLectureView() {
   refreshIcons();
 }
 
-async function loadLecture(lectureId) {
+async function loadLecture(lectureId, initialTab = 'transcript') {
   if (!el('btnTranscribe')) renderLectureView();
   LEC.lectureId = lectureId;
   try {
@@ -262,6 +296,9 @@ async function loadLecture(lectureId) {
 </div>`;
     }
 
+    // Tóm tắt & Mindmap: Tự động nạp dữ liệu đã tạo
+    renderSummary(lec.summary, lec.mindmap);
+
     // Quiz: Tự động nạp bài quiz đã lưu nếu có
     if (Array.isArray(lec.quiz) && lec.quiz.length) {
       LEC.quizData = lec.quiz;
@@ -274,11 +311,17 @@ async function loadLecture(lectureId) {
 <div class="empty-state" style="height:100%;">
   <div class="empty-icon"><i data-lucide="help-circle" style="width:48px;height:48px;color:var(--text-subtle);"></i></div>
   <div class="empty-title">Chưa có bài kiểm tra</div>
-  <div class="empty-sub">Nhấn "② Tạo Quiz trắc nghiệm" để AI tự động biên soạn câu hỏi từ bài giảng này</div>
+  <div class="empty-sub">Nhấn "③ Tạo Quiz" để AI tự động biên soạn câu hỏi từ bài giảng này</div>
 </div>`;
     }
 
-    switchTabTo('transcript');
+    // Flashcards: Tự động nạp thẻ ghi nhớ của bài giảng
+    try {
+      const cards = await API.get_lecture_flashcards(lectureId);
+      renderLectureFlashcards(cards);
+    } catch (_) {}
+
+    switchTabTo(initialTab || 'transcript');
     updateStepButtons();
     refreshIcons();
   } catch (e) {
@@ -635,7 +678,142 @@ async function submitQuiz() {
 }
 
 // ──────────────────────────────────────────
-// Flashcard Generation
+// Summary & Mindmap
+// ──────────────────────────────────────────
+async function triggerSummaryGeneration() {
+  if (!LEC.lectureId) return showToast('Hãy phiên âm bài giảng trước khi tạo tóm tắt', 'warning');
+  if (!LEC.fullText?.trim()) return showToast('Bài giảng chưa có nội dung văn bản để tóm tắt', 'warning');
+
+  showStatus('Mô hình AI đang tóm tắt phân cấp và vẽ sơ đồ tư duy…', 0.3);
+  await API.generate_summary(LEC.lectureId);
+}
+
+function renderSummary(summary, mindmap) {
+  if (!el('summaryBox')) return;
+  const hasOverview = summary && (summary.overview || (Array.isArray(summary.key_takeaways) && summary.key_takeaways.length));
+  const hasMindmap = mindmap && (mindmap.topic || (Array.isArray(mindmap.children) && mindmap.children.length));
+
+  if (!hasOverview && !hasMindmap) {
+    el('summaryBox').innerHTML = `
+<div class="empty-state" style="height:100%;padding:40px 20px;">
+  <i data-lucide="sparkles" style="width:44px;height:44px;color:#6366f1;"></i>
+  <div class="empty-title" style="margin-top:14px;font-size:16px;font-weight:700;">Chưa có bản tóm tắt bài giảng</div>
+  <div class="empty-sub" style="max-width:480px;margin:6px auto 16px;color:#64748b;line-height:1.5;">
+    AI sẽ trích xuất luận điểm cốt lõi, tóm tắt từng phần và tự động xây dựng sơ đồ tư duy (Mindmap).
+  </div>
+  <button class="btn btn-primary" onclick="triggerSummaryGeneration()" style="display:inline-flex;align-items:center;gap:6px;">
+    <i data-lucide="sparkles" style="width:14px;height:14px;"></i> Tóm tắt ngay bằng AI
+  </button>
+</div>`;
+    refreshIcons();
+    return;
+  }
+
+  const overviewHtml = summary?.overview ? `
+<div class="card" style="padding:18px 20px;border:1px solid rgba(99,102,241,0.18);background:rgba(99,102,241,0.03);border-radius:var(--radius-lg);margin-bottom:14px;">
+  <div style="font-weight:800;color:#4338ca;font-size:14px;display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <i data-lucide="book-open" style="width:16px;height:16px;"></i> TỔNG QUAN BÀI GIẢNG
+  </div>
+  <div style="line-height:1.7;color:var(--text);font-size:13.5px;">${escHtml(summary.overview)}</div>
+</div>` : '';
+
+  const takeaways = Array.isArray(summary?.key_takeaways) ? summary.key_takeaways : [];
+  const takeawaysHtml = takeaways.length ? `
+<div class="card" style="padding:18px 20px;border:1px solid #e2e8f0;background:#ffffff;border-radius:var(--radius-lg);margin-bottom:14px;">
+  <div style="font-weight:800;color:#0f172a;font-size:14px;display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <i data-lucide="check-circle" style="width:16px;height:16px;color:#059669;"></i> LUẬN ĐIỂM & THUẬT NGỮ CỐT LÕI
+  </div>
+  <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;">
+    ${takeaways.map(item => `
+      <li style="display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:1.6;color:var(--text);">
+        <i data-lucide="arrow-right" style="width:13px;height:13px;color:#4f46e5;flex-shrink:0;margin-top:4px;"></i>
+        <span>${escHtml(item)}</span>
+      </li>
+    `).join('')}
+  </ul>
+</div>` : '';
+
+  const sections = Array.isArray(summary?.sections) ? summary.sections : [];
+  const sectionsHtml = sections.length ? `
+<div class="card" style="padding:18px 20px;border:1px solid #e2e8f0;background:#ffffff;border-radius:var(--radius-lg);margin-bottom:14px;">
+  <div style="font-weight:800;color:#0f172a;font-size:14px;display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <i data-lucide="list" style="width:16px;height:16px;color:#d97706;"></i> NỘI DUNG TỪNG PHẦN
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    ${sections.map((sec, idx) => `
+      <div style="padding:10px 14px;background:#f8fafc;border-radius:var(--radius-md);border:1px solid #e2e8f0;">
+        <div style="font-weight:700;font-size:13px;color:#1e293b;display:flex;justify-content:space-between;">
+          <span>${idx + 1}. ${escHtml(sec.title || '')}</span>
+          ${sec.timestamp ? `<span class="badge" style="font-size:11px;">⏱️ ${escHtml(sec.timestamp)}</span>` : ''}
+        </div>
+        <div style="font-size:12.5px;color:#64748b;margin-top:4px;line-height:1.5;">${escHtml(sec.summary || '')}</div>
+      </div>
+    `).join('')}
+  </div>
+</div>` : '';
+
+  // Mindmap Visualizer
+  function renderMindmapNode(node) {
+    if (!node) return '';
+    const title = node.topic || node.title || node.name || 'Chủ đề';
+    const children = Array.isArray(node.children) ? node.children : [];
+    return `
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#ffffff;border:1px solid rgba(99,102,241,0.25);border-radius:20px;font-size:12.5px;font-weight:700;color:#4338ca;box-shadow:0 1px 3px rgba(0,0,0,0.04);width:fit-content;">
+          <i data-lucide="folder-tree" style="width:13px;height:13px;color:#6366f1;"></i>
+          <span>${escHtml(title)}</span>
+        </div>
+        ${children.length ? `
+          <div style="padding-left:18px;border-left:2px dashed #cbd5e1;margin-left:8px;display:flex;flex-direction:column;gap:8px;">
+            ${children.map(renderMindmapNode).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  const mindmapHtml = hasMindmap ? `
+<div class="card" style="padding:18px 20px;border:1px solid rgba(99,102,241,0.20);background:#fbfcfe;border-radius:var(--radius-lg);margin-bottom:14px;">
+  <div style="font-weight:800;color:#3730a3;font-size:14px;display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+    <i data-lucide="git-branch" style="width:16px;height:16px;color:#6366f1;"></i> SƠ ĐỒ TƯ DUY (MINDMAP PHÂN CẤP)
+  </div>
+  <div style="padding:10px 4px;">
+    ${renderMindmapNode(mindmap)}
+  </div>
+</div>` : '';
+
+  el('summaryBox').innerHTML = `
+<div style="max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:4px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:4px 0;">
+    <span style="font-weight:800;color:var(--text);font-size:14px;display:flex;align-items:center;gap:6px;">
+      <i data-lucide="sparkles" style="width:16px;height:16px;color:#6366f1;"></i> TỔNG HỢP KIẾN THỨC BÀI HỌC
+    </span>
+    <button class="btn btn-ghost btn-sm" onclick="triggerSummaryGeneration()" title="Tạo lại tóm tắt mới" style="font-size:12px;display:inline-flex;align-items:center;gap:4px;">
+      <i data-lucide="rotate-ccw" style="width:13px;height:13px;"></i> Tạo lại
+    </button>
+  </div>
+  ${overviewHtml}
+  ${takeawaysHtml}
+  ${sectionsHtml}
+  ${mindmapHtml}
+</div>`;
+  refreshIcons();
+}
+
+EventBus.on('summary:done', ({ summary, mindmap }) => {
+  hideStatus();
+  renderSummary(summary, mindmap);
+  switchTabTo('summary');
+  showToast('Đã tạo xong tóm tắt & sơ đồ tư duy!', 'success');
+});
+
+EventBus.on('summary:error', ({ message }) => {
+  hideStatus();
+  showToast('Lỗi tạo tóm tắt: ' + message, 'error', 4000);
+});
+
+// ──────────────────────────────────────────
+// Flashcard Generation & Study
 // ──────────────────────────────────────────
 async function showCardsModal() {
   if (!LEC.lectureId) return showToast('Hãy phiên âm bài giảng trước khi tạo thẻ ghi nhớ', 'warning');
@@ -669,9 +847,130 @@ async function showCardsModal() {
   await API.generate_flashcards(LEC.lectureId, numCards);
 }
 
-EventBus.on('flashcards:done', ({ count, deck_name }) => {
+function renderLectureFlashcards(cards) {
+  if (!el('flashcardsBox')) return;
+  const list = Array.isArray(cards) ? cards : [];
+  LEC.flashcards = list;
+
+  if (!list.length) {
+    el('flashcardsBox').innerHTML = `
+<div class="empty-state" style="height:100%;padding:40px 20px;">
+  <i data-lucide="layers" style="width:44px;height:44px;color:#059669;"></i>
+  <div class="empty-title" style="margin-top:14px;font-size:16px;font-weight:700;">Chưa có thẻ ghi nhớ nào</div>
+  <div class="empty-sub" style="max-width:480px;margin:6px auto 16px;color:#64748b;line-height:1.5;">
+    Tự động trích xuất các định nghĩa, công thức và khái niệm trọng tâm thành bộ Flashcard kèm gợi ý liên tưởng chuẩn Spaced Repetition (SM-2).
+  </div>
+  <button class="btn btn-primary" onclick="showCardsModal()" style="display:inline-flex;align-items:center;gap:6px;">
+    <i data-lucide="layers" style="width:14px;height:14px;"></i> Tạo Flashcards ngay
+  </button>
+</div>`;
+    refreshIcons();
+    return;
+  }
+
+  el('flashcardsBox').innerHTML = `
+<div style="max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:14px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.20);padding:12px 18px;border-radius:var(--radius-lg);">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-weight:800;font-size:14px;color:#065f46;display:flex;align-items:center;gap:6px;">
+        <i data-lucide="layers" style="width:16px;height:16px;"></i> THẺ GHI NHỚ BÀI GIẢNG
+      </span>
+      <span class="badge" style="background:#d1fae5;color:#065f46;border:1px solid #a7f3d0;font-weight:700;">${list.length} thẻ</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="btn btn-primary btn-sm" id="btnStudyCardsNow" style="display:inline-flex;align-items:center;gap:6px;background:#059669;border-color:#059669;">
+        <i data-lucide="play" style="width:13px;height:13px;"></i> Ôn tập lật thẻ
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="showCardsModal()" title="Trích xuất thêm thẻ" style="font-size:12px;display:inline-flex;align-items:center;gap:4px;">
+        <i data-lucide="plus" style="width:13px;height:13px;"></i> Thêm thẻ
+      </button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:12px;">
+    ${list.map((c, i) => `
+      <div class="card" id="fc-card-${c.id || i}" style="padding:16px;border:1px solid #e2e8f0;border-radius:var(--radius-md);display:flex;flex-direction:column;gap:8px;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:11px;font-weight:800;color:#059669;background:#ecfdf5;padding:2px 8px;border-radius:12px;border:1px solid #a7f3d0;">THẺ #${i + 1}</span>
+          <button class="btn btn-ghost btn-sm btn-del-card" data-cid="${c.id}" title="Xoá thẻ" style="padding:2px 6px;height:22px;">
+            <i data-lucide="trash-2" style="width:12px;height:12px;color:var(--danger);"></i>
+          </button>
+        </div>
+        <div style="font-weight:700;font-size:13.5px;color:#0f172a;line-height:1.5;">${escHtml(c.front)}</div>
+        <div class="fc-back-content" id="fc-back-${i}" style="display:none;padding:10px;background:#f8fafc;border-radius:var(--radius-sm);border-left:3px solid #059669;font-size:13px;color:#334155;line-height:1.5;animation:fadeUp .2s ease;">
+          <div style="font-weight:600;color:#065f46;font-size:11px;margin-bottom:2px;">ĐÁP ÁN:</div>
+          ${escHtml(c.back)}
+          ${c.hint ? `<div style="font-size:11px;color:#d97706;margin-top:6px;"><i data-lucide="lightbulb" style="width:11px;height:11px;display:inline-block;vertical-align:middle;"></i> Gợi ý: ${escHtml(c.hint)}</div>` : ''}
+        </div>
+        <button class="btn btn-outline btn-sm btn-toggle-card" data-idx="${i}" style="margin-top:auto;font-size:12px;padding:6px 10px;display:inline-flex;align-items:center;justify-content:center;gap:4px;">
+          <i data-lucide="eye" style="width:13px;height:13px;"></i> <span>Xem đáp án</span>
+        </button>
+      </div>
+    `).join('')}
+  </div>
+</div>`;
+
+  el('btnStudyCardsNow')?.addEventListener('click', studyLectureFlashcards);
+
+  el('flashcardsBox').querySelectorAll('.btn-toggle-card').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = btn.dataset.idx;
+      const backEl = el(`fc-back-${idx}`);
+      if (!backEl) return;
+      const isHidden = backEl.style.display === 'none';
+      backEl.style.display = isHidden ? 'block' : 'none';
+      btn.innerHTML = isHidden
+        ? '<i data-lucide="eye-off" style="width:13px;height:13px;"></i> <span>Ẩn đáp án</span>'
+        : '<i data-lucide="eye" style="width:13px;height:13px;"></i> <span>Xem đáp án</span>';
+      refreshIcons();
+    });
+  });
+
+  el('flashcardsBox').querySelectorAll('.btn-del-card').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const cid = btn.dataset.cid;
+      if (!cid) return;
+      try {
+        await API.delete_card(cid);
+        showToast('Đã xóa thẻ', 'info');
+        const cards = await API.get_lecture_flashcards(LEC.lectureId);
+        renderLectureFlashcards(cards);
+      } catch (err) {
+        showToast('Lỗi khi xóa thẻ', 'error');
+      }
+    });
+  });
+
+  refreshIcons();
+}
+
+async function studyLectureFlashcards() {
+  if (!LEC.lectureId) return;
+  try {
+    const decks = await API.get_lecture_decks(LEC.lectureId);
+    if (decks && decks.length > 0) {
+      switchView('flashcard');
+      if (typeof selectDeck === 'function') {
+        selectDeck(decks[0].id, decks[0].name);
+      }
+    } else {
+      showToast('Bài giảng chưa có bộ thẻ để ôn tập', 'warning');
+    }
+  } catch (err) {
+    showToast('Lỗi mở bộ thẻ: ' + err.message, 'error');
+  }
+}
+
+EventBus.on('flashcards:done', async ({ count, deck_name, all_cards }) => {
   hideStatus();
-  showToast(`Đã tạo ${count} thẻ trong bộ "${deck_name}"! Vào "Thẻ ghi nhớ" để ôn tập.`, 'success', 5000);
+  showToast(`Đã tạo ${count} thẻ trong bộ "${deck_name}"!`, 'success', 4000);
+  if (all_cards && Array.isArray(all_cards)) {
+    renderLectureFlashcards(all_cards);
+  } else if (LEC.lectureId) {
+    const cards = await API.get_lecture_flashcards(LEC.lectureId);
+    renderLectureFlashcards(cards);
+  }
+  switchTabTo('flashcards');
 });
 
 EventBus.on('flashcards:error', ({ message }) => {
@@ -795,7 +1094,7 @@ function hideStatus() {
 
 function updateStepButtons() {
   const has = !!LEC.lectureId;
-  ['btnQuiz', 'btnCards', 'btnExport'].forEach(id => {
+  ['btnSummary', 'btnQuiz', 'btnCards', 'btnExport'].forEach(id => {
     if (el(id)) el(id).disabled = !has;
   });
   // Mark transcribe as done if we have a lectureId

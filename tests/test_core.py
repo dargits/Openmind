@@ -64,6 +64,35 @@ class TestCoreModules(unittest.TestCase):
         self.assertEqual(lec_loaded["quiz"][0]["correct_index"], 1)
         self.assertIn("tầng Giao vận", lec_loaded["quiz"][0]["explanation"])
 
+        # Kiểm tra đổi tên bộ flashcard
+        self.assertTrue(self.db.update_deck(deck_id, "Từ vựng Mạng Nâng Cao", "Mô tả mới"))
+        decks = self.db.list_decks()
+        self.assertEqual(decks[0]["name"], "Từ vựng Mạng Nâng Cao")
+        self.assertEqual(decks[0]["lecture_title"], "Bài giảng Mạng máy tính")
+
+        # Kiểm tra truy vấn decks và flashcards theo bài giảng
+        lec_decks = self.db.get_lecture_decks(lid)
+        self.assertEqual(len(lec_decks), 1)
+        self.assertEqual(lec_decks[0]["id"], deck_id)
+
+        lec_cards = self.db.get_lecture_flashcards(lid)
+        self.assertEqual(len(lec_cards), 1)
+        self.assertEqual(lec_cards[0]["deck_name"], "Từ vựng Mạng Nâng Cao")
+
+        # Kiểm tra list_lectures trả về đầy đủ chỉ số học tập
+        lectures_stats = self.db.list_lectures()
+        self.assertEqual(lectures_stats[0]["quiz_count"], 1)
+        self.assertEqual(lectures_stats[0]["flashcard_count"], 1)
+        self.assertEqual(lectures_stats[0]["deck_count"], 1)
+        self.assertEqual(lectures_stats[0]["has_summary"], 1)
+        self.assertEqual(lectures_stats[0]["has_quiz"], 1)
+
+        # Kiểm tra xóa bài giảng dọn dẹp sạch sẽ dữ liệu liên đới
+        self.db.delete_lecture(lid)
+        self.assertEqual(len(self.db.list_lectures()), 0)
+        self.assertEqual(len(self.db.get_lecture_decks(lid)), 0)
+        self.assertEqual(len(self.db.get_lecture_flashcards(lid)), 0)
+
     def test_sm2_srs_calculation(self):
         # 1. Test Again (rating = 0)
         ef, interval, reps, due, state = srs_manager.calculate_next_review(0, 2.5, 5, 2)

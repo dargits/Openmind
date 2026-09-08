@@ -35,7 +35,10 @@ const API = {
 
   get_decks: () => API.call('get_decks'),
   create_deck: (n, d) => API.call('create_deck', n, d || ''),
+  update_deck: (id, n, d) => API.call('update_deck', id, n, d || ''),
   delete_deck: (id) => API.call('delete_deck', id),
+  get_lecture_flashcards: (id) => API.call('get_lecture_flashcards', id),
+  get_lecture_decks: (id) => API.call('get_lecture_decks', id),
   get_due_cards: (id) => API.call('get_due_cards', id),
   get_all_cards: (id) => API.call('get_all_cards', id),
   add_card: (did, f, b, h) => API.call('add_card', did, f, b, h || ''),

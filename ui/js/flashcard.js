@@ -161,18 +161,24 @@ function renderDeckList(decks) {
     const mastered = d.mastered_cards || 0;
     const pct      = total > 0 ? Math.round(mastered / total * 100) : 0;
     const isActive = d.id === FC.deckId;
+    const lecTag   = d.lecture_title ? `<div style="font-size:11px;color:#6366f1;font-weight:600;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="Bài giảng: ${escHtml(d.lecture_title)}">📖 ${escHtml(d.lecture_title)}</div>` : '';
 
     return `
 <div class="deck-item ${isActive ? 'active' : ''}" data-did="${escHtml(d.id)}" data-name="${escHtml(d.name)}">
   <div class="deck-item-top">
     <div style="flex:1;min-width:0;">
       <div class="deck-name">${escHtml(d.name)}</div>
-      <div class="deck-meta">${due > 0 ? `<span style="color:#d97706;font-weight:700;">${due} cần ôn</span> · ` : ''}${total} thẻ</div>
+      ${lecTag}
+      <div class="deck-meta" style="margin-top:2px;">${due > 0 ? `<span style="color:#d97706;font-weight:700;">${due} cần ôn</span> · ` : ''}${total} thẻ</div>
     </div>
-    <div class="flex items-center gap-2">
-      <span class="deck-pct ${isActive ? 'text-accent' : 'text-muted'}" style="font-size:12px;font-weight:800;">${pct}%</span>
+    <div class="flex items-center gap-1">
+      <span class="deck-pct ${isActive ? 'text-accent' : 'text-muted'}" style="font-size:12px;font-weight:800;margin-right:2px;">${pct}%</span>
+      <button class="btn btn-ghost btn-sm btn-rename-deck" data-did="${escHtml(d.id)}" data-name="${escHtml(d.name)}"
+        style="padding:4px 6px;display:inline-flex;align-items:center;" title="Đổi tên bộ thẻ">
+        <i data-lucide="pencil" style="width:12px;height:12px;color:var(--text-muted);"></i>
+      </button>
       <button class="btn btn-ghost btn-sm btn-del-deck" data-did="${escHtml(d.id)}"
-        style="padding:4px 6px;display:inline-flex;align-items:center;" title="Xoá chủ đề">
+        style="padding:4px 6px;display:inline-flex;align-items:center;" title="Xoá bộ thẻ">
         <i data-lucide="trash-2" style="width:12px;height:12px;color:var(--danger);"></i>
       </button>
     </div>
@@ -187,8 +193,15 @@ function renderDeckList(decks) {
 
   el('deckList').querySelectorAll('.deck-item').forEach(item => {
     item.addEventListener('click', e => {
-      if (e.target.closest('.btn-del-deck')) return;
+      if (e.target.closest('.btn-del-deck') || e.target.closest('.btn-rename-deck')) return;
       selectDeck(item.dataset.did, item.dataset.name);
+    });
+  });
+
+  el('deckList').querySelectorAll('.btn-rename-deck').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      renameDeckDialog(btn.dataset.did, btn.dataset.name);
     });
   });
 
@@ -197,37 +210,76 @@ function renderDeckList(decks) {
       e.stopPropagation();
       const did = btn.dataset.did;
       const idx = await showModal(
-        'Xoá chủ đề',
-        `<p style="color:var(--text-muted);">Bạn chắc muốn xoá chủ đề này và <strong style="color:var(--danger);">toàn bộ thẻ bên trong</strong>?</p>`,
-        [{ label: 'Huỷ', class: 'btn-ghost' }, { label: 'Xoá chủ đề', class: 'btn-danger' }]
+        'Xoá bộ thẻ',
+        `<p style="color:var(--text-muted);">Bạn chắc muốn xoá bộ thẻ này và <strong style="color:var(--danger);">toàn bộ thẻ bên trong</strong>?</p>`,
+        [{ label: 'Huỷ', class: 'btn-ghost' }, { label: 'Xoá bộ thẻ', class: 'btn-danger' }]
       );
       if (idx !== 1) return;
       try {
         await API.delete_deck(did);
-        showToast('Đã xoá chủ đề', 'success');
+        showToast('Đã xoá bộ thẻ', 'success');
         if (FC.deckId === did) {
           FC.deckId = null;
-          if (el('fcDeckTitle')) el('fcDeckTitle').innerHTML = `<i data-lucide="layers" style="width:18px;height:18px;color:var(--accent);"></i><span>Chọn chủ đề để bắt đầu</span>`;
-          if (el('fcFront')) el('fcFront').innerHTML = '<div class="card-empty"><div class="card-empty-title">Chọn chủ đề</div></div>';
+          if (el('fcDeckTitle')) el('fcDeckTitle').innerHTML = `<i data-lucide="layers" style="width:18px;height:18px;color:var(--accent);"></i><span>Chọn bộ thẻ để bắt đầu</span>`;
+          if (el('fcFront')) el('fcFront').innerHTML = '<div class="card-empty"><div class="card-empty-title">Chọn bộ thẻ</div></div>';
           if (el('fcBack')) el('fcBack').innerHTML = '';
         }
         loadDecks();
       } catch (err) {
-        showToast('Lỗi khi xóa chủ đề', 'error');
+        showToast('Lỗi khi xóa bộ thẻ', 'error');
       }
     });
   });
   refreshIcons();
 }
 
+async function renameDeckDialog(deckId, currentName) {
+  const idx = await showModal(
+    'Đổi tên bộ thẻ ghi nhớ',
+    `<div class="flex-col gap-2">
+       <label class="label">Tên mới cho bộ thẻ</label>
+       <input class="input w-full" id="renameDeckInput" value="${escHtml(currentName)}" placeholder="Nhập tên mới…" autofocus>
+     </div>`,
+    [
+      { label: 'Huỷ', class: 'btn-ghost' },
+      { label: 'Lưu thay đổi', class: 'btn-primary' }
+    ]
+  );
+  if (idx !== 1) return;
+  const newName = el('renameDeckInput')?.value?.trim();
+  if (!newName) {
+    showToast('Tên bộ thẻ không được để trống', 'warning');
+    return;
+  }
+  try {
+    await API.update_deck(deckId, newName);
+    showToast(`Đã đổi tên thành "${newName}"`, 'success');
+    if (FC.deckId === deckId) {
+      if (el('fcCurrentDeckName')) el('fcCurrentDeckName').textContent = newName;
+      FC.deckName = newName;
+    }
+    loadDecks();
+  } catch (err) {
+    showToast('Lỗi khi đổi tên: ' + err.message, 'error');
+  }
+}
+
 async function selectDeck(deckId, deckName) {
   FC.deckId = deckId;
+  FC.deckName = deckName;
   FC.reviewed = 0;
   FC.correct = 0;
   FC.wrong = 0;
   FC.sessionStart = Date.now();
   if (el('fcDeckTitle')) {
-    el('fcDeckTitle').innerHTML = `<i data-lucide="layers" style="width:18px;height:18px;color:var(--accent);"></i> <span>${escHtml(deckName)}</span>`;
+    el('fcDeckTitle').innerHTML = `
+      <i data-lucide="layers" style="width:18px;height:18px;color:var(--accent);"></i>
+      <span id="fcCurrentDeckName">${escHtml(deckName)}</span>
+      <button class="btn btn-ghost btn-sm" id="btnHeaderRenameDeck" title="Đổi tên bộ thẻ" style="padding:2px 6px;margin-left:6px;height:24px;display:inline-flex;align-items:center;">
+        <i data-lucide="pencil" style="width:13px;height:13px;color:var(--text-muted);"></i>
+      </button>
+    `;
+    el('btnHeaderRenameDeck')?.addEventListener('click', () => renameDeckDialog(FC.deckId, FC.deckName));
   }
   const decks = await API.get_decks();
   renderDeckList(decks);

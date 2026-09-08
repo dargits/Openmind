@@ -132,9 +132,19 @@ class API:
         deck_id = db.create_deck(name.strip(), description)
         return {"id": deck_id, "name": name}
 
+    def update_deck(self, deck_id: str, name: str, description: str = "") -> dict:
+        success = db.update_deck(deck_id, name.strip(), description.strip() if description else None)
+        return {"ok": success, "name": name.strip()}
+
     def delete_deck(self, deck_id: str) -> dict:
         db.delete_deck(deck_id)
         return {"ok": True}
+
+    def get_lecture_flashcards(self, lecture_id: str) -> list:
+        return db.get_lecture_flashcards(lecture_id)
+
+    def get_lecture_decks(self, lecture_id: str) -> list:
+        return db.get_lecture_decks(lecture_id)
 
     def get_due_cards(self, deck_id: str) -> list:
         return db.get_due_cards(deck_id)
@@ -338,10 +348,22 @@ class API:
                 self._push("llm:status", {"text": f"Đang rút trích {num_cards} thẻ ghi nhớ flashcards…"})
                 cards = llm_engine.generate_flashcards(lec["full_text"], int(num_cards), on_prompt=handle_prompt)
                 if cards:
-                    deck_name = f"Thẻ: {lec['title']}"
-                    deck_id = db.create_deck(deck_name, "Tự động trích xuất từ bài giảng", lecture_id)
+                    existing_decks = db.get_lecture_decks(lecture_id)
+                    if existing_decks:
+                        deck_id = existing_decks[0]["id"]
+                        deck_name = existing_decks[0]["name"]
+                    else:
+                        deck_name = f"Thẻ: {lec['title']}"
+                        deck_id = db.create_deck(deck_name, "Tự động trích xuất từ bài giảng", lecture_id)
                     db.add_flashcards_batch(deck_id, cards, lecture_id)
-                    self._push("flashcards:done", {"count": len(cards), "deck_name": deck_name})
+                    all_cards = db.get_lecture_flashcards(lecture_id)
+                    self._push("flashcards:done", {
+                        "count": len(cards),
+                        "deck_id": deck_id,
+                        "deck_name": deck_name,
+                        "lecture_id": lecture_id,
+                        "all_cards": all_cards
+                    })
                 else:
                     self._push("flashcards:error", {"message": "Không trích xuất được thẻ hợp lệ từ bài giảng này."})
             except Exception as e:
