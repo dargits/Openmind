@@ -29,41 +29,42 @@ const API = {
       throw err;
     }
   },
-  get_app_info:         ()               => API.call('get_app_info'),
-  load_models:          ()               => API.call('load_models'),
-  get_model_info:       ()               => API.call('get_model_info'),
+  get_app_info: () => API.call('get_app_info'),
+  load_models: () => API.call('load_models'),
+  get_model_info: () => API.call('get_model_info'),
 
-  get_decks:            ()               => API.call('get_decks'),
-  create_deck:          (n, d)           => API.call('create_deck', n, d || ''),
-  delete_deck:          (id)             => API.call('delete_deck', id),
-  get_due_cards:        (id)             => API.call('get_due_cards', id),
-  get_all_cards:        (id)             => API.call('get_all_cards', id),
-  add_card:             (did, f, b, h)   => API.call('add_card', did, f, b, h || ''),
-  delete_card:          (id)             => API.call('delete_card', id),
-  rate_card:            (id, r, ef, iv, rp) => API.call('rate_card', id, r, ef, iv, rp),
-  preview_srs:          (r, ef, iv, rp)  => API.call('preview_srs', r, ef, iv, rp),
-  get_deck_progress:    (id)             => API.call('get_deck_progress', id),
+  get_decks: () => API.call('get_decks'),
+  create_deck: (n, d) => API.call('create_deck', n, d || ''),
+  delete_deck: (id) => API.call('delete_deck', id),
+  get_due_cards: (id) => API.call('get_due_cards', id),
+  get_all_cards: (id) => API.call('get_all_cards', id),
+  add_card: (did, f, b, h) => API.call('add_card', did, f, b, h || ''),
+  delete_card: (id) => API.call('delete_card', id),
+  rate_card: (id, r, ef, iv, rp) => API.call('rate_card', id, r, ef, iv, rp),
+  preview_srs: (r, ef, iv, rp) => API.call('preview_srs', r, ef, iv, rp),
+  get_deck_progress: (id) => API.call('get_deck_progress', id),
 
-  list_lectures:        (tag, q)         => API.call('list_lectures', tag || '', q || ''),
-  get_lecture:          (id)             => API.call('get_lecture', id),
-  delete_lecture:       (id)             => API.call('delete_lecture', id),
-  pick_audio_file:      ()               => API.call('pick_audio_file'),
-  get_audio_url:        (p)              => API.call('get_audio_url', p),
+  list_lectures: (tag, q) => API.call('list_lectures', tag || '', q || ''),
+  get_lecture: (id) => API.call('get_lecture', id),
+  delete_lecture: (id) => API.call('delete_lecture', id),
+  pick_audio_file: () => API.call('pick_audio_file'),
+  get_audio_url: (p) => API.call('get_audio_url', p),
 
-  start_transcribe:     (p, pr, lid, t, ft) => API.call('start_transcribe', p, pr || '', lid || '', t || '', ft || 'General'),
-  generate_summary:     (id)             => API.call('generate_summary', id),
-  generate_quiz:        (id, n, d)       => API.call('generate_quiz', id, n || 5, d || 'trung bình'),
-  generate_flashcards:  (id, n)          => API.call('generate_flashcards', id, n || 8),
-  ask_rag:              (q, id)          => API.call('ask_rag', q, id),
-  save_quiz_result:     (id, s, t, d, r) => API.call('save_quiz_result', id, s, t, d, r),
+  start_transcribe: (p, pr, lid, t, ft) => API.call('start_transcribe', p, pr || '', lid || '', t || '', ft || 'General'),
+  generate_summary: (id) => API.call('generate_summary', id),
+  generate_quiz: (id, n, d) => API.call('generate_quiz', id, n || 5, d || 'trung bình'),
+  generate_flashcards: (id, n) => API.call('generate_flashcards', id, n || 8),
+  ask_rag: (q, id) => API.call('ask_rag', q, id),
+  save_quiz: (id, q) => API.call('save_quiz', id, q),
+  save_quiz_result: (id, s, t, d, r) => API.call('save_quiz_result', id, s, t, d, r),
 
-  get_stats:            ()               => API.call('get_stats'),
-  get_settings:         ()               => API.call('get_settings'),
-  seed_demo_data:       (f)              => API.call('seed_demo_data', f || false),
+  get_stats: () => API.call('get_stats'),
+  get_settings: () => API.call('get_settings'),
+  seed_demo_data: (f) => API.call('seed_demo_data', f || false),
 
-  export_txt:           (id)             => API.call('export_txt', id),
-  export_html:          (id)             => API.call('export_html', id),
-  export_json:          (id)             => API.call('export_json', id),
+  export_txt: (id) => API.call('export_txt', id),
+  export_html: (id) => API.call('export_html', id),
+  export_json: (id) => API.call('export_json', id),
 };
 
 // ──────────────────────────────────────────
@@ -93,9 +94,9 @@ function showToast(msg, type = 'info', duration = 3200) {
   if (!el_) return;
   const iconMap = {
     success: 'check-circle',
-    error:   'alert-circle',
+    error: 'alert-circle',
     warning: 'alert-triangle',
-    info:    'info',
+    info: 'info',
   };
   const iconName = iconMap[type] || 'info';
   el_.innerHTML = `<i data-lucide="${iconName}" style="width:16px;height:16px;flex-shrink:0;"></i><span>${escHtml(msg)}</span>`;
@@ -112,7 +113,7 @@ function showToast(msg, type = 'info', duration = 3200) {
 function showModal(title, bodyHtml, actions = []) {
   return new Promise(resolve => {
     const overlay = document.getElementById('modalOverlay');
-    const box     = document.getElementById('modalBox');
+    const box = document.getElementById('modalBox');
 
     const actionsHtml = actions.map((a, i) =>
       `<button class="btn ${a.class || 'btn-ghost'}" data-idx="${i}">${a.label}</button>`
@@ -147,9 +148,9 @@ function closeModal() {
 // ──────────────────────────────────────────
 // Helpers & Lucide Icons
 // ──────────────────────────────────────────
-function el(id)      { return document.getElementById(id); }
+function el(id) { return document.getElementById(id); }
 function html(id, c) { const e = el(id); if (e) e.innerHTML = c; }
-function qs(sel, parent = document)  { return parent.querySelector(sel); }
+function qs(sel, parent = document) { return parent.querySelector(sel); }
 function qsa(sel, parent = document) { return [...parent.querySelectorAll(sel)]; }
 
 function refreshIcons() {
@@ -172,16 +173,16 @@ function fmtDuration(seconds) {
 function fmtInterval(days) {
   if (days <= 0) return 'hôm nay';
   if (days === 1) return '1 ngày';
-  if (days < 7)  return `${days} ngày`;
-  if (days < 30) return `${Math.round(days/7)} tuần`;
-  if (days < 365)return `${(days/30).toFixed(1)} tháng`;
-  return `${(days/365).toFixed(1)} năm`;
+  if (days < 7) return `${days} ngày`;
+  if (days < 30) return `${Math.round(days / 7)} tuần`;
+  if (days < 365) return `${(days / 30).toFixed(1)} tháng`;
+  return `${(days / 365).toFixed(1)} năm`;
 }
 
 function fmtDate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
-  return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 }
 
 function fmtDateShort(iso) {
@@ -204,7 +205,7 @@ function escHtml(str) {
 
 function greetingText() {
   const h = new Date().getHours();
-  if (h < 6)  return 'Chào buổi khuya';
+  if (h < 6) return 'Chào buổi khuya';
   if (h < 12) return 'Chào buổi sáng';
   if (h < 18) return 'Chào buổi chiều';
   return 'Chào buổi tối';
@@ -212,7 +213,7 @@ function greetingText() {
 
 // Compute XP/level from total cards reviewed
 function computeLevel(totalCards) {
-  const lvl  = Math.floor(totalCards / 50) + 1;
+  const lvl = Math.floor(totalCards / 50) + 1;
   const curr = totalCards % 50;
   const next = 50;
   return { level: lvl, current: curr, max: next, pct: Math.round(curr / next * 100) };
@@ -289,7 +290,7 @@ async function refreshTopBar() {
     if (el('sidebarXpText')) el('sidebarXpText').textContent = `${xp.current} / ${xp.max} XP`;
 
     refreshIcons();
-  } catch (_) {}
+  } catch (_) { }
 }
 
 // ──────────────────────────────────────────
@@ -329,7 +330,7 @@ async function renderDashboardView() {
 
   <!-- Stats row -->
   <div class="dash-stats" id="dashStats">
-    ${['','','',''].map(() => `
+    ${['', '', '', ''].map(() => `
       <div class="dash-stat-card">
         <div class="dash-stat-icon shimmer" style="width:36px;height:36px;border-radius:10px;"></div>
         <div class="shimmer" style="height:28px;width:60%;margin:12px 0 4px;border-radius:6px;"></div>
@@ -549,11 +550,11 @@ async function loadDashboardData() {
         });
       } else {
         const tagColors = {
-          'CNTT': ['#e0e7ff','#4338ca'],
-          'Toán': ['#d1fae5','#047857'],
-          'Vật lý': ['#cffafe','#0e7490'],
-          'Ngoại ngữ': ['#fef3c7','#b45309'],
-          'General': ['#ede9fe','#6d28d9'],
+          'CNTT': ['#e0e7ff', '#4338ca'],
+          'Toán': ['#d1fae5', '#047857'],
+          'Vật lý': ['#cffafe', '#0e7490'],
+          'Ngoại ngữ': ['#fef3c7', '#b45309'],
+          'General': ['#ede9fe', '#6d28d9'],
         };
         el('dashRecentLectures').innerHTML = lectures.slice(0, 4).map(lec => {
           const tag = lec.folder_tag || 'General';
@@ -603,7 +604,7 @@ function renderDashHeatmap(history) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const iso = d.toISOString().slice(0, 10);
-    const lbl = `${d.getDate()}/${d.getMonth()+1}`;
+    const lbl = `${d.getDate()}/${d.getMonth() + 1}`;
     days.push({ iso, label: lbl, level: dateMap[iso] || 0 });
   }
 
@@ -618,7 +619,7 @@ function renderDashHeatmap(history) {
   ${weeks.map(week => `
   <div style="display:flex;flex-direction:column;gap:4px;">
     ${week.map(d => `
-    <div class="heatmap-day has-${d.level}" title="${d.label}: ${d.level > 0 ? d.level*10+'+ phút' : 'Chưa học'}"></div>
+    <div class="heatmap-day has-${d.level}" title="${d.label}: ${d.level > 0 ? d.level * 10 + '+ phút' : 'Chưa học'}"></div>
     `).join('')}
   </div>`).join('')}
 </div>
@@ -646,7 +647,7 @@ registerView('dashboard', {
 // ──────────────────────────────────────────
 // Splash / startup
 // ──────────────────────────────────────────
-let splashTimeout   = null;
+let splashTimeout = null;
 let splashDismissed = false;
 
 function dismissSplash() {
@@ -669,7 +670,7 @@ function dismissSplash() {
 
 function setSplashStatus(text, phase, progress) {
   if (el('splashStatus')) el('splashStatus').textContent = text;
-  if (el('splashBar'))    el('splashBar').style.width = `${Math.round(progress * 100)}%`;
+  if (el('splashBar')) el('splashBar').style.width = `${Math.round(progress * 100)}%`;
 
   if (phase >= 1 && el('phase1'))
     el('phase1').className = 'phase-pill' + (progress >= 0.5 ? ' done' : '');

@@ -37,9 +37,16 @@ class Database:
                 summary_json TEXT,
                 mindmap_json TEXT,
                 folder_tag TEXT DEFAULT 'General',
+                quiz_json TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             """)
+
+            # Tự động migration thêm cột quiz_json nếu database cũ chưa có
+            try:
+                cursor.execute("ALTER TABLE lectures ADD COLUMN quiz_json TEXT;")
+            except Exception:
+                pass
 
             # Decks table
             cursor.execute("""
@@ -107,7 +114,8 @@ class Database:
     def save_lecture(self, title: str, audio_path: str = "", duration_sec: float = 0,
                      transcript: Optional[List[Dict[str, Any]]] = None, full_text: str = "",
                      summary_data: Optional[Dict[str, Any]] = None, mindmap_data: Optional[Dict[str, Any]] = None,
-                     folder_tag: str = "General", lecture_id: Optional[str] = None) -> str:
+                     folder_tag: str = "General", lecture_id: Optional[str] = None,
+                     quiz_data: Optional[List[Dict[str, Any]]] = None) -> str:
         lid = lecture_id or str(uuid.uuid4())
         transcript_str = json.dumps(transcript or [], ensure_ascii=False)
         summary_str = json.dumps(summary_data or {}, ensure_ascii=False)
@@ -115,21 +123,46 @@ class Database:
 
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
-            INSERT INTO lectures (id, title, audio_path, duration_sec, transcript_json, full_text, summary_json, mindmap_json, folder_tag)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET
-                title=excluded.title,
-                audio_path=excluded.audio_path,
-                duration_sec=excluded.duration_sec,
-                transcript_json=excluded.transcript_json,
-                full_text=excluded.full_text,
-                summary_json=excluded.summary_json,
-                mindmap_json=excluded.mindmap_json,
-                folder_tag=excluded.folder_tag;
-            """, (lid, title, audio_path, duration_sec, transcript_str, full_text, summary_str, mindmap_str, folder_tag))
+            if quiz_data is not None:
+                quiz_str = json.dumps(quiz_data, ensure_ascii=False)
+                cursor.execute("""
+                INSERT INTO lectures (id, title, audio_path, duration_sec, transcript_json, full_text, summary_json, mindmap_json, folder_tag, quiz_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    title=excluded.title,
+                    audio_path=excluded.audio_path,
+                    duration_sec=excluded.duration_sec,
+                    transcript_json=excluded.transcript_json,
+                    full_text=excluded.full_text,
+                    summary_json=excluded.summary_json,
+                    mindmap_json=excluded.mindmap_json,
+                    folder_tag=excluded.folder_tag,
+                    quiz_json=excluded.quiz_json;
+                """, (lid, title, audio_path, duration_sec, transcript_str, full_text, summary_str, mindmap_str, folder_tag, quiz_str))
+            else:
+                cursor.execute("""
+                INSERT INTO lectures (id, title, audio_path, duration_sec, transcript_json, full_text, summary_json, mindmap_json, folder_tag)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    title=excluded.title,
+                    audio_path=excluded.audio_path,
+                    duration_sec=excluded.duration_sec,
+                    transcript_json=excluded.transcript_json,
+                    full_text=excluded.full_text,
+                    summary_json=excluded.summary_json,
+                    mindmap_json=excluded.mindmap_json,
+                    folder_tag=excluded.folder_tag;
+                """, (lid, title, audio_path, duration_sec, transcript_str, full_text, summary_str, mindmap_str, folder_tag))
             conn.commit()
         return lid
+
+    def save_quiz(self, lecture_id: str, quiz_data: List[Dict[str, Any]]):
+        """Lưu danh sách câu hỏi trắc nghiệm vào bài giảng tương ứng."""
+        quiz_str = json.dumps(quiz_data, ensure_ascii=False)
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE lectures SET quiz_json = ? WHERE id = ?", (quiz_str, lecture_id))
+            conn.commit()
 
     def get_lecture(self, lecture_id: str) -> Optional[Dict[str, Any]]:
         with self.get_connection() as conn:
@@ -142,6 +175,7 @@ class Database:
             res["transcript"] = json.loads(res.get("transcript_json") or "[]")
             res["summary"] = json.loads(res.get("summary_json") or "{}")
             res["mindmap"] = json.loads(res.get("mindmap_json") or "{}")
+            res["quiz"] = json.loads(res.get("quiz_json") or "[]")
             return res
 
     def list_lectures(self, folder_tag: Optional[str] = None, search_query: str = "") -> List[Dict[str, Any]]:

@@ -48,6 +48,22 @@ class TestCoreModules(unittest.TestCase):
         self.assertEqual(len(cards), 1)
         self.assertEqual(cards[0]["front"], "TCP là gì?")
 
+        # Kiểm tra lưu và tải quiz của bài giảng
+        sample_quiz = [
+            {
+                "question": "Giao thức TCP hoạt động ở tầng nào?",
+                "options": ["Tầng Mạng", "Tầng Giao vận (Transport)", "Tầng Ứng dụng", "Tầng Liên kết"],
+                "correct_index": 1,
+                "explanation": "TCP là giao thức hướng kết nối nằm ở tầng Giao vận trong mô hình TCP/IP."
+            }
+        ]
+        self.db.save_quiz(lid, sample_quiz)
+        lec_loaded = self.db.get_lecture(lid)
+        self.assertIsNotNone(lec_loaded)
+        self.assertEqual(len(lec_loaded.get("quiz", [])), 1)
+        self.assertEqual(lec_loaded["quiz"][0]["correct_index"], 1)
+        self.assertIn("tầng Giao vận", lec_loaded["quiz"][0]["explanation"])
+
     def test_sm2_srs_calculation(self):
         # 1. Test Again (rating = 0)
         ef, interval, reps, due, state = srs_manager.calculate_next_review(0, 2.5, 5, 2)

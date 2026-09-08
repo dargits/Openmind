@@ -306,6 +306,7 @@ class API:
                 self._push("llm:status", {"text": f"Đang sinh {num_questions} câu hỏi trắc nghiệm ({difficulty})…"})
                 quiz = llm_engine.generate_quiz(lec["full_text"], int(num_questions), difficulty, on_prompt=handle_prompt)
                 if quiz:
+                    db.save_quiz(lecture_id, quiz)
                     self._push("quiz:done", {"quiz": quiz})
                 else:
                     self._push("quiz:error", {"message": "AI không trích xuất được câu hỏi phù hợp. Hãy thử lại hoặc kiểm tra độ dài bài giảng."})
@@ -314,6 +315,10 @@ class API:
 
         threading.Thread(target=run, daemon=True).start()
         return {"status": "started"}
+
+    def save_quiz(self, lecture_id: str, quiz: list) -> dict:
+        db.save_quiz(lecture_id, quiz)
+        return {"ok": True}
 
     def generate_flashcards(self, lecture_id: str, num_cards: int = 8) -> dict:
         def run():

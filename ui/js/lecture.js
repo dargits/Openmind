@@ -262,8 +262,14 @@ async function loadLecture(lectureId) {
 </div>`;
     }
 
-    // Reset quiz
-    if (el('quizBox')) {
+    // Quiz: Tự động nạp bài quiz đã lưu nếu có
+    if (Array.isArray(lec.quiz) && lec.quiz.length) {
+      LEC.quizData = lec.quiz;
+      LEC.quizAnswers = {};
+      renderQuiz(lec.quiz);
+    } else if (el('quizBox')) {
+      LEC.quizData = null;
+      LEC.quizAnswers = {};
       el('quizBox').innerHTML = `
 <div class="empty-state" style="height:100%;">
   <div class="empty-icon"><i data-lucide="help-circle" style="width:48px;height:48px;color:var(--text-subtle);"></i></div>
@@ -509,7 +515,12 @@ function renderQuiz(questions) {
     <span style="font-weight:800;font-size:14px;color:#4338ca;display:flex;align-items:center;gap:8px;">
       <i data-lucide="file-text" style="width:16px;height:16px;"></i> BÀI KIỂM TRA TRẮC NGHIỆM
     </span>
-    <span class="badge badge-accent">${questions.length} câu hỏi</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="badge badge-accent">${questions.length} câu hỏi</span>
+      <button class="btn btn-ghost btn-sm" onclick="openQuizModal()" title="Tạo bộ câu hỏi mới từ AI" style="font-size:12px;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;">
+        <i data-lucide="sparkles" style="width:13px;height:13px;color:#6366f1;"></i> Tạo mới
+      </button>
+    </div>
   </div>
 
   ${questions.map((q, i) => {
@@ -585,9 +596,22 @@ async function submitQuiz() {
   <div style="font-size:48px;font-weight:900;color:var(--text);font-family:var(--font-heading);">${score} / ${questions.length}</div>
   <div style="margin:10px 0;"><span class="badge ${cls}" style="font-size:14px;padding:7px 24px;">${pct}% Chính xác</span></div>
   <p class="text-muted" style="font-size:13px;margin-top:8px;">${msg}</p>
+  <div style="display:flex;justify-content:center;gap:12px;margin-top:16px;">
+    <button class="btn btn-outline" id="btnRetakeQuiz" style="display:inline-flex;align-items:center;gap:6px;">
+      <i data-lucide="rotate-ccw" style="width:15px;height:15px;"></i> Làm lại bài này
+    </button>
+    <button class="btn btn-primary" onclick="openQuizModal()" style="display:inline-flex;align-items:center;gap:6px;">
+      <i data-lucide="sparkles" style="width:15px;height:15px;"></i> Tạo bài quiz mới
+    </button>
+  </div>
 </div>`;
   el('quizBox').prepend(resultEl);
   el('quizBox').scrollTop = 0;
+
+  resultEl.querySelector('#btnRetakeQuiz')?.addEventListener('click', () => {
+    LEC.quizAnswers = {};
+    renderQuiz(questions);
+  });
 
   if (LEC.lectureId) {
     await API.save_quiz_result(LEC.lectureId, score, questions.length, 'trung bình', details);
