@@ -23,6 +23,73 @@ SYSTEM_STUDY_PROMPT = (
     "3. ĐÁP ÁN CHẤT LƯỢNG: Các lựa chọn trắc nghiệm phải logic, mang tính phân loại kiến thức thực chất."
 )
 
+
+class TranscriptPruner:
+    """
+    Bộ tiền xử lý & cô đọng văn bản bài giảng (Transcript Pruning Engine).
+    Tự động lọc bỏ:
+    - Lời kêu gọi tương tác (Call-To-Action / Outro): like, sub, chuông, click video...
+    - Câu chào hỏi, phiếm đàm xã giao vô nghĩa (Intro / Chit-chat).
+    - Câu đệm thừa thãi không chứa giá trị tri thức học thuật.
+    """
+
+    # Mẫu câu kêu gọi tương tác / Outro / Quảng cáo kênh / Lời chào rác
+    CTA_AND_OUTRO_PATTERNS = [
+        r"(?:hãy\s+)?(?:nhấn|bấm|click)\s+(?:vào\s+)?(?:thích|like|đăng ký|subscribe|nút|chuông|kênh|video\s+xuất\s+hiện).*",
+        r"(?:cảm ơn|xin cảm ơn)\s+(?:các bạn|mọi người|quý vị)?\s*(?:đã|vì đã)?\s*(?:xem|lắng nghe|theo dõi|ủng hộ).*",
+        r"(?:hẹn gặp|gặp lại)\s+(?:lại\s+)?(?:các bạn|bạn|mọi người)\s+(?:ở|trong|tại)\s+(?:video|bài|tập|phần)\s+(?:sau|tiếp theo).*",
+        r"nhấn\s+vào\s+(?:các\s+)?video\s+xuất\s+hiện\s+trên\s+màn\s+hình.*",
+        r"(?:đừng quên|nhớ)\s+(?:nhấn|bấm)?\s*(?:like|thích|share|chia sẻ|đăng ký|subscribe).*",
+        r"(?:khuyến khích|ủng hộ)\s+kênh\s+(?:tạo|làm)\s+thêm\s+(?:nhiều\s+)?(?:phim|video|clip|bài).*",
+        r"(?:nếu thấy|thấy)\s+(?:thông tin|video|bài chia sẻ)?\s*(?:hữu ích|hay|bổ ích)\s+thì\s+vui lòng\s+nhấn.*",
+        r"(?:chào mừng|hoan nghênh)\s+(?:các bạn|mọi người)\s+(?:đã\s+)?(?:quay trở lại|đến với)\s+kênh.*",
+        r"(?:trong video|trong clip|trong tập)\s+(?:ngày hôm nay|hôm nay|lần này)\s+(?:mình|tôi|chúng ta)\s+sẽ\s+chia sẻ.*",
+        r"tôi\s+rất\s+muốn\s+được\s+chia\s+sẻ\s+về\s+nhiều\s+kiến\s+thức\s+khác\s+nhau.*",
+    ]
+
+    @classmethod
+    def is_noise_sentence(cls, sentence: str) -> bool:
+        s = sentence.strip()
+        if len(s.split()) < 3:
+            return True
+        for pattern in cls.CTA_AND_OUTRO_PATTERNS:
+            if re.search(pattern, s, re.IGNORECASE):
+                return True
+        return False
+
+    @classmethod
+    def prune_transcript(cls, text: str, max_chars: int = 6000) -> str:
+        """
+        Làm sạch và cô đọng transcript:
+        1. Tách câu thông minh.
+        2. Loại bỏ các câu CTA, outro, câu chào vô thưởng vô phạt.
+        3. Giữ các câu giàu thông tin tri thức.
+        4. Giới hạn độ dài an toàn cho Context Window của LLM.
+        """
+        if not text:
+            return ""
+
+        raw_sentences = re.split(r'(?<=[.?!])\s+|\n+', text)
+        cleaned_sentences = []
+
+        for sentence in raw_sentences:
+            s = sentence.strip()
+            if not s:
+                continue
+
+            if cls.is_noise_sentence(s):
+                continue
+
+            cleaned_sentences.append(s)
+
+        result = " ".join(cleaned_sentences)
+
+        if len(result) > max_chars:
+            result = result[:max_chars].rsplit(" ", 1)[0] + "..."
+
+        return result
+
+
 class LLMEngine:
     def __init__(self):
         self.model = None
@@ -137,6 +204,7 @@ class LLMEngine:
 
     # ==================== 1. TÓM TẮT PHÂN CẤP (HIERARCHICAL SUMMARY) ====================
     def generate_hierarchical_summary(self, transcript_text: str, segments: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+        pruned_text = TranscriptPruner.prune_transcript(transcript_text, max_chars=6500)
         prompt = (
             "Dưới đây là nội dung bài giảng (có chứa thuật ngữ chuyên ngành tiếng Việt và tiếng Anh).\n"
             "Hãy tóm tắt bài giảng này theo cấu trúc JSON phân cấp chuẩn:\n"
@@ -155,7 +223,7 @@ class LLMEngine:
             '  ]\n'
             "}\n\n"
             "LƯU Ý: Giữ nguyên các thuật ngữ tiếng Anh gốc (VD: MD5, Hash, SQL, TCP, Algorithm, v.v.).\n"
-            f"Transcript:\n{transcript_text[:6500]}\n\n"
+            f"Transcript:\n{pruned_text}\n\n"
             "CHỈ trả về JSON hợp lệ, không thêm chữ giải thích nào khác."
         )
 
@@ -172,6 +240,7 @@ class LLMEngine:
 
     # ==================== 2. SINH QUIZ TRẮC NGHIỆM ĐA ĐỘ KHÓ ====================
     def generate_quiz(self, transcript_text: str, num_questions: int = 5, difficulty: str = "trung bình") -> List[Dict[str, Any]]:
+        pruned_text = TranscriptPruner.prune_transcript(transcript_text, max_chars=4000)
         prompt = (
             f"Dựa CHỈ VÀO nội dung bài giảng dưới đây, hãy tạo {num_questions} câu hỏi trắc nghiệm 4 đáp án bằng tiếng Việt "
             f"ở mức độ '{difficulty}'.\n\n"
@@ -188,7 +257,7 @@ class LLMEngine:
             '    "explanation": "Giải thích chi tiết tại sao đáp án này đúng dựa trên nội dung bài giảng."\n'
             '  }\n'
             ']\n\n'
-            f"Transcript bài giảng:\n{transcript_text[:3500]}"
+            f"Transcript bài giảng:\n{pruned_text}"
         )
 
         raw = self.call_chat(prompt, max_tokens=1000)
@@ -204,6 +273,7 @@ class LLMEngine:
 
     # ==================== 3. SINH FLASHCARDS ====================
     def generate_flashcards(self, transcript_text: str, num_cards: int = 8) -> List[Dict[str, str]]:
+        pruned_text = TranscriptPruner.prune_transcript(transcript_text, max_chars=4000)
         prompt = (
             f"Dựa vào bài giảng sau, hãy rút trích {num_cards} thẻ ghi nhớ (Flashcards) chất lượng cao.\n\n"
             "YÊU CẦU CHO THẺ:\n"
@@ -218,7 +288,7 @@ class LLMEngine:
             '    "hint": "Gợi ý nhớ nhanh"\n'
             '  }\n'
             ']\n\n'
-            f"Transcript bài giảng:\n{transcript_text[:3500]}"
+            f"Transcript bài giảng:\n{pruned_text}"
         )
 
         raw = self.call_chat(prompt, max_tokens=1000)
@@ -233,6 +303,7 @@ class LLMEngine:
 
     # ==================== 4. SINH CÂY SƠ ĐỒ TƯ DUY (MINDMAP) ====================
     def generate_mindmap(self, summary_text_or_transcript: str) -> Dict[str, Any]:
+        pruned_text = TranscriptPruner.prune_transcript(summary_text_or_transcript, max_chars=6000)
         prompt = (
             "Dựa vào nội dung sau, hãy xây dựng một sơ đồ tư duy (Mindmap) phân cấp dạng cây (Tree JSON).\n"
             "Các nhánh phải có tên cụ thể, nêu rõ thuật ngữ chuyên ngành (VD: Thuật toán MD5, Giao thức mạng, CSDL quan hệ, v.v.).\n"
@@ -251,7 +322,7 @@ class LLMEngine:
             '    }\n'
             '  ]\n'
             "}\n\n"
-            f"Nội dung:\n{summary_text_or_transcript[:6000]}"
+            f"Nội dung:\n{pruned_text}"
         )
 
         raw = self.call_chat(prompt, max_tokens=1300)

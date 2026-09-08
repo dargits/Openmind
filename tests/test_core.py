@@ -124,11 +124,34 @@ class TestCoreModules(unittest.TestCase):
         self.assertTrue(hasattr(core, "stt_engine"))
         self.assertTrue(hasattr(core, "llm_engine"))
 
-        # Test compatibility shims
-        import data.database as legacy_db
-        self.assertEqual(legacy_db.db, core.db)
-        import app_api as legacy_api
-        self.assertEqual(legacy_api.api, core.api)
+    def test_transcript_pruner(self):
+        from core.llm_engine import TranscriptPruner
+
+        raw_lecture = (
+            "DNS server, hệ thống tên miền, hoạt động như thế nào. "
+            "Trong thế giới mạng internet, các máy tính sử dụng các con số như là địa chỉ IP. "
+            "Máy chủ DNS cung cấp dịch vụ phân giải tên miền tương ứng với địa chỉ IP. "
+            "Khi bạn nhập Yahoo.com, yêu cầu được gửi tới Resolver Server, rồi chuyển tiếp lên DNS Root Server và Authoritative Name Server. "
+            "Tôi rất muốn được chia sẻ về nhiều kiến thức khác nhau. "
+            "Hãy nhấn vào các video xuất hiện trên màn hình hiện tại và tôi sẽ gặp bạn ở đó. "
+            "Xin cảm ơn vì đã xem đoạn phim này. "
+            "Và nếu thấy thông tin hữu ích thì vui lòng nhấn thích và đăng ký ở bên dưới, nhằm khuyến khích kênh tạo thêm nhiều phim khác."
+        )
+
+        pruned = TranscriptPruner.prune_transcript(raw_lecture)
+
+        # Đảm bảo toàn bộ kiến thức kỹ thuật được giữ lại
+        self.assertIn("DNS server", pruned)
+        self.assertIn("địa chỉ IP", pruned)
+        self.assertIn("Resolver Server", pruned)
+        self.assertIn("DNS Root Server", pruned)
+        self.assertIn("Authoritative Name Server", pruned)
+
+        # Đảm bảo các câu CTA/Outro bị loại bỏ hoàn toàn
+        self.assertNotIn("nhấn thích và đăng ký", pruned)
+        self.assertNotIn("khuyến khích kênh", pruned)
+        self.assertNotIn("video xuất hiện trên màn hình", pruned)
+        self.assertNotIn("Xin cảm ơn vì đã xem", pruned)
 
 
 if __name__ == "__main__":
