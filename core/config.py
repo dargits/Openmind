@@ -6,8 +6,8 @@ import json
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 MODELS_DIR = BASE_DIR / "models"
-OUTPUTS_DIR = BASE_DIR / "outputs"
-SAMPLES_DIR = BASE_DIR / "samples"
+OUTPUTS_DIR = DATA_DIR / "outputs"
+SAMPLES_DIR = DATA_DIR / "samples"
 
 # Ensure directories exist
 for directory in [DATA_DIR, MODELS_DIR, OUTPUTS_DIR, SAMPLES_DIR]:

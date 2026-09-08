@@ -117,12 +117,13 @@ class TestCoreModules(unittest.TestCase):
         streak = self.db.get_current_streak()
         self.assertEqual(streak, 3)
 
-    def test_package_imports_and_shims(self):
+    def test_package_imports(self):
         import core
         self.assertTrue(hasattr(core, "db"))
         self.assertTrue(hasattr(core, "api"))
         self.assertTrue(hasattr(core, "stt_engine"))
         self.assertTrue(hasattr(core, "llm_engine"))
+        self.assertTrue(hasattr(core, "seed_demo_data"))
 
     def test_transcript_pruner(self):
         from core.llm_engine import TranscriptPruner

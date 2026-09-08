@@ -80,15 +80,19 @@ pip install -r requirements.txt
 Mã nguồn được phân tách theo mô hình kiến trúc module rõ ràng:
 
 - **`core/`**: Chứa toàn bộ logic lõi về AI và thuật toán:
+  - `database.py`: Data Access Layer SQLite (WAL Mode).
+  - `api.py`: Cầu nối API hai chiều Python ↔ Webview.
+  - `demo_seeder.py`: Logic nạp bài giảng mẫu ban đầu.
   - `stt_engine.py`: Tương tác với faster-whisper.
-  - `llm_engine.py`: Tương tác với llama-cpp-python và prompt engineering.
+  - `llm_engine.py`: Tương tác với llama-cpp-python, prompt templates & TranscriptPruner.
   - `flashcard_srs.py`: Thuật toán lặp lại ngắt quãng SuperMemo-2 (SM-2).
   - `rag_engine.py`: Xử lý chunking và tra cứu ngữ cảnh bài giảng.
   - `export_engine.py`: Xuất dữ liệu HTML, JSON, TXT, Anki CSV.
   - `config.py`: Quản lý đường dẫn, cấu hình phần cứng và settings.
-- **`data/`**: Cơ sở dữ liệu SQLite và Data Access Layer (`database.py`).
-- **`ui/web/`**: Giao diện người dùng Webview hiện đại (HTML/CSS/Vanilla JS).
-- **`tools/`**: Các công cụ CLI bổ trợ (Benchmark STT, Seed Demo Data).
+- **`ui/`**: Giao diện người dùng Webview hiện đại (HTML/CSS/Vanilla JS).
+- **`data/`**: Cơ sở dữ liệu SQLite và tệp dữ liệu bài giảng mẫu (`demo_lecture.json`).
+- **`models/`**: Thư mục lưu trữ trọng số mô hình AI cục bộ (100% Offline).
+- **`tests/`**: Toàn bộ kiểm thử tự động và công cụ đo đạc (`benchmark_stt.py`).
 
 ### Quy chuẩn Code:
 - Tuân thủ chuẩn **PEP 8** cho mã nguồn Python.
@@ -102,8 +106,11 @@ Mã nguồn được phân tách theo mô hình kiến trúc module rõ ràng:
 Trước khi gửi Pull Request, hãy đảm bảo các chức năng hoạt động chính xác và chạy công cụ benchmark để đánh giá không làm suy giảm hiệu năng:
 
 ```bash
+# Chạy Unit Tests
+python -m unittest tests/test_core.py -v
+
 # Kiểm tra Benchmark STT
-python tools/benchmark_stt.py --audio samples/lecture_sample.mp3 --models tiny,small
+python tests/benchmark_stt.py --audio data/samples/lecture_sample.mp3 --models tiny,small
 ```
 
 ---

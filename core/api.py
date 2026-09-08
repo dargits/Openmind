@@ -444,7 +444,7 @@ class API:
 
     def seed_demo_data(self, force: bool = False) -> dict:
         try:
-            from tools.seed_demo_data import seed_demo_data
+            from core.demo_seeder import seed_demo_data
             return seed_demo_data(force=force)
         except Exception as e:
             return {"success": False, "message": f"Lỗi nạp dữ liệu: {e}"}

@@ -41,7 +41,7 @@ def seed_demo_data(force: bool = False) -> dict:
     Nạp dữ liệu demo từ demo_data/demo_lecture_dsa.json vào SQLite database.
     Không ghi đè dữ liệu nếu bài giảng demo đã tồn tại (trừ khi force=True).
     """
-    demo_file = PROJECT_ROOT / "demo_data" / "demo_lecture_dsa.json"
+    demo_file = PROJECT_ROOT / "data" / "demo_lecture.json"
     if not demo_file.exists():
         return {"success": False, "message": f"Không tìm thấy file: {demo_file}"}
 

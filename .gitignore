@@ -20,14 +20,10 @@ data/*.db-wal
 data/*.db-journal
 data/settings.json
 data/cache/
+data/outputs/
+data/samples/
 !data/.gitkeep
-
-# Output files & Temporary Exports
-outputs/*
-!outputs/.gitkeep
-samples/*
-!samples/.gitkeep
-demo_data/cache/
+!data/demo_lecture.json
 
 # Python Virtual Environments
 venv/

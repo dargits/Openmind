@@ -54,13 +54,13 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 # Đảm bảo các thư mục dữ liệu tồn tại
-for folder in ["data", "models", "outputs", "samples"]:
+for folder in ["data", "models"]:
     (BASE_DIR / folder).mkdir(parents=True, exist_ok=True)
 
 # Tự động kiểm tra & nạp dữ liệu mẫu ban đầu nếu cơ sở dữ liệu trống
 try:
     from core.database import db
-    from tools.seed_demo_data import seed_demo_data
+    from core.demo_seeder import seed_demo_data
     if len(db.list_lectures()) == 0:
         print("[Open-mind] Đang nạp dữ liệu học tập mẫu ban đầu...")
         seed_demo_data(force=False)
@@ -76,7 +76,7 @@ def main():
     print("  OPEN-MIND — Trợ lý Học tập AI Toàn diện (100% Offline)")
     print("=" * 60)
 
-    WEB_DIR = BASE_DIR / "ui" / "web"
+    WEB_DIR = BASE_DIR / "ui"
     INDEX_HTML = WEB_DIR / "index.html"
 
     window = webview.create_window(

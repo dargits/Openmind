@@ -12,6 +12,7 @@ from core.rag_engine import rag_engine
 from core.flashcard_srs import srs_manager
 from core.export_engine import export_engine
 from core.model_manager import model_manager
+from core.demo_seeder import seed_demo_data
 
 __all__ = [
     "Database",
@@ -25,4 +26,5 @@ __all__ = [
     "srs_manager",
     "export_engine",
     "model_manager",
+    "seed_demo_data",
 ]

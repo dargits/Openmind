@@ -191,39 +191,34 @@ python main.py
 
 ```text
 Open-mind/
-├── 📁 core/                         # Toàn bộ lõi ứng dụng & nghiệp vụ phần mềm
+├── 📁 core/                         # Toàn bộ lõi ứng dụng & nghiệp vụ AI
 │   ├── __init__.py                 # Khởi tạo package core, export các engine chính
 │   ├── config.py                   # Cấu hình hệ thống, tham số model & hardware
 │   ├── database.py                 # Data Access Layer SQLite (WAL Mode, CRUD)
 │   ├── api.py                      # Cầu nối API hai chiều Python ↔ Javascript (pywebview)
+│   ├── demo_seeder.py              # Logic nạp bài giảng mẫu ban đầu
 │   ├── stt_engine.py               # Engine Whisper STT & Bộ chuẩn hóa ngữ âm tiếng Việt
-│   ├── llm_engine.py               # Bộ điều khiển Qwen 2.5 LLM & Prompt Templates
+│   ├── llm_engine.py               # Engine Qwen 2.5 LLM & TranscriptPruner
 │   ├── rag_engine.py               # Sliding-window Chunking & BM25 Context Retrieval
 │   ├── flashcard_srs.py            # Triển khai thuật toán SuperMemo-2 (SM-2)
 │   ├── export_engine.py            # Xuất dữ liệu ra TXT, JSON, Anki CSV, HTML Report
 │   └── model_manager.py            # Quản lý kiểm tra & tải Model AI tự động
-├── 📁 ui/
-│   └── web/                        # Giao diện người dùng Webview hiện đại (SPA)
-│       ├── css/style.css           # Design System hiện đại, responsive & glassmorphism
-│       ├── js/                     # Logic giao diện & tương tác người dùng
-│       ├── logo.jpg                # Logo thương hiệu ứng dụng
-│       └── index.html              # Cấu trúc giao diện Webview chính
-├── 📁 data/                         # Thư mục lưu trữ dữ liệu runtime (Tách biệt khỏi code)
+├── 📁 ui/                           # Giao diện người dùng Webview hiện đại (SPA)
+│   ├── css/style.css               # Design System hiện đại, responsive & glassmorphism
+│   ├── js/                         # Logic giao diện & tương tác người dùng
+│   ├── logo.jpg                    # Logo thương hiệu ứng dụng
+│   └── index.html                  # Cấu trúc giao diện Webview chính
+├── 📁 data/                         # Thư mục lưu trữ dữ liệu người dùng (100% Offline)
+│   ├── demo_lecture.json           # Dữ liệu học tập mẫu hoàn chỉnh
 │   ├── openmind.db                 # Database SQLite người dùng (Tự sinh)
 │   ├── settings.json               # Cấu hình người dùng cá nhân (Tự sinh)
 │   └── .gitkeep
 ├── 📁 models/                       # Thư mục lưu trữ trọng số mô hình AI (Offline)
 │   └── README.md                   # Hướng dẫn chi tiết tải thủ công mô hình
-├── 📁 demo_data/                    # Dữ liệu bài giảng mẫu phục vụ thử nghiệm
-│   └── demo_lecture_dsa.json       # Dữ liệu mẫu hoàn chỉnh (Transcript, Flashcards, Quiz)
-├── 📁 outputs/                      # Thư mục chứa các tệp đã xuất ra (.gitkeep)
-├── 📁 samples/                      # Thư mục chứa audio ghi âm thử nghiệm (.gitkeep)
-├── 📁 tests/                        # Bộ kiểm thử tự động (Unit Tests)
+├── 📁 tests/                        # Bộ kiểm thử tự động & công cụ đo đạc
 │   ├── __init__.py
-│   └── test_core.py                # Test Database CRUD, SM-2 SRS, RAG & Export Engine
-├── 📁 tools/                        # Bộ công cụ phát triển & đo đạc
-│   ├── benchmark_stt.py            # Đo đạc RTF, Peak RAM, WER của mô hình STT
-│   └── seed_demo_data.py           # Nạp lại dữ liệu bài giảng mẫu vào Database
+│   ├── test_core.py                # Test Database CRUD, SM-2 SRS, RAG, Export, Pruner
+│   └── benchmark_stt.py            # Đo đạc RTF, Peak RAM, WER của mô hình STT
 ├── main.py                         # Entrypoint chính khởi chạy ứng dụng Desktop
 ├── requirements.txt                # Danh sách thư viện Python phụ thuộc
 ├── run.bat                         # Kịch bản khởi chạy 1-Click trên Windows
@@ -238,7 +233,7 @@ Open-mind/
 ## 🧪 Kiểm thử & Bộ công cụ (Testing & Tools)
 
 ### 1. Chạy Bộ Kiểm thử Tự động (Unit Tests)
-Dự án đi kèm bộ test toàn diện kiểm tra tính đúng đắn của Database, thuật toán SM-2, RAG Engine và Export Engine:
+Dự án đi kèm bộ test toàn diện kiểm tra tính đúng đắn của Database, thuật toán SM-2, RAG Engine, TranscriptPruner và Export Engine:
 
 ```bash
 python -m unittest tests/test_core.py -v
@@ -249,15 +244,15 @@ python -m unittest tests/test_core.py -v
 
 ```bash
 # Đo toàn bộ mô hình STT trên file audio mẫu
-python tools/benchmark_stt.py --audio samples/lecture.mp3 --reference samples/lecture_ground_truth.txt
+python tests/benchmark_stt.py --audio data/samples/lecture.mp3 --reference data/samples/lecture_ground_truth.txt
 
 # Đo riêng mô hình tiny và small
-python tools/benchmark_stt.py --audio samples/lecture.mp3 --models tiny,small
+python tests/benchmark_stt.py --audio data/samples/lecture.mp3 --models tiny,small
 ```
 
 ### 3. Nạp lại Dữ liệu Mẫu (Seed Demo Data)
 ```bash
-python tools/seed_demo_data.py --force
+python -m core.demo_seeder --force
 ```
 
 ---
