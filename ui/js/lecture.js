@@ -8,6 +8,7 @@ const LEC = {
   lectureId: null,
   audioPath: null,
   audioUrl: null,
+  title: null,
   isTranscribing: false,
   segments: [],
   fullText: '',
@@ -38,22 +39,27 @@ function renderLectureView() {
     </div>
 
     <!-- After file is picked -->
-    <div id="lecAudioRow" style="${!LEC.audioPath ? 'display:none;' : ''}display:flex;gap:10px;align-items:center;">
-      <div class="upload-zone-file" style="flex:1;">
+    <div id="lecAudioRow" style="${!LEC.audioPath ? 'display:none;' : ''}display:flex;gap:10px;align-items:center;width:100%;min-width:0;">
+      <div class="upload-zone-file" style="flex:1;min-width:0;overflow:hidden;display:flex;align-items:center;gap:12px;">
         <div style="width:36px;height:36px;border-radius:9px;background:rgba(99,102,241,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
           <i data-lucide="music" style="width:18px;height:18px;color:#4f46e5;"></i>
         </div>
-        <div style="flex:1;min-width:0;">
-          <div class="audio-filename" id="lecFileName">Chưa chọn file</div>
-          <div style="font-size:11px;color:var(--text-muted);">File âm thanh đang được tải</div>
+        <div style="flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center;">
+          <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+            <div class="audio-filename" id="lecFileName" title="Nhấp để đổi tên bài giảng" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;">Chưa chọn file</div>
+            <button class="btn btn-ghost btn-sm" id="lecRenameBtn" title="Đổi tên bài giảng / file" style="padding:2px 6px;height:24px;flex-shrink:0;display:inline-flex;align-items:center;">
+              <i data-lucide="pencil" style="width:12px;height:12px;color:var(--text-muted);"></i>
+            </button>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">File âm thanh sẵn sàng</div>
         </div>
-        <audio controls id="lecAudio" style="width:280px;height:32px;"></audio>
+        <audio controls id="lecAudio" style="width:250px;height:32px;flex-shrink:0;"></audio>
       </div>
       <button class="btn btn-ghost btn-sm" id="lecChangeFile"
-        style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;">
+        style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;">
         <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i> Đổi file
       </button>
-      <select class="select" id="lecFolder" style="width:140px;font-size:13px;">
+      <select class="select" id="lecFolder" style="width:130px;font-size:13px;flex-shrink:0;">
         <option value="General">General</option>
         <option value="CNTT">CNTT</option>
         <option value="Toán">Toán</option>
@@ -198,11 +204,17 @@ function renderLectureView() {
 
   // ── Bind events ──
   el('lecPickAudio').addEventListener('click', pickAudio);
+  el('lecRenameBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    renameLectureDialog();
+  });
+  el('lecFileName')?.addEventListener('click', renameLectureDialog);
   el('lecChangeFile')?.addEventListener('click', () => {
     el('lecAudioRow').style.display = 'none';
     el('lecUploadZone').style.removeProperty('display');
     LEC.audioPath = null;
     LEC.audioUrl = null;
+    LEC.title = null;
     if (el('lecAudio')) el('lecAudio').src = '';
   });
 
@@ -258,11 +270,15 @@ async function loadLecture(lectureId, initialTab = 'transcript') {
     if (el('lecFolder') && lec.folder_tag) el('lecFolder').value = lec.folder_tag;
 
     // Audio setup
+    const name = lec.title || (LEC.audioPath ? LEC.audioPath.split(/[\\\/]/).pop() : '') || 'Bài giảng';
+    LEC.title = name;
+    if (el('lecFileName')) {
+      el('lecFileName').textContent = name;
+      el('lecFileName').title = name;
+    }
     if (LEC.audioPath) {
       try {
         LEC.audioUrl = await API.get_audio_url(LEC.audioPath);
-        const name = LEC.audioPath.split(/[\\\/]/).pop() || lec.title;
-        if (el('lecFileName')) el('lecFileName').textContent = name;
         if (el('lecAudio')) el('lecAudio').src = LEC.audioUrl;
         if (el('lecAudioRow')) { el('lecAudioRow').style.display = 'flex'; }
         if (el('lecUploadZone')) el('lecUploadZone').style.display = 'none';
@@ -331,8 +347,44 @@ async function loadLecture(lectureId, initialTab = 'transcript') {
 }
 
 // ──────────────────────────────────────────
-// Audio Picker
+// Audio Picker & Rename
 // ──────────────────────────────────────────
+async function renameLectureDialog() {
+  const currentTitle = LEC.title || el('lecFileName')?.textContent || '';
+  const idx = await showModal(
+    'Đổi tên bài giảng / file âm thanh',
+    `<div class="flex-col gap-2">
+      <label class="label">Tên hiển thị bài giảng</label>
+      <input class="input w-full" id="renameLecInput" value="${escHtml(currentTitle)}" placeholder="Nhập tên bài giảng…" autofocus>
+    </div>`,
+    [
+      { label: 'Huỷ', class: 'btn-ghost' },
+      { label: 'Lưu thay đổi', class: 'btn-primary' }
+    ]
+  );
+  if (idx !== 1) return;
+  const newTitle = el('renameLecInput')?.value?.trim();
+  if (!newTitle) return showToast('Tên không được để trống', 'warning');
+
+  LEC.title = newTitle;
+  if (el('lecFileName')) {
+    el('lecFileName').textContent = newTitle;
+    el('lecFileName').title = newTitle;
+  }
+
+  if (LEC.lectureId) {
+    try {
+      await API.rename_lecture(LEC.lectureId, newTitle);
+      showToast(`Đã đổi tên bài giảng thành "${newTitle}"`, 'success');
+      if (typeof loadLibrary === 'function') loadLibrary();
+    } catch (err) {
+      showToast('Lỗi khi đổi tên: ' + err.message, 'error');
+    }
+  } else {
+    showToast(`Đã cập nhật tên hiển thị thành "${newTitle}"`, 'success');
+  }
+}
+
 async function pickAudio() {
   try {
     const path = await API.pick_audio_file();
@@ -341,7 +393,11 @@ async function pickAudio() {
     LEC.audioUrl = await API.get_audio_url(path);
 
     const name = path.split(/[\\\/]/).pop();
-    if (el('lecFileName')) el('lecFileName').textContent = name;
+    LEC.title = name;
+    if (el('lecFileName')) {
+      el('lecFileName').textContent = name;
+      el('lecFileName').title = name;
+    }
     if (el('lecAudio')) el('lecAudio').src = LEC.audioUrl;
     if (el('lecAudioRow')) { el('lecAudioRow').style.display = 'flex'; }
     if (el('lecUploadZone')) el('lecUploadZone').style.display = 'none';
@@ -379,7 +435,8 @@ async function startTranscribe() {
   }
 
   const folder = el('lecFolder')?.value || 'General';
-  const title = (LEC.audioPath.split(/[\\\/]/).pop()).replace(/\.[^.]+$/, '');
+  const fallbackTitle = (LEC.audioPath.split(/[\\\/]/).pop()).replace(/\.[^.]+$/, '');
+  const title = LEC.title || fallbackTitle;
 
   await API.start_transcribe(LEC.audioPath, '', LEC.lectureId || '', title, folder);
 }

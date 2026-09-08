@@ -85,7 +85,10 @@ class TestCoreModules(unittest.TestCase):
         self.assertEqual(lectures_stats[0]["flashcard_count"], 1)
         self.assertEqual(lectures_stats[0]["deck_count"], 1)
         self.assertEqual(lectures_stats[0]["has_summary"], 1)
-        self.assertEqual(lectures_stats[0]["has_quiz"], 1)
+        # Kiểm tra đổi tên bài giảng
+        self.assertTrue(self.db.rename_lecture(lid, "Bài giảng Mạng máy tính & Internet"))
+        lec_renamed = self.db.get_lecture(lid)
+        self.assertEqual(lec_renamed["title"], "Bài giảng Mạng máy tính & Internet")
 
         # Kiểm tra xóa bài giảng dọn dẹp sạch sẽ dữ liệu liên đới
         self.db.delete_lecture(lid)

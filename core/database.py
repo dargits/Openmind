@@ -219,6 +219,14 @@ class Database:
             cursor.execute("DELETE FROM lectures WHERE id = ?", (lecture_id,))
             conn.commit()
 
+    def rename_lecture(self, lecture_id: str, new_title: str) -> bool:
+        """Đổi tên bài giảng / tiêu đề audio."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE lectures SET title = ? WHERE id = ?", (new_title.strip(), lecture_id))
+            conn.commit()
+            return cursor.rowcount > 0
+
     # ==================== DECK & FLASHCARD CRUD ====================
     def create_deck(self, name: str, description: str = "", lecture_id: Optional[str] = None) -> str:
         deck_id = str(uuid.uuid4())

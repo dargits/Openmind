@@ -49,6 +49,7 @@ const API = {
 
   list_lectures: (tag, q) => API.call('list_lectures', tag || '', q || ''),
   get_lecture: (id) => API.call('get_lecture', id),
+  rename_lecture: (id, t) => API.call('rename_lecture', id, t),
   delete_lecture: (id) => API.call('delete_lecture', id),
   pick_audio_file: () => API.call('pick_audio_file'),
   get_audio_url: (p) => API.call('get_audio_url', p),

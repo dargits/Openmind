@@ -200,6 +200,10 @@ class API:
         db.delete_lecture(lecture_id)
         return {"ok": True}
 
+    def rename_lecture(self, lecture_id: str, new_title: str) -> dict:
+        success = db.rename_lecture(lecture_id, new_title)
+        return {"ok": success, "title": new_title.strip()}
+
     def pick_audio_file(self) -> str:
         """Opens native file picker dialog, returns selected path."""
         result = self._window.create_file_dialog(
