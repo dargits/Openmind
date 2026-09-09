@@ -6,6 +6,9 @@ import sys
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_dynamic_libs, collect_submodules, collect_data_files
 
+# Resolve absolute root directory of OpenMind
+ROOT_DIR = Path(SPECPATH).resolve().parent
+
 block_cipher = None
 
 # Collect all dynamic C/C++ libraries and data files
@@ -24,20 +27,19 @@ hidden_imports = [
 ] + collect_submodules('webview')
 
 datas = [
-    ('ui', 'ui'),
-    ('data/demo_lecture.json', 'data'),
-    ('.env.example', '.'),
+    (str(ROOT_DIR / 'ui'), 'ui'),
+    (str(ROOT_DIR / 'data' / 'demo_lecture.json'), 'data'),
+    (str(ROOT_DIR / '.env.example'), '.'),
 ]
 
-# Thêm data files nếu có
 try:
     datas += collect_data_files('faster_whisper')
 except Exception:
     pass
 
 a = Analysis(
-    ['main.py'],
-    pathex=[],
+    [str(ROOT_DIR / 'main.py')],
+    pathex=[str(ROOT_DIR)],
     binaries=ctranslate2_bins + llama_cpp_bins,
     datas=datas,
     hiddenimports=hidden_imports,
@@ -63,13 +65,13 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,  # Ẩn cửa sổ dòng lệnh đen, mở thẳng GUI cho người non-tech
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='ui/logo.jpg' if Path('ui/logo.jpg').exists() else None,
+    icon=str(ROOT_DIR / 'ui' / 'logo.jpg') if (ROOT_DIR / 'ui' / 'logo.jpg').exists() else None,
 )
 
 coll = COLLECT(
