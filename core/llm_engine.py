@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Open-mind Contributors
+# SPDX-License-Identifier: MIT
+#
+# Purpose: Open-mind - Offline AI-Powered Academic Lecture Copilot.
+# Distributed under the terms of the OSI-approved MIT License.
+
 import os
 import time
 import json
@@ -13,16 +19,19 @@ from core.config import (
 )
 
 # System prompt enforcing strict terminology and clear, unambiguous academic questioning
+# System prompt enforcing strict pedagogy, academic terminology and unambiguous questioning
 SYSTEM_STUDY_PROMPT = (
-    "Bạn là chuyên gia sư phạm và trợ giảng AI cao cấp. "
-    "Nhiệm vụ của bạn là tạo tóm tắt, câu hỏi trắc nghiệm và thẻ ghi nhớ chất lượng cao, chuẩn xác về mặt học thuật.\n"
+    "Bạn là chuyên gia sư phạm và trợ giảng AI cao cấp chuyên sâu về thiết kế học liệu giáo dục chuẩn mực.\n"
+    "Nhiệm vụ của bạn là tạo tóm tắt, câu hỏi trắc nghiệm và thẻ ghi nhớ (flashcard) chất lượng xuất sắc, chuẩn xác về mặt học thuật.\n"
     "CÁC NGUYÊN TẮC BẮT BUỘC:\n"
-    "1. RÕ NGHĨA & ĐỘC LẬP (SELF-CONTAINED): Mỗi câu hỏi hoặc thẻ ghi nhớ phải đầy đủ ngữ cảnh. "
-    "TUYỆT ĐỐI KHÔNG dùng các đại từ mơ hồ như 'nó', 'điều này', 'cái này', 'phương pháp này' mà KHÔNG nêu tên chủ thể. "
-    "Ví dụ SAI: 'Nó thực hiện chức năng gì?'. Ví dụ ĐÚNG: 'Hàm băm MD5 thực hiện chức năng gì trong bảo mật?'.\n"
-    "2. CHUẨN XÁC THUẬT NGỮ: Giữ nguyên các thuật ngữ kỹ thuật, tên chuẩn tiếng Anh/viết tắt "
-    "(VD: MD5, SHA-256, Hash function, SQL, API, TCP/IP, Encryption, Token, Cache, v.v.). Không dịch thô làm mất nghĩa.\n"
-    "3. ĐÁP ÁN CHẤT LƯỢNG: Các lựa chọn trắc nghiệm phải logic, mang tính phân loại kiến thức thực chất."
+    "1. RÕ NGHĨA & TỰ THÂN ĐẦY ĐỦ (SELF-CONTAINED): Mỗi câu hỏi hoặc thẻ ghi nhớ phải độc lập và đủ ngữ cảnh. "
+    "TUYỆT ĐỐI KHÔNG dùng đại từ mơ hồ như 'nó', 'điều này', 'cái này', 'phương pháp này', 'theo bài giảng' mà không nêu tên chủ thể. "
+    "Ví dụ SAI: 'Nó thực hiện chức năng gì?'. Ví dụ ĐÚNG: 'Giao thức TCP thực hiện chức năng gì trong tầng Giao vận?'.\n"
+    "2. CHUẨN XÁC THUẬT NGỮ CHUYÊN NGÀNH: Giữ nguyên các thuật ngữ kỹ thuật, tên chuẩn tiếng Anh/viết tắt "
+    "(VD: TCP/IP, MD5, SHA-256, Hash function, SQL, API, Encryption, Cache, Token, Latency, Throughput, v.v.). Không dịch thô làm sai nghĩa.\n"
+    "3. TƯ DUY PHÂN LOẠI & SƯ PHẠM CAO: Câu hỏi trắc nghiệm phải đánh giá đúng mức độ hiểu bản chất khái niệm. "
+    "Các phương án gây nhiễu (distractors) phải hợp lý, phân loại thực chất, không bị lộ đáp án ngớ ngẩn.\n"
+    "4. BẢO ĐẢM ĐỦ SỐ LƯỢNG: Luôn tạo chính xác đủ số lượng mục được yêu cầu."
 )
 
 
@@ -258,137 +267,288 @@ class LLMEngine:
         }
 
     # ==================== 2. SINH QUIZ TRẮC NGHIỆM ĐA ĐỘ KHÓ ====================
-    def generate_quiz(self, transcript_text: str, num_questions: int = 5, difficulty: str = "trung bình",
-                      on_prompt: Optional[Callable[[str], None]] = None) -> List[Dict[str, Any]]:
-        full_text = TranscriptPruner.prune_transcript(transcript_text)
-        prompt = (
-            f"Dựa CHỈ VÀO nội dung bài giảng dưới đây, hãy tạo {num_questions} câu hỏi trắc nghiệm 4 đáp án bằng tiếng Việt "
-            f"ở mức độ '{difficulty}'.\n\n"
-            "QUY TẮC QUAN TRỌNG CHO CÂU HỎI:\n"
-            "- Mỗi câu hỏi PHẢI ĐẦY ĐỦ CHỦ NGỮ/VỊ NGỮ, nêu đích danh khái niệm, thuật ngữ (ví dụ: 'Mô hình TCP/IP', 'Giao thức TCP', 'Địa chỉ IP').\n"
-            "- TUYỆT ĐỐI KHÔNG viết câu hỏi cộc lốc hoặc mơ hồ như: 'Nó là gì?', 'Nó thực hiện điều gì?'.\n"
-            "- 4 đáp án A, B, C, D: Phải ngắn gọn, cô đọng (tối đa 15 từ mỗi đáp án), chỉ có 1 đáp án đúng duy nhất. Tránh viết lựa chọn dài dòng.\n"
-            "- Phần GIẢI THÍCH (explanation): CỰC KỲ NGẮN GỌN, súc tích trong 1-2 câu ngắn (tối đa 25-35 từ), chỉ nêu trực tiếp lý do cốt lõi vì sao đáp án đó đúng theo bài giảng. TUYỆT ĐỐI KHÔNG giải thích dài dòng, không kể chuyện, không dùng ví dụ ví von lan man.\n\n"
-            "CHỈ trả về mảng JSON hợp lệ, đúng cấu trúc:\n"
-            '[\n'
-            '  {\n'
-            '    "question": "Câu hỏi cụ thể nêu rõ tên chủ thể/thuật ngữ?",\n'
-            '    "options": ["A. Lựa chọn 1 ngắn gọn", "B. Lựa chọn 2 ngắn gọn", "C. Lựa chọn 3 ngắn gọn", "D. Lựa chọn 4 ngắn gọn"],\n'
-            '    "correct_index": 0,\n'
-            '    "explanation": "Giải thích ngắn gọn 1-2 câu lý do đáp án đúng."\n'
-            '  }\n'
-            ']\n\n'
-            f"Transcript bài giảng:\n{full_text}"
-        )
+    def _sanitize_quiz_item(self, q: Any, fallback_idx: int = 0) -> Optional[Dict[str, Any]]:
+        if not isinstance(q, dict):
+            return None
+        question = str(q.get("question") or "").strip()
+        if not question or len(question) < 5:
+            return None
 
-        print("\n" + "═" * 70)
-        print(f"🤖 [DEBUG AI - GENERATE QUIZ] Số câu hỏi: {num_questions} | Độ khó: {difficulty}")
-        print(f"📝 [PROMPT SENT TO LLM]:")
-        print("─" * 70)
-        print(prompt)
-        print("─" * 70)
-        print(f"📊 Thống kê prompt: {len(prompt)} ký tự | ~{len(prompt.split())} từ")
-        print("═" * 70 + "\n")
+        # Xoá số thứ tự câu thừa nếu có (vd: "Câu 1:", "1.")
+        question = re.sub(r"^(?:câu\s*\d+[:.]?|\d+[.)])\s*", "", question, flags=re.IGNORECASE).strip()
 
-        if on_prompt:
-            try:
-                on_prompt(prompt)
-            except Exception:
-                pass
+        # Làm sạch đại từ mơ hồ
+        if re.match(r"^(nó|điều này|cái này|phương pháp này)\s+", question, re.IGNORECASE):
+            question = re.sub(r"^(nó|điều này|cái này|phương pháp này)\s+", "Thuật ngữ / Khái niệm trong bài giảng ", question, flags=re.IGNORECASE)
 
-        t0 = time.time()
-        max_tokens = min(1200, max(350, num_questions * 140))
-        raw = self.call_chat(prompt, max_tokens=max_tokens)
-        duration = time.time() - t0
-        print(f"✅ [DEBUG AI - QUIZ FINISHED] Thời gian suy luận: {duration:.2f}s | Output: {len(raw)} ký tự\n")
+        raw_options = q.get("options") or q.get("choices") or []
+        if not isinstance(raw_options, list) or len(raw_options) < 2:
+            return None
 
-        parsed = self._extract_json(raw)
-        if isinstance(parsed, dict):
-            for key in ["questions", "quiz", "data", "items"]:
-                if key in parsed and isinstance(parsed[key], list):
-                    parsed = parsed[key]
-                    break
+        prefix_letters = ["A", "B", "C", "D"]
+        cleaned_opts = []
+        for i, opt in enumerate(raw_options[:4]):
+            text = opt if isinstance(opt, str) else str(opt.get("text", opt) if isinstance(opt, dict) else opt)
+            text = text.strip()
+            # Xoá tiền tố thừa lặp A., B., C., D. hoặc số
+            text = re.sub(r"^[A-Da-d][.)\-:]\s*", "", text).strip()
+            text = re.sub(r"^[A-Da-d][.)\-:]\s*", "", text).strip()
+            letter = prefix_letters[i] if i < len(prefix_letters) else f"{i+1}"
+            cleaned_opts.append(f"{letter}. {text}")
+
+        # Đảm bảo đủ 4 phương án
+        while len(cleaned_opts) < 4:
+            letter = prefix_letters[len(cleaned_opts)]
+            cleaned_opts.append(f"{letter}. Không có phương án nào ở trên")
+
+        correct_idx = q.get("correct_index")
+        if correct_idx is None:
+            correct_idx = q.get("answer")
+        try:
+            correct_idx = int(correct_idx)
+        except (ValueError, TypeError):
+            if isinstance(correct_idx, str) and correct_idx.upper() in ["A", "B", "C", "D"]:
+                correct_idx = ["A", "B", "C", "D"].index(correct_idx.upper())
             else:
-                vals = list(parsed.values())
-                if vals and isinstance(vals[0], list):
-                    parsed = vals[0]
+                correct_idx = fallback_idx % 4
 
-        if isinstance(parsed, list):
-            valid_questions = []
-            for q in parsed:
-                if isinstance(q, dict) and "question" in q and "options" in q:
-                    q_text = q.get("question", "")
-                    if re.match(r"^(nó|điều này|cái này)\s+", q_text, re.IGNORECASE):
-                        q["question"] = re.sub(r"^(nó|điều này|cái này)\s+", "Thuật ngữ / Khái niệm trong bài giảng ", q_text, flags=re.IGNORECASE)
-                    valid_questions.append(q)
-            if valid_questions:
-                return valid_questions
-        return []
+        if correct_idx < 0 or correct_idx >= len(cleaned_opts):
+            correct_idx = fallback_idx % 4
+
+        explanation = str(q.get("explanation") or q.get("reason") or "").strip()
+        if not explanation:
+            explanation = f"Đáp án {prefix_letters[correct_idx]} là phương án chuẩn xác nhất theo nội dung bài giảng."
+
+        return {
+            "question": question,
+            "options": cleaned_opts,
+            "correct_index": correct_idx,
+            "explanation": explanation
+        }
+
+    def generate_quiz(self, transcript_text: str, num_questions: int = 5, difficulty: str = "trung bình",
+                      on_prompt: Optional[Callable[[str], None]] = None,
+                      on_progress: Optional[Callable[[str], None]] = None) -> List[Dict[str, Any]]:
+        clean_text = TranscriptPruner.prune_transcript(transcript_text, max_chars=8000)
+        if not clean_text:
+            return []
+
+        target_total = max(1, int(num_questions))
+        batch_size = 5 if target_total > 5 else target_total
+        valid_questions: List[Dict[str, Any]] = []
+        existing_question_texts: List[str] = []
+
+        diff_guide = {
+            "dễ": "Mức độ DỄ: Tập trung vào nhận biết khái niệm cơ bản, định nghĩa thuật ngữ cốt lõi, vai trò và chức năng then chốt của các đối tượng trong bài giảng.",
+            "trung bình": "Mức độ TRUNG BÌNH: Tập trung vào thông hiểu và vận dụng; kiểm tra nguyên lý hoạt động, cơ chế kỹ thuật, mối quan hệ nhân quả và tương tác giữa các thành phần.",
+            "khó": "Mức độ KHÓ: Tập trung vào phân tích sâu, so sánh đối chiếu, các tình huống biên/ngoại lệ, ưu nhược điểm kỹ thuật, và các câu hỏi phân biệt bẫy logic sâu sắc."
+        }.get(difficulty.lower(), "Mức độ TRUNG BÌNH: Thông hiểu và vận dụng kiến thức.")
+
+        # Lặp sinh theo từng lượt (batch) để đảm bảo chất lượng cao nhất và đủ số lượng
+        max_attempts = max(3, (target_total + batch_size - 1) // batch_size + 2)
+        attempt = 0
+
+        while len(valid_questions) < target_total and attempt < max_attempts:
+            attempt += 1
+            needed = target_total - len(valid_questions)
+            curr_batch_target = min(batch_size, needed)
+
+            if on_progress:
+                try:
+                    on_progress(f"Đang biên soạn câu hỏi {len(valid_questions) + 1} - {len(valid_questions) + curr_batch_target}/{target_total} ({difficulty})…")
+                except Exception:
+                    pass
+
+            avoid_section = ""
+            if existing_question_texts:
+                sample_qs = [f"- {t}" for t in existing_question_texts[-5:]]
+                avoid_section = (
+                    f"\nCÁC CÂU HỎI ĐÃ TẠO TRƯỚC ĐÓ (BẮT BUỘC KHÔNG ĐƯỢC TRÙNG LẶP CHỦ ĐỀ/Ý NÀY):\n"
+                    + "\n".join(sample_qs) + "\n"
+                )
+
+            prompt = (
+                f"Dựa CHỈ VÀO nội dung bài giảng dưới đây, hãy tạo CHÍNH XÁC {curr_batch_target} câu hỏi trắc nghiệm 4 đáp án bằng tiếng Việt.\n\n"
+                f"ĐỘ KHÓ YÊU CẦU: {difficulty.upper()}\n"
+                f"{diff_guide}\n"
+                f"{avoid_section}\n"
+                "QUY TẮC SƯ PHẠM BẮT BUỘC:\n"
+                "1. CÂU HỎI ĐỘC LẬP & TỰ THÂN ĐẦY ĐỦ: Phải đầy đủ chủ ngữ/vị ngữ, nêu đích danh thuật ngữ kỹ thuật/chủ đề cụ thể "
+                "(Ví dụ: 'Giao thức TCP', 'Mô hình OSI', 'Mật mã khóa đối xứng', 'Hàm băm SHA-256'). TUYỆT ĐỐI KHÔNG hỏi cộc lốc hoặc dùng từ mơ hồ như 'Nó là gì?'.\n"
+                "2. 4 PHƯƠNG ÁN A, B, C, D CHUẨN XÁC: Mỗi câu phải có đủ 4 lựa chọn mang tính phân loại học thuật thực chất, không có phương án ngớ ngẩn.\n"
+                "3. PHÂN BỔ ĐÁP ÁN ĐÚNG ĐỀU ĐẶN: Phân bổ vị trí đáp án đúng ngẫu nhiên qua các chỉ số 0, 1, 2, 3 (tương ứng A, B, C, D). TUYỆT ĐỐI KHÔNG dồn tất cả vào đáp án A.\n"
+                "4. GIẢI THÍCH (explanation) RÕ RÀNG & GIÁ TRỊ: Giải thích 1-3 câu nêu rõ lý do vì sao đáp án đúng là chuẩn xác theo bài giảng, giúp người học ghi nhớ sâu sắc.\n\n"
+                f"CHỈ trả về đúng mảng JSON {curr_batch_target} phần tử theo cấu trúc mẫu:\n"
+                "[\n"
+                "  {\n"
+                '    "question": "Câu hỏi cụ thể nêu rõ tên chủ thể/thuật ngữ?",\n'
+                '    "options": ["A. Lựa chọn 1", "B. Lựa chọn 2", "C. Lựa chọn 3", "D. Lựa chọn 4"],\n'
+                '    "correct_index": 1,\n'
+                '    "explanation": "Giải thích rõ lý do đáp án này đúng theo bài giảng."\n'
+                "  }\n"
+                "]\n\n"
+                f"Nội dung bài giảng:\n{clean_text}"
+            )
+
+            print("\n" + "═" * 70)
+            print(f"🤖 [DEBUG AI - QUIZ BATCH {attempt}] Cần: {curr_batch_target} câu | Đã có: {len(valid_questions)}/{target_total}")
+            print("═" * 70)
+
+            if on_prompt and attempt == 1:
+                try:
+                    on_prompt(prompt)
+                except Exception:
+                    pass
+
+            t0 = time.time()
+            max_tokens = max(600, min(2400, curr_batch_target * 240))
+            raw = self.call_chat(prompt, max_tokens=max_tokens, temperature=0.25)
+            duration = time.time() - t0
+            print(f"✅ [DEBUG AI - QUIZ BATCH {attempt} FINISHED] Thời gian: {duration:.2f}s | Output: {len(raw)} ký tự\n")
+
+            parsed = self._extract_json(raw)
+            if isinstance(parsed, dict):
+                for key in ["questions", "quiz", "data", "items"]:
+                    if key in parsed and isinstance(parsed[key], list):
+                        parsed = parsed[key]
+                        break
+                else:
+                    vals = list(parsed.values())
+                    if vals and isinstance(vals[0], list):
+                        parsed = vals[0]
+
+            if isinstance(parsed, list):
+                for i, item in enumerate(parsed):
+                    sanitized = self._sanitize_quiz_item(item, fallback_idx=(len(valid_questions) + i) % 4)
+                    if sanitized:
+                        # Kiểm tra tránh trùng lặp nội dung câu hỏi
+                        q_title = sanitized["question"].strip().lower()
+                        if not any(q_title == e.lower() for e in existing_question_texts):
+                            valid_questions.append(sanitized)
+                            existing_question_texts.append(sanitized["question"])
+                            if len(valid_questions) >= target_total:
+                                break
+
+        return valid_questions[:target_total]
 
     # ==================== 3. SINH FLASHCARDS ====================
+    def _sanitize_flashcard_item(self, c: Any) -> Optional[Dict[str, str]]:
+        if not isinstance(c, dict):
+            return None
+        front = str(c.get("front") or c.get("question") or "").strip()
+        back = str(c.get("back") or c.get("answer") or "").strip()
+        hint = str(c.get("hint") or c.get("suggestion") or "").strip()
+        if not front or not back or len(front) < 4:
+            return None
+
+        # Xoá số thứ tự thừa nếu có
+        front = re.sub(r"^(?:thẻ\s*\d+[:.]?|\d+[.)])\s*", "", front, flags=re.IGNORECASE).strip()
+        back = re.sub(r"^(?:đáp án[:.]?|trả lời[:.]?)\s*", "", back, flags=re.IGNORECASE).strip()
+
+        # Làm sạch đại từ mơ hồ
+        if re.match(r"^(nó|điều này|cái này|phương pháp này)\s+", front, re.IGNORECASE):
+            front = re.sub(r"^(nó|điều này|cái này|phương pháp này)\s+", "Khái niệm ", front, flags=re.IGNORECASE)
+
+        return {
+            "front": front,
+            "back": back,
+            "hint": hint
+        }
+
     def generate_flashcards(self, transcript_text: str, num_cards: int = 8,
-                            on_prompt: Optional[Callable[[str], None]] = None) -> List[Dict[str, str]]:
-        full_text = TranscriptPruner.prune_transcript(transcript_text)
-        prompt = (
-            f"Dựa vào bài giảng sau, hãy rút trích {num_cards} thẻ ghi nhớ (Flashcards) chất lượng cao.\n\n"
-            "YÊU CẦU CHO THẺ:\n"
-            "- Mặt trước (front): Nêu rõ câu hỏi tự kiểm tra hoặc tên khái niệm/thuật ngữ cụ thể (ví dụ: 'Mô hình TCP/IP là gì?', 'Chức năng của giao thức IP?'). KHÔNG dùng 'Nó là gì?'.\n"
-            "- Mặt sau (back): Định nghĩa hoặc câu trả lời súc tích, ngắn gọn (tối đa 25 từ), nêu bật từ khóa quan trọng.\n"
-            "- Gợi ý (hint): Gợi ý ngắn 3-5 từ giúp liên tưởng nhanh.\n\n"
-            "CHỈ trả về mảng JSON hợp lệ:\n"
-            '[\n'
-            '  {\n'
-            '    "front": "Khái niệm hoặc câu hỏi cụ thể nêu rõ tên thuật ngữ?",\n'
-            '    "back": "Định nghĩa / câu trả lời trọng tâm, súc tích (1-2 câu ngắn)",\n'
-            '    "hint": "Gợi ý nhớ nhanh"\n'
-            '  }\n'
-            ']\n\n'
-            f"Transcript bài giảng:\n{full_text}"
-        )
+                            on_prompt: Optional[Callable[[str], None]] = None,
+                            on_progress: Optional[Callable[[str], None]] = None) -> List[Dict[str, str]]:
+        clean_text = TranscriptPruner.prune_transcript(transcript_text, max_chars=8000)
+        if not clean_text:
+            return []
 
-        print("\n" + "═" * 70)
-        print(f"🤖 [DEBUG AI - GENERATE FLASHCARDS] Số lượng thẻ: {num_cards}")
-        print(f"📝 [PROMPT SENT TO LLM]:")
-        print("─" * 70)
-        print(prompt)
-        print("─" * 70)
-        print(f"📊 Thống kê prompt: {len(prompt)} ký tự | ~{len(prompt.split())} từ")
-        print("═" * 70 + "\n")
+        target_total = max(1, int(num_cards))
+        batch_size = 8 if target_total > 8 else target_total
+        valid_cards: List[Dict[str, str]] = []
+        existing_fronts: List[str] = []
 
-        if on_prompt:
-            try:
-                on_prompt(prompt)
-            except Exception:
-                pass
+        max_attempts = max(3, (target_total + batch_size - 1) // batch_size + 2)
+        attempt = 0
 
-        t0 = time.time()
-        max_tokens = min(1200, max(300, num_cards * 80))
-        raw = self.call_chat(prompt, max_tokens=max_tokens)
-        duration = time.time() - t0
-        print(f"✅ [DEBUG AI - FLASHCARDS FINISHED] Thời gian suy luận: {duration:.2f}s | Output: {len(raw)} ký tự\n")
+        while len(valid_cards) < target_total and attempt < max_attempts:
+            attempt += 1
+            needed = target_total - len(valid_cards)
+            curr_batch_target = min(batch_size, needed)
 
-        parsed = self._extract_json(raw)
-        if isinstance(parsed, dict):
-            for key in ["flashcards", "cards", "data", "items"]:
-                if key in parsed and isinstance(parsed[key], list):
-                    parsed = parsed[key]
-                    break
-            else:
-                vals = list(parsed.values())
-                if vals and isinstance(vals[0], list):
-                    parsed = vals[0]
+            if on_progress:
+                try:
+                    on_progress(f"Đang rút trích thẻ ghi nhớ {len(valid_cards) + 1} - {len(valid_cards) + curr_batch_target}/{target_total}…")
+                except Exception:
+                    pass
 
-        if isinstance(parsed, list):
-            valid_cards = []
-            for c in parsed:
-                if isinstance(c, dict) and "front" in c and "back" in c:
-                    f_text = c.get("front", "")
-                    if re.match(r"^(nó|điều này|cái này)\s+", f_text, re.IGNORECASE):
-                        c["front"] = re.sub(r"^(nó|điều này|cái này)\s+", "Khái niệm ", f_text, flags=re.IGNORECASE)
-                    valid_cards.append(c)
-            if valid_cards:
-                return valid_cards
-        return []
+            avoid_section = ""
+            if existing_fronts:
+                sample_fronts = [f"- {f}" for f in existing_fronts[-6:]]
+                avoid_section = (
+                    f"\nCÁC THẺ ĐÃ CÓ TRƯỚC ĐÓ (BẮT BUỘC KHÔNG ĐƯỢC TRÙNG LẶP Ý NÀY):\n"
+                    + "\n".join(sample_fronts) + "\n"
+                )
+
+            prompt = (
+                f"Dựa vào bài giảng sau, hãy rút trích CHÍNH XÁC {curr_batch_target} thẻ ghi nhớ (Flashcards) chất lượng cao "
+                "chuẩn Spaced Repetition (SM-2) & Active Recall (Gợi nhớ chủ động).\n\n"
+                f"{avoid_section}\n"
+                "TIÊU CHUẨN SƯ PHẠM CHO TỪNG MẶT THẺ:\n"
+                "1. Mặt trước (front): Nêu một câu hỏi tự kiểm tra rõ ràng hoặc tên thuật ngữ/khái niệm kỹ thuật cụ thể "
+                "(Ví dụ: 'Mô hình TCP/IP gồm những tầng nào?', 'Chức năng của thuật toán băm SHA-256?'). KHÔNG dùng 'Nó là gì?'.\n"
+                "2. Mặt sau (back): Định nghĩa hoặc câu trả lời cô đọng, súc tích (1-3 câu, tối đa 35 từ), nêu bật từ khóa quan trọng và bản chất cốt lõi.\n"
+                "3. Gợi ý (hint): Gợi ý tư duy liên tưởng ngắn gọn (3-7 từ) giúp người học liên hệ nhanh khi chưa nhớ ra.\n"
+                "4. Đa dạng kiến thức: Bao gồm định nghĩa thuật ngữ, cơ chế hoạt động, so sánh và ứng dụng thực tế.\n\n"
+                f"CHỈ trả về đúng mảng JSON {curr_batch_target} phần tử theo cấu trúc:\n"
+                "[\n"
+                "  {\n"
+                '    "front": "Câu hỏi tự kiểm tra hoặc khái niệm cụ thể nêu rõ tên thuật ngữ?",\n'
+                '    "back": "Định nghĩa / câu trả lời trọng tâm, súc tích (1-2 câu ngắn)",\n'
+                '    "hint": "Từ khóa gợi ý nhớ nhanh"\n'
+                "  }\n"
+                "]\n\n"
+                f"Transcript bài giảng:\n{clean_text}"
+            )
+
+            print("\n" + "═" * 70)
+            print(f"🤖 [DEBUG AI - FLASHCARDS BATCH {attempt}] Cần: {curr_batch_target} thẻ | Đã có: {len(valid_cards)}/{target_total}")
+            print("═" * 70)
+
+            if on_prompt and attempt == 1:
+                try:
+                    on_prompt(prompt)
+                except Exception:
+                    pass
+
+            t0 = time.time()
+            max_tokens = max(500, min(2000, curr_batch_target * 140))
+            raw = self.call_chat(prompt, max_tokens=max_tokens, temperature=0.25)
+            duration = time.time() - t0
+            print(f"✅ [DEBUG AI - FLASHCARDS BATCH {attempt} FINISHED] Thời gian: {duration:.2f}s | Output: {len(raw)} ký tự\n")
+
+            parsed = self._extract_json(raw)
+            if isinstance(parsed, dict):
+                for key in ["flashcards", "cards", "data", "items"]:
+                    if key in parsed and isinstance(parsed[key], list):
+                        parsed = parsed[key]
+                        break
+                else:
+                    vals = list(parsed.values())
+                    if vals and isinstance(vals[0], list):
+                        parsed = vals[0]
+
+            if isinstance(parsed, list):
+                for item in parsed:
+                    sanitized = self._sanitize_flashcard_item(item)
+                    if sanitized:
+                        f_title = sanitized["front"].strip().lower()
+                        if not any(f_title == e.lower() for e in existing_fronts):
+                            valid_cards.append(sanitized)
+                            existing_fronts.append(sanitized["front"])
+                            if len(valid_cards) >= target_total:
+                                break
+
+        return valid_cards[:target_total]
 
     # ==================== 4. SINH CÂY SƠ ĐỒ TƯ DUY (MINDMAP) ====================
     def generate_mindmap(self, summary_text_or_transcript: str) -> Dict[str, Any]:

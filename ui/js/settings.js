@@ -1,3 +1,11 @@
+/**
+ * SPDX-FileCopyrightText: 2026 Open-mind Contributors
+ * SPDX-License-Identifier: MIT
+ *
+ * Purpose: Open-mind - Offline AI-Powered Academic Lecture Copilot.
+ * Distributed under the terms of the OSI-approved MIT License.
+ */
+
 /* ════════════════════════════════════════════
    Settings View — Open-mind
    AI Models · Interface · Data management

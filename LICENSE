@@ -1,6 +1,26 @@
 MIT License
+===========
 
-Copyright (c) 2026 [Shydev] / Open-mind
+SPDX-License-Identifier: MIT
+SPDX-FileCopyrightText: Copyright (c) 2026 Open-mind Contributors
+
+--------------------------------------------------------------------------------
+THÔNG BÁO VỀ MỤC ĐÍCH CỦA GIẤY PHÉP (LICENSE PURPOSE DECLARATION)
+--------------------------------------------------------------------------------
+Open-mind là một dự án phần mềm mã nguồn mở được phát triển với mục đích:
+1. Đảm bảo quyền tự do tiếp cận, nghiên cứu, chia sẻ và mở rộng giải pháp AI
+   học tập phục vụ cho sinh viên, giảng viên và cộng đồng học thuật Việt Nam.
+2. Bảo vệ quyền riêng tư người dùng thông qua mô hình 100% On-Device AI.
+3. Cho phép bất kỳ ai sao chép, sửa đổi, hợp nhất, xuất bản và phân phối lại mã nguồn
+   hoặc sản phẩm phái sinh một cách tự do, kể cả cho mục đích phi lợi nhuận lẫn thương mại,
+   tuân thủ các tiêu chuẩn của Sáng kiến Mã nguồn Mở (Open Source Initiative - OSI).
+
+Giấy phép MIT (MIT License) được lựa chọn vì tính chất giấy phép tự do chuẩn OSI (OSI-approved),
+có tính phổ quát cao và hoàn toàn tương thích với các hệ sinh thái thư viện mã nguồn mở
+đi kèm (faster-whisper, llama.cpp, pywebview, PyTorch, Pygame).
+--------------------------------------------------------------------------------
+
+Copyright (c) 2026 Open-mind Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

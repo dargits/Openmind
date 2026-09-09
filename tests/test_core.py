@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Open-mind Contributors
+# SPDX-License-Identifier: MIT
+#
+# Purpose: Open-mind - Offline AI-Powered Academic Lecture Copilot.
+# Distributed under the terms of the OSI-approved MIT License.
+
 import unittest
 import os
 import tempfile
@@ -201,6 +207,90 @@ class TestCoreModules(unittest.TestCase):
         self.assertNotIn("khuyến khích kênh", pruned)
         self.assertNotIn("video xuất hiện trên màn hình", pruned)
         self.assertNotIn("Xin cảm ơn vì đã xem", pruned)
+
+    def test_quiz_and_flashcard_quality_and_count(self):
+        from core.llm_engine import LLMEngine
+        engine = LLMEngine()
+
+        # 1. Test _sanitize_quiz_item
+        raw_item = {
+            "question": "nó thực hiện chức năng gì trong tầng Giao vận?",
+            "options": ["A. A. Định tuyến gói tin", "B. Truyền dữ liệu tin cậy", "C. Mã hóa dữ liệu"],
+            "correct_index": "1",
+            "explanation": "TCP là giao thức hướng kết nối đảm bảo độ tin cậy."
+        }
+        clean = engine._sanitize_quiz_item(raw_item, fallback_idx=0)
+        self.assertIsNotNone(clean)
+        self.assertFalse(clean["question"].lower().startswith("nó"))
+        self.assertEqual(len(clean["options"]), 4)
+        self.assertTrue(clean["options"][0].startswith("A. Định tuyến"))
+        self.assertEqual(clean["correct_index"], 1)
+        self.assertIn("tin cậy", clean["explanation"])
+
+        # 2. Test _sanitize_flashcard_item
+        raw_card = {
+            "front": "1. nó là gì trong hệ thống mạng?",
+            "back": "Đáp án: Giao thức truyền thông tin cậy",
+            "hint": "3-way handshake"
+        }
+        clean_card = engine._sanitize_flashcard_item(raw_card)
+        self.assertIsNotNone(clean_card)
+        self.assertFalse(clean_card["front"].startswith("1."))
+        self.assertFalse("nó" in clean_card["front"].lower().split()[:2])
+        self.assertFalse(clean_card["back"].startswith("Đáp án:"))
+        self.assertEqual(clean_card["hint"], "3-way handshake")
+
+        import json
+
+        # 3. Test exact question count guarantee with batching simulation
+        fake_responses = [
+            # Batch 1: 5 questions
+            json.dumps([
+                {"question": f"Câu hỏi kiểm tra số {i} về giao thức mạng?", "options": ["A. Opt 1", "B. Opt 2", "C. Opt 3", "D. Opt 4"], "correct_index": i % 4, "explanation": "Giải thích chuẩn."}
+                for i in range(1, 6)
+            ]),
+            # Batch 2: 5 questions
+            json.dumps([
+                {"question": f"Câu hỏi kiểm tra số {i} về giao thức mạng?", "options": ["A. Opt 1", "B. Opt 2", "C. Opt 3", "D. Opt 4"], "correct_index": i % 4, "explanation": "Giải thích chuẩn."}
+                for i in range(6, 11)
+            ])
+        ]
+        call_count = 0
+        def mock_call_chat(prompt, **kwargs):
+            nonlocal call_count
+            resp = fake_responses[call_count % len(fake_responses)]
+            call_count += 1
+            return resp
+
+        engine.call_chat = mock_call_chat
+
+        # Yêu cầu đúng 10 câu hỏi -> kết quả phải chính xác 10 câu
+        quiz_10 = engine.generate_quiz("Bài giảng về mạng máy tính TCP/IP...", num_questions=10, difficulty="trung bình")
+        self.assertEqual(len(quiz_10), 10)
+        self.assertEqual(call_count, 2)  # 2 lượt batch 5 câu
+
+        # Yêu cầu 5 câu hỏi -> kết quả chính xác 5 câu
+        call_count = 0
+        quiz_5 = engine.generate_quiz("Bài giảng về mạng máy tính TCP/IP...", num_questions=5, difficulty="dễ")
+        self.assertEqual(len(quiz_5), 5)
+        self.assertEqual(call_count, 1)
+
+        # 4. Test Flashcards exact count guarantee (15 cards)
+        fake_cards_resp = [
+            json.dumps([{"front": f"Thuật ngữ số {i} là gì?", "back": f"Định nghĩa thuật ngữ {i}", "hint": f"Mẹo {i}"} for i in range(1, 9)]),
+            json.dumps([{"front": f"Thuật ngữ số {i} là gì?", "back": f"Định nghĩa thuật ngữ {i}", "hint": f"Mẹo {i}"} for i in range(9, 16)])
+        ]
+        card_call_count = 0
+        def mock_call_chat_cards(prompt, **kwargs):
+            nonlocal card_call_count
+            resp = fake_cards_resp[card_call_count % len(fake_cards_resp)]
+            card_call_count += 1
+            return resp
+        engine.call_chat = mock_call_chat_cards
+
+        cards_15 = engine.generate_flashcards("Bài giảng...", num_cards=15)
+        self.assertEqual(len(cards_15), 15)
+        self.assertEqual(card_call_count, 2)
 
 
 if __name__ == "__main__":

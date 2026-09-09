@@ -16,11 +16,12 @@
 [![Cross-Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-555555.svg?style=for-the-badge)](#)
 
 [Khởi động nhanh](#-hướng-dẫn-cài-đặt--khởi-chạy-quick-start) •
+[Cài đặt từ mã nguồn](BUILDING.md) •
 [Tính năng nổi bật](#-tính-năng-cốt-lõi-key-features) •
 [Kiến trúc hệ thống](#-kiến-trúc-hệ-thống-architecture) •
-[Thuật toán cốt lõi](#-thuật-toán-cốt-lõi-core-algorithms) •
-[Benchmark](#-bảng-so-sánh-mô-hình-stt-benchmarks) •
-[Đóng góp](#-đóng-góp-phát-triển-contributing)
+[Lịch sử thay đổi (Changelog)](CHANGELOG.md) •
+[Thư viện phụ thuộc](DEPENDENCIES.md) •
+[Đóng góp & Báo lỗi](CONTRIBUTING.md)
 
 </div>
 
@@ -215,16 +216,25 @@ Open-mind/
 │   └── .gitkeep
 ├── 📁 models/                       # Thư mục lưu trữ trọng số mô hình AI (Offline)
 │   └── README.md                   # Hướng dẫn chi tiết tải thủ công mô hình
+├── 📁 scripts/                      # Kịch bản tự động hóa đóng gói & kiểm tra mã nguồn
+│   ├── add_license_headers.py      # Tiện ích tự động gắn SPDX License Header
+│   └── package_release.py          # Script đóng gói bản phát hành mở (.tar.gz & SHA256)
 ├── 📁 tests/                        # Bộ kiểm thử tự động & công cụ đo đạc
 │   ├── __init__.py
 │   ├── test_core.py                # Test Database CRUD, SM-2 SRS, RAG, Export, Pruner
 │   └── benchmark_stt.py            # Đo đạc RTF, Peak RAM, WER của mô hình STT
+├── .env.example                    # Tệp cấu hình môi trường mẫu (Cấu hình trước khi chạy/dịch)
+├── pyproject.toml                  # Khai báo cấu hình dự án & đóng gói chuẩn PEP 517/518/621
+├── setup.py                        # Kịch bản cài đặt tương thích ngược (pip install -e .)
 ├── main.py                         # Entrypoint chính khởi chạy ứng dụng Desktop
 ├── requirements.txt                # Danh sách thư viện Python phụ thuộc
 ├── run.bat                         # Kịch bản khởi chạy 1-Click trên Windows
 ├── run.sh                          # Kịch bản khởi chạy 1-Click trên Linux/macOS
-├── CONTRIBUTING.md                 # Hướng dẫn tiêu chuẩn đóng góp mã nguồn
-├── LICENSE                         # Giấy phép mã nguồn mở MIT
+├── BUILDING.md                     # Hướng dẫn chi tiết biên dịch & cài đặt từ mã nguồn
+├── CHANGELOG.md                    # Lịch sử thay đổi mã nguồn (Keep a Changelog)
+├── DEPENDENCIES.md                 # Báo cáo thư viện phụ thuộc & ma trận tương thích giấy phép
+├── CONTRIBUTING.md                 # Hướng dẫn tiêu chuẩn đóng góp mã nguồn & Bug Tracker
+├── LICENSE                         # Giấy phép mã nguồn mở MIT toàn văn & thông báo mục đích
 └── README.md                       # Tài liệu tổng quan dự án
 ```
 
@@ -277,21 +287,35 @@ python -m core.demo_seeder --force
 
 ---
 
-## 🤝 Đóng góp Phát triển (Contributing)
+## 🤝 Đóng góp Phát triển & 🐛 Quản lý Lỗi (Contributing & Bug Tracker)
 
-Chúng tôi hoan nghênh mọi đóng góp từ cộng đồng (báo cáo lỗi, cải thiện prompt, bổ sung từ điển ngữ âm hoặc tối ưu UI). Vui lòng tham khảo chi tiết tại tài liệu [**CONTRIBUTING.md**](CONTRIBUTING.md).
+Chúng tôi hoan nghênh mọi đóng góp từ cộng đồng! Quy trình phát triển của Open-mind được quản lý công khai, minh bạch theo tiêu chuẩn nguồn mở:
 
-1. Fork repository
-2. Tạo nhánh tính năng (`git checkout -b feature/AmazingFeature`)
-3. Commit thay đổi (`git commit -m 'Add some AmazingFeature'`)
-4. Push lên nhánh (`git push origin feature/AmazingFeature`)
-5. Mở một **Pull Request**
+- **Báo cáo lỗi phần mềm (Bug Tracker):** Nếu gặp lỗi hoặc sự cố khi chạy, vui lòng mở issue tại [**GitHub Issues Tracker**](https://github.com/dargits/Openmind/issues). Chúng tôi cung cấp sẵn biểu mẫu chuẩn [Bug Report](.github/ISSUE_TEMPLATE/bug_report.md) để hỗ trợ phản hồi nhanh nhất.
+- **Đề xuất tính năng mới:** Sử dụng biểu mẫu [Feature Request](.github/ISSUE_TEMPLATE/feature_request.md) tại GitHub Issues.
+- **Quy chuẩn đóng góp mã nguồn (Pull Request):**
+  1. Fork repository tại `https://github.com/dargits/Openmind.git`
+  2. Tạo nhánh tính năng (`git checkout -b feature/AmazingFeature`)
+  3. Kiểm tra mã nguồn và chạy bộ test (`python -m unittest tests/test_core.py -v`)
+  4. Đảm bảo các file mới có SPDX License Header (`SPDX-License-Identifier: MIT`)
+  5. Commit thay đổi (`git commit -m 'feat: Add some AmazingFeature'`)
+  6. Push lên nhánh (`git push origin feature/AmazingFeature`)
+  7. Mở một **Pull Request** theo mẫu [PULL_REQUEST_TEMPLATE](.github/pull_request_template.md).
+
+Chi tiết xem tại tài liệu [**CONTRIBUTING.md**](CONTRIBUTING.md).
 
 ---
 
-## 📄 Giấy phép (License)
+## 📄 Giấy phép & Mục đích Cấp phép (License & Purpose Declaration)
 
-Dự án được phân phối dưới giấy phép mã nguồn mở **[MIT License](LICENSE)**. Bạn hoàn toàn tự do sử dụng, chỉnh sửa và tích hợp cho các mục đích học tập, nghiên cứu cũng như thương mại.
+Dự án **Open-mind** được cấp phép theo giấy phép mã nguồn mở **[MIT License](LICENSE)** được Tổ chức Sáng kiến Mã nguồn Mở (**OSI**) phê chuẩn.
+
+### 🎯 Thông báo về Mục đích của Giấy phép (License Purpose Notice):
+1. **Thúc đẩy Học thuật & Nghiên cứu Mở:** Giấy phép MIT trao quyền tự do tối đa cho sinh viên, giảng viên và các nhà nghiên cứu trong việc tiếp cận, nghiên cứu cơ chế hoạt động, tùy biến mô hình AI và phát triển các sản phẩm phái sinh mà không bị rào cản bản quyền.
+2. **Quyền riêng tư 100% On-Device:** Đảm bảo giải pháp AI học tập hoàn toàn độc lập, phi thương mại hóa dữ liệu người dùng, hoạt động an toàn không phụ thuộc vào máy chủ đám mây của bên thứ ba.
+3. **Tính Tương thích Hoàn hảo:** Giấy phép MIT có tính tương thích một chiều và hai chiều cao nhất với toàn bộ hệ sinh thái thư viện mã nguồn mở mà Open-mind sử dụng (`faster-whisper`, `llama.cpp`, `pywebview`, `PyTorch`, `Pygame`), loại trừ hoàn toàn nguy cơ xung đột bản quyền.
+
+Toàn văn giấy phép được cung cấp tại tệp **[LICENSE](LICENSE)**. Báo cáo chi tiết giấy phép của các thư viện phụ thuộc có tại **[DEPENDENCIES.md](DEPENDENCIES.md)**.
 
 <div align="center">
   <sub>Xây dựng với ❤️ dành cho cộng đồng học tập & nghiên cứu. Nếu bạn thấy dự án hữu ích, hãy tặng <b>⭐ Star</b> trên GitHub!</sub>

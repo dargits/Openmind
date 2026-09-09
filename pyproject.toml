@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "open-mind"
+version = "1.0.0"
+description = "Offline AI-Powered Academic Lecture Copilot & Active Recall Learning Workspace"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Openmind Contributors", email = "community@openmind.local" }
+]
+keywords = [
+    "ai",
+    "speech-to-text",
+    "whisper",
+    "llm",
+    "qwen",
+    "offline-ai",
+    "spaced-repetition",
+    "education",
+    "open-source"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Education",
+    "Operating System :: OS Independent"
+]
+dependencies = [
+    "faster-whisper==1.0.3",
+    "llama-cpp-python==0.3.34",
+    "pywebview>=5.0",
+    "pydub==0.25.1",
+    "pygame==2.6.1",
+    "huggingface-hub>=0.20.0",
+    "requests>=2.28.0",
+    "tqdm>=4.65.0",
+]
+
+[project.optional-dependencies]
+build = [
+    "pyinstaller>=6.10.0",
+]
+benchmark = [
+    "psutil>=5.9.0",
+    "jiwer>=3.0.0",
+]
+dev = [
+    "pytest>=7.0.0",
+]
+
+[project.scripts]
+open-mind = "main:main"
+
+[project.urls]
+"Homepage" = "https://github.com/dargits/Openmind"
+"Bug Tracker" = "https://github.com/dargits/Openmind/issues"
+"Documentation" = "https://github.com/dargits/Openmind#readme"

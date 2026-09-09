@@ -115,29 +115,36 @@ python tests/benchmark_stt.py --audio data/samples/lecture_sample.mp3 --models t
 
 ---
 
-## 6. Báo cáo lỗi & Đề xuất tính năng mới
+## 6. Báo cáo lỗi & Đề xuất tính năng mới (Bug Tracker)
 
-Nếu bạn phát hiện lỗi hoặc muốn đề xuất cải tiến, vui lòng mở một **Issue** theo mẫu sau:
+Toàn bộ quá trình ghi nhận lỗi phần mềm và theo dõi xử lý được quản lý tập trung thông qua hệ thống **[GitHub Issues Tracker](https://github.com/dargits/Openmind/issues)**.
 
-### Mẫu báo cáo lỗi (Bug Report):
-```markdown
-**Mô tả lỗi:**
-Mô tả ngắn gọn và súc tích về lỗi gặp phải.
+- **Báo cáo sự cố / Lỗi phần mềm:** Vui lòng tạo issue mới tại [New Bug Report](https://github.com/dargits/Openmind/issues/new?template=bug_report.md).
+- **Đề xuất tính năng:** Vui lòng tạo issue mới tại [New Feature Request](https://github.com/dargits/Openmind/issues/new?template=feature_request.md).
 
-**Các bước tái hiện lỗi:**
-1. Mở ứng dụng và vào mục '...'
-2. Chọn file âm thanh '...'
-3. Bấm vào '...'
-4. Thấy thông báo lỗi xuất hiện.
-
-**Cấu hình thiết bị:**
-- Hệ điều hành: Windows 11 / 10 / Linux
-- RAM: 8GB / 16GB
-- Cỡ model STT: small / tiny / base
-
-**Log lỗi / Ảnh chụp màn hình (nếu có):**
-[Dán log hoặc ảnh tại đây]
-```
+Khi gửi báo cáo lỗi, hãy cung cấp đầy đủ:
+1. Mô tả chi tiết hành vi bất thường.
+2. Các bước tái hiện lỗi cụ thể.
+3. Log terminal hoặc thông tin stack trace.
+4. Môi trường kiểm thử (OS, CPU/RAM, phiên bản Python).
 
 ---
-*Cảm ơn sự đóng góp của bạn để Open-mind Pro ngày càng hoàn thiện hơn! 🚀*
+
+## 7. Tiêu Chuẩn Giấy Phép & Bản Quyền Mã Nguồn (SPDX License Headers)
+
+Theo quy định quản lý mã nguồn mở chuẩn quốc tế và thể lệ cuộc thi:
+- Mọi tệp mã nguồn mới được thêm vào dự án bắt buộc phải đính kèm **SPDX Header** chuẩn OSI ở đầu tệp:
+  ```python
+  # SPDX-FileCopyrightText: 2026 Open-mind Contributors
+  # SPDX-License-Identifier: MIT
+  #
+  # Purpose: Part of Open-mind - Offline AI Academic Copilot.
+  # Distributed under the OSI-approved MIT License.
+  ```
+- Bạn có thể chạy script tiện ích tự động:
+  ```bash
+  python scripts/add_license_headers.py
+  ```
+
+---
+*Cảm ơn sự đóng góp của bạn để Open-mind ngày càng hoàn thiện và lan tỏa giá trị tri thức mở! 🚀*

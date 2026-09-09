@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Open-mind Contributors
+# SPDX-License-Identifier: MIT
+#
+# Purpose: Open-mind - Offline AI-Powered Academic Lecture Copilot.
+# Distributed under the terms of the OSI-approved MIT License.
+
 """
 Open-mind Pro — Python ↔ JavaScript API Bridge
 ────────────────────────────────────────────────
@@ -317,8 +323,11 @@ class API:
                 def handle_prompt(p: str):
                     self._push("debug:prompt", {"type": "quiz", "title": lec.get("title", ""), "prompt": p})
 
+                def handle_progress(msg: str):
+                    self._push("llm:status", {"text": msg})
+
                 self._push("llm:status", {"text": f"Đang sinh {num_questions} câu hỏi trắc nghiệm ({difficulty})…"})
-                quiz = llm_engine.generate_quiz(lec["full_text"], int(num_questions), difficulty, on_prompt=handle_prompt)
+                quiz = llm_engine.generate_quiz(lec["full_text"], int(num_questions), difficulty, on_prompt=handle_prompt, on_progress=handle_progress)
                 if quiz:
                     db.save_quiz(lecture_id, quiz)
                     self._push("quiz:done", {"quiz": quiz})
@@ -349,8 +358,11 @@ class API:
                 def handle_prompt(p: str):
                     self._push("debug:prompt", {"type": "flashcards", "title": lec.get("title", ""), "prompt": p})
 
+                def handle_progress(msg: str):
+                    self._push("llm:status", {"text": msg})
+
                 self._push("llm:status", {"text": f"Đang rút trích {num_cards} thẻ ghi nhớ flashcards…"})
-                cards = llm_engine.generate_flashcards(lec["full_text"], int(num_cards), on_prompt=handle_prompt)
+                cards = llm_engine.generate_flashcards(lec["full_text"], int(num_cards), on_prompt=handle_prompt, on_progress=handle_progress)
                 if cards:
                     existing_decks = db.get_lecture_decks(lecture_id)
                     if existing_decks:

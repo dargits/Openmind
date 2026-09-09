@@ -1,3 +1,11 @@
+/**
+ * SPDX-FileCopyrightText: 2026 Open-mind Contributors
+ * SPDX-License-Identifier: MIT
+ *
+ * Purpose: Open-mind - Offline AI-Powered Academic Lecture Copilot.
+ * Distributed under the terms of the OSI-approved MIT License.
+ */
+
 /* ════════════════════════════════════════════
    Lecture Studio View — Open-mind
    Workflow Stepper · Drag-drop · Tab redesign
@@ -15,6 +23,54 @@ const LEC = {
   quizData: null,
   quizAnswers: {},
   activeTab: 'transcript',
+};
+
+// ──────────────────────────────────────────
+// Centralized Task Timer Manager
+// ──────────────────────────────────────────
+const TaskTimer = {
+  interval: null,
+  seconds: 0,
+  activeElementIds: [],
+  start(elementIds = []) {
+    this.stop();
+    this.seconds = 0;
+    this.activeElementIds = Array.isArray(elementIds) ? elementIds : [elementIds];
+    this.updateView();
+    this.interval = setInterval(() => {
+      this.seconds++;
+      this.updateView();
+    }, 1000);
+  },
+  updateView() {
+    const mm = String(Math.floor(this.seconds / 60)).padStart(2, '0');
+    const ss = String(this.seconds % 60).padStart(2, '0');
+    const timeStr = `${mm}:${ss}`;
+
+    const gTimer = el('lecStatusTimer');
+    if (gTimer) {
+      gTimer.textContent = `⏱️ ${timeStr}`;
+      gTimer.style.display = 'inline-flex';
+    }
+
+    this.activeElementIds.forEach(id => {
+      const elem = el(id);
+      if (elem) {
+        elem.textContent = `Thời gian đã chạy: ${timeStr}`;
+      }
+    });
+  },
+  stop() {
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = null;
+    }
+    const gTimer = el('lecStatusTimer');
+    if (gTimer) gTimer.style.display = 'none';
+    const s = this.seconds;
+    this.seconds = 0;
+    return s;
+  }
 };
 
 function renderLectureView() {
@@ -94,10 +150,11 @@ function renderLectureView() {
   </div>
 
   <!-- Status / Progress Bar -->
-  <div class="status-bar" id="lecStatusBar" style="display:none;">
+  <div class="status-bar" id="lecStatusBar" style="display:none;align-items:center;gap:10px;padding:8px 14px;border-radius:var(--radius-md);background:#f8fafc;border:1px solid #e2e8f0;">
     <i data-lucide="loader-2" class="spin" style="width:18px;height:18px;color:#4f46e5;flex-shrink:0;"></i>
-    <span class="status-text" id="lecStatusText">Đang xử lý bài giảng…</span>
-    <div class="progress-inline">
+    <span class="status-text" id="lecStatusText" style="font-weight:600;font-size:13px;color:#1e293b;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Đang xử lý bài giảng…</span>
+    <span class="badge badge-accent status-timer-badge" id="lecStatusTimer" style="display:none;font-family:monospace;font-weight:700;font-size:12px;padding:3px 10px;border-radius:12px;background:rgba(99,102,241,0.1);color:#4f46e5;border:1px solid rgba(99,102,241,0.2);">⏱️ 00:00</span>
+    <div class="progress-inline" style="flex-shrink:0;width:120px;">
       <div class="progress-wrap" style="height:6px;">
         <div class="progress-bar progress-accent" id="lecProgressBar" style="width:0%"></div>
       </div>
@@ -424,12 +481,18 @@ async function startTranscribe() {
   LEC.fullText = '';
 
   showStatus('Đang nạp mô hình và phân tích giọng nói…', 0.05);
+  switchTabTo('transcript');
+  TaskTimer.start(['transcribeElapsedTimer']);
+
   if (el('transcriptBox')) {
     el('transcriptBox').innerHTML = `
-<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;color:var(--text-muted);">
-  <i data-lucide="loader-2" class="spin" style="width:36px;height:36px;color:#4f46e5;"></i>
-  <div style="font-weight:700;color:var(--text);">Đang lắng nghe và trích xuất từng câu nói…</div>
-  <div style="font-size:12px;">Quá trình này có thể mất vài phút tùy độ dài bài giảng</div>
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;color:var(--text-muted);padding:40px 20px;">
+  <i data-lucide="loader-2" class="spin" style="width:38px;height:38px;color:#4f46e5;"></i>
+  <div style="font-weight:700;color:var(--text);font-size:16px;">Đang lắng nghe và trích xuất từng câu nói…</div>
+  <div style="font-size:13px;max-width:520px;text-align:center;line-height:1.5;">Mô hình Whisper STT đang nhận diện giọng nói tiếng Việt và đồng bộ mốc thời gian theo thời gian thực.</div>
+  <div id="transcribeElapsedTimer" style="display:inline-block;padding:6px 16px;background:rgba(99,102,241,0.08);color:#4f46e5;font-weight:700;font-size:13px;border-radius:20px;border:1px solid rgba(99,102,241,0.2);">
+    Thời gian đã chạy: 00:00
+  </div>
 </div>`;
     refreshIcons();
   }
@@ -454,17 +517,19 @@ EventBus.on('transcribe:segment', ({ segment, progress }) => {
 });
 
 EventBus.on('transcribe:done', data => {
+  const elapsed = TaskTimer.stop();
   LEC.isTranscribing = false;
   LEC.lectureId = data.lecture_id;
   LEC.segments = data.segments || LEC.segments;
   LEC.fullText = data.full_text || LEC.fullText;
   hideStatus();
   updateStepButtons();
-  showToast(`Phiên âm xong! Đã trích xuất ${LEC.segments.length} đoạn hội thoại.`, 'success', 3500);
+  showToast(`Phiên âm xong! Đã trích xuất ${LEC.segments.length} đoạn (${fmtDuration(elapsed)}).`, 'success', 3500);
   switchTabTo('transcript');
 });
 
 EventBus.on('transcribe:error', ({ message }) => {
+  TaskTimer.stop();
   LEC.isTranscribing = false;
   hideStatus();
   showToast('Lỗi phiên âm: ' + message, 'error', 4000);
@@ -515,18 +580,19 @@ async function showQuizModal() {
       <div>
         <label class="label">Số lượng câu hỏi</label>
         <select class="select w-full" id="quizNumSelect" style="font-size:13px;">
-          <option value="3">3 câu — Siêu nhanh</option>
-          <option value="4" selected>4 câu — Tiêu chuẩn (nhanh & đủ ý)</option>
-          <option value="5">5 câu — Toàn diện</option>
-          <option value="8">8 câu — Nâng cao</option>
+          <option value="3">3 câu — Thử nhanh</option>
+          <option value="5" selected>5 câu — Tiêu chuẩn (khuyên dùng)</option>
+          <option value="10">10 câu — Toàn diện (tổng hợp đầy đủ)</option>
+          <option value="15">15 câu — Chuyên sâu</option>
+          <option value="20">20 câu — Đầy đủ nhất</option>
         </select>
       </div>
       <div>
         <label class="label">Mức độ khó</label>
         <select class="select w-full" id="quizDiffSelect" style="font-size:13px;">
-          <option value="dễ">Dễ — Khái niệm cơ bản & định nghĩa</option>
-          <option value="trung bình" selected>Trung bình — Hiểu & Vận dụng kiến thức</option>
-          <option value="khó">Khó — Phân tích, suy luận & câu bẫy</option>
+          <option value="dễ">Dễ — Nhận biết khái niệm & định nghĩa cơ bản</option>
+          <option value="trung bình" selected>Trung bình — Thông hiểu & Vận dụng kiến thức</option>
+          <option value="khó">Khó — Phân tích sâu, trường hợp ngoại lệ & bẫy tư duy</option>
         </select>
       </div>
     </div>`,
@@ -544,25 +610,14 @@ async function showQuizModal() {
   LEC.quizData = null;
   LEC.quizAnswers = {};
   switchTabTo('quiz');
-
-  let seconds = 0;
-  if (LEC._quizTimer) clearInterval(LEC._quizTimer);
-  LEC._quizTimer = setInterval(() => {
-    seconds++;
-    const tEl = el('quizElapsedTimer');
-    if (tEl) {
-      const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
-      const ss = String(seconds % 60).padStart(2, '0');
-      tEl.textContent = `Thời gian đã chạy: ${mm}:${ss}`;
-    }
-  }, 1000);
+  TaskTimer.start(['quizElapsedTimer']);
 
   if (el('quizBox')) el('quizBox').innerHTML = `
 <div class="empty-state" style="height:100%;padding:40px 20px;">
   <i data-lucide="loader-2" class="spin" style="width:40px;height:40px;color:#4f46e5;"></i>
   <div class="empty-title" style="margin-top:16px;font-size:16px;font-weight:700;">Đang biên soạn ${numQuestions} câu hỏi trắc nghiệm…</div>
   <div class="empty-sub" style="margin-top:6px;max-width:540px;margin-left:auto;margin-right:auto;color:#64748b;line-height:1.5;">
-    Mô hình AI đang phân tích toàn bộ nội dung bài giảng 100% offline trên CPU. Quá trình này thường mất khoảng 25 - 50 giây.
+    Mô hình AI đang phân tích toàn bộ nội dung bài giảng 100% offline trên CPU. Quá trình này thường mất khoảng 20 - 50 giây tùy số lượng câu.
   </div>
   <div id="quizElapsedTimer" style="margin-top:16px;display:inline-block;padding:6px 16px;background:rgba(99,102,241,0.08);color:#4f46e5;font-weight:700;font-size:13px;border-radius:20px;border:1px solid rgba(99,102,241,0.2);">
     Thời gian đã chạy: 00:00
@@ -573,19 +628,22 @@ async function showQuizModal() {
   await API.generate_quiz(LEC.lectureId, numQuestions, difficulty);
 }
 
+// Global alias for modal trigger buttons
+window.openQuizModal = showQuizModal;
+
 EventBus.on('quiz:done', ({ quiz }) => {
+  const elapsed = TaskTimer.stop();
   hideStatus();
-  if (LEC._quizTimer) { clearInterval(LEC._quizTimer); LEC._quizTimer = null; }
   const questions = Array.isArray(quiz) ? quiz : (quiz.questions || []);
   LEC.quizData = questions;
   renderQuiz(questions);
   switchTabTo('quiz');
-  showToast(`Đã tạo xong ${questions.length} câu hỏi trắc nghiệm!`, 'success');
+  showToast(`Đã tạo xong ${questions.length} câu hỏi trắc nghiệm (${fmtDuration(elapsed)})!`, 'success');
 });
 
 EventBus.on('quiz:error', ({ message }) => {
+  TaskTimer.stop();
   hideStatus();
-  if (LEC._quizTimer) { clearInterval(LEC._quizTimer); LEC._quizTimer = null; }
   showToast('Lỗi sinh quiz: ' + message, 'error', 5000);
   if (el('quizBox')) {
     el('quizBox').innerHTML = `
@@ -741,6 +799,22 @@ async function triggerSummaryGeneration() {
   if (!LEC.fullText?.trim()) return showToast('Bài giảng chưa có nội dung văn bản để tóm tắt', 'warning');
 
   showStatus('Mô hình AI đang tóm tắt phân cấp và vẽ sơ đồ tư duy…', 0.3);
+  switchTabTo('summary');
+  TaskTimer.start(['summaryElapsedTimer']);
+
+  if (el('summaryBox')) el('summaryBox').innerHTML = `
+<div class="empty-state" style="height:100%;padding:40px 20px;">
+  <i data-lucide="loader-2" class="spin" style="width:40px;height:40px;color:#6366f1;"></i>
+  <div class="empty-title" style="margin-top:16px;font-size:16px;font-weight:700;">Đang tạo tóm tắt phân cấp & vẽ sơ đồ tư duy…</div>
+  <div class="empty-sub" style="margin-top:6px;max-width:540px;margin-left:auto;margin-right:auto;color:#64748b;line-height:1.5;">
+    Mô hình AI đang trích xuất các luận điểm cốt lõi, tóm tắt các phần và thiết lập cây phân cấp sơ đồ tư duy (Mindmap). Quá trình này thường mất khoảng 15 - 35 giây.
+  </div>
+  <div id="summaryElapsedTimer" style="margin-top:16px;display:inline-block;padding:6px 16px;background:rgba(99,102,241,0.08);color:#4f46e5;font-weight:700;font-size:13px;border-radius:20px;border:1px solid rgba(99,102,241,0.2);">
+    Thời gian đã chạy: 00:00
+  </div>
+</div>`;
+  refreshIcons();
+
   await API.generate_summary(LEC.lectureId);
 }
 
@@ -857,13 +931,15 @@ function renderSummary(summary, mindmap) {
 }
 
 EventBus.on('summary:done', ({ summary, mindmap }) => {
+  const elapsed = TaskTimer.stop();
   hideStatus();
   renderSummary(summary, mindmap);
   switchTabTo('summary');
-  showToast('Đã tạo xong tóm tắt & sơ đồ tư duy!', 'success');
+  showToast(`Đã tạo xong tóm tắt & sơ đồ tư duy (${fmtDuration(elapsed)})!`, 'success');
 });
 
 EventBus.on('summary:error', ({ message }) => {
+  TaskTimer.stop();
   hideStatus();
   showToast('Lỗi tạo tóm tắt: ' + message, 'error', 4000);
 });
@@ -880,15 +956,15 @@ async function showCardsModal() {
       <div>
         <label class="label">Số lượng thẻ muốn rút trích</label>
         <select class="select w-full" id="cardsNumSelect" style="font-size:13px;">
-          <option value="5">5 thẻ</option>
-          <option value="8" selected>8 thẻ (Khuyên dùng)</option>
-          <option value="10">10 thẻ</option>
-          <option value="15">15 thẻ — Chi tiết</option>
-          <option value="20">20 thẻ — Đầy đủ nhất</option>
+          <option value="5">5 thẻ — Thử nhanh</option>
+          <option value="8">8 thẻ — Cơ bản</option>
+          <option value="10" selected>10 thẻ — Tiêu chuẩn (khuyên dùng)</option>
+          <option value="15">15 thẻ — Toàn diện</option>
+          <option value="20">20 thẻ — Chi tiết nhất</option>
         </select>
       </div>
       <p class="text-muted text-sm" style="font-size:12px;line-height:1.6;background:var(--glass-light);padding:12px;border-radius:var(--radius-md);border:1px solid var(--glass-border);">
-        AI sẽ tự động trích xuất các <strong>định nghĩa, thuật ngữ</strong> và <strong>khái niệm quan trọng</strong> kèm gợi ý liên tưởng chuẩn Spaced Repetition (SM-2).
+        AI sẽ tự động trích xuất các <strong>định nghĩa, thuật ngữ</strong> và <strong>khái niệm quan trọng</strong> kèm gợi ý liên tưởng chuẩn Spaced Repetition (SM-2 & Active Recall).
       </p>
     </div>`,
     [
@@ -898,8 +974,24 @@ async function showCardsModal() {
   );
   if (idx !== 1) return;
 
-  const numCards = parseInt(el('cardsNumSelect')?.value) || 8;
+  const numCards = parseInt(el('cardsNumSelect')?.value) || 10;
   showStatus(`AI đang rút trích ${numCards} flashcards từ bài giảng…`, 0.3);
+  switchTabTo('flashcards');
+  TaskTimer.start(['cardsElapsedTimer']);
+
+  if (el('flashcardsBox')) el('flashcardsBox').innerHTML = `
+<div class="empty-state" style="height:100%;padding:40px 20px;">
+  <i data-lucide="loader-2" class="spin" style="width:40px;height:40px;color:#059669;"></i>
+  <div class="empty-title" style="margin-top:16px;font-size:16px;font-weight:700;">Đang rút trích ${numCards} thẻ ghi nhớ flashcards…</div>
+  <div class="empty-sub" style="margin-top:6px;max-width:540px;margin-left:auto;margin-right:auto;color:#64748b;line-height:1.5;">
+    Mô hình AI đang phân tích toàn bộ nội dung bài giảng để xây dựng các câu hỏi tự kiểm tra chuẩn SM-2 & Active Recall. Quá trình này thường mất khoảng 20 - 45 giây.
+  </div>
+  <div id="cardsElapsedTimer" style="margin-top:16px;display:inline-block;padding:6px 16px;background:rgba(5,150,105,0.08);color:#059669;font-weight:700;font-size:13px;border-radius:20px;border:1px solid rgba(5,150,105,0.2);">
+    Thời gian đã chạy: 00:00
+  </div>
+</div>`;
+  refreshIcons();
+
   await API.generate_flashcards(LEC.lectureId, numCards);
 }
 
@@ -1018,8 +1110,9 @@ async function studyLectureFlashcards() {
 }
 
 EventBus.on('flashcards:done', async ({ count, deck_name, all_cards }) => {
+  const elapsed = TaskTimer.stop();
   hideStatus();
-  showToast(`Đã tạo ${count} thẻ trong bộ "${deck_name}"!`, 'success', 4000);
+  showToast(`Đã tạo ${count} thẻ trong bộ "${deck_name}" (${fmtDuration(elapsed)})!`, 'success', 4000);
   if (all_cards && Array.isArray(all_cards)) {
     renderLectureFlashcards(all_cards);
   } else if (LEC.lectureId) {
@@ -1030,6 +1123,7 @@ EventBus.on('flashcards:done', async ({ count, deck_name, all_cards }) => {
 });
 
 EventBus.on('flashcards:error', ({ message }) => {
+  TaskTimer.stop();
   hideStatus();
   showToast('Lỗi tạo thẻ: ' + message, 'error', 4000);
 });
@@ -1146,6 +1240,7 @@ function updateProgress(progress) {
 
 function hideStatus() {
   if (el('lecStatusBar')) el('lecStatusBar').style.display = 'none';
+  TaskTimer.stop();
 }
 
 function updateStepButtons() {
