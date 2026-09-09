@@ -16,11 +16,11 @@
 [![Cross-Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-555555.svg?style=for-the-badge)](#)
 
 [Khởi động nhanh](#-hướng-dẫn-cài-đặt--khởi-chạy-quick-start) •
-[Cài đặt từ mã nguồn](BUILDING.md) •
+[Cài đặt từ mã nguồn](docs/BUILDING.md) •
 [Kiến trúc hệ thống](docs/architecture.md) •
 [Đặc tả API](docs/api.md) •
 [Lịch sử thay đổi (Changelog)](CHANGELOG.md) •
-[Thư viện phụ thuộc](DEPENDENCIES.md) •
+[Thư viện phụ thuộc](docs/DEPENDENCIES.md) •
 [Đóng góp & Báo lỗi](CONTRIBUTING.md)
 
 </div>
@@ -204,9 +204,12 @@ Open-mind/
 │   ├── flashcard_srs.py            # Triển khai thuật toán SuperMemo-2 (SM-2)
 │   ├── export_engine.py            # Xuất dữ liệu ra TXT, JSON, Anki CSV, HTML Report
 │   └── model_manager.py            # Quản lý kiểm tra & tải Model AI tự động
-├── 📁 docs/                         # Tài liệu kỹ thuật chuyên sâu & hồ sơ cuộc thi
+├── 📁 docs/                         # Trung tâm tài liệu kỹ thuật chuyên sâu (Documentation Hub)
+│   ├── README.md                   # Cổng điều hướng & mục lục tài liệu kỹ thuật
 │   ├── architecture.md             # Sơ đồ & phân tích kiến trúc hệ thống đa tầng
 │   ├── api.md                      # Đặc tả các RESTful API endpoints của hệ thống
+│   ├── BUILDING.md                 # Hướng dẫn chi tiết biên dịch & cài đặt từ mã nguồn
+│   ├── DEPENDENCIES.md             # Báo cáo thư viện phụ thuộc & ma trận giấy phép
 │   └── the-le-cuoc-thi-2026.pdf    # Thể lệ cuộc thi Phát triển PMMN tích hợp AI 2026
 ├── 📁 ui/                           # Giao diện người dùng Webview hiện đại (SPA)
 │   ├── css/style.css               # Design System hiện đại, responsive & glassmorphism
@@ -227,6 +230,9 @@ Open-mind/
 │   ├── __init__.py
 │   ├── test_core.py                # Test Database CRUD, SM-2 SRS, RAG, Export, Pruner
 │   └── benchmark_stt.py            # Đo đạc RTF, Peak RAM, WER của mô hình STT
+├── 📁 .github/                      # Quy chuẩn cộng đồng & Bug Tracker
+│   ├── ISSUE_TEMPLATE/             # Mẫu báo lỗi và yêu cầu tính năng
+│   └── pull_request_template.md    # Mẫu đóng góp Pull Request
 ├── .env.example                    # Tệp cấu hình môi trường mẫu (Cấu hình trước khi chạy/dịch)
 ├── pyproject.toml                  # Khai báo cấu hình dự án & đóng gói chuẩn PEP 517/518/621
 ├── setup.py                        # Kịch bản cài đặt tương thích ngược (pip install -e .)
@@ -234,9 +240,7 @@ Open-mind/
 ├── requirements.txt                # Danh sách thư viện Python phụ thuộc
 ├── run.bat                         # Kịch bản khởi chạy 1-Click trên Windows
 ├── run.sh                          # Kịch bản khởi chạy 1-Click trên Linux/macOS
-├── BUILDING.md                     # Hướng dẫn chi tiết biên dịch & cài đặt từ mã nguồn
 ├── CHANGELOG.md                    # Lịch sử thay đổi mã nguồn (Keep a Changelog)
-├── DEPENDENCIES.md                 # Báo cáo thư viện phụ thuộc & ma trận tương thích giấy phép
 ├── CONTRIBUTING.md                 # Hướng dẫn tiêu chuẩn đóng góp mã nguồn & Bug Tracker
 ├── LICENSE                         # Giấy phép mã nguồn mở MIT toàn văn & thông báo mục đích
 └── README.md                       # Tài liệu tổng quan dự án
@@ -319,7 +323,7 @@ Dự án **Open-mind** được cấp phép theo giấy phép mã nguồn mở *
 2. **Quyền riêng tư 100% On-Device:** Đảm bảo giải pháp AI học tập hoàn toàn độc lập, phi thương mại hóa dữ liệu người dùng, hoạt động an toàn không phụ thuộc vào máy chủ đám mây của bên thứ ba.
 3. **Tính Tương thích Hoàn hảo:** Giấy phép MIT có tính tương thích một chiều và hai chiều cao nhất với toàn bộ hệ sinh thái thư viện mã nguồn mở mà Open-mind sử dụng (`faster-whisper`, `llama.cpp`, `pywebview`, `PyTorch`, `Pygame`), loại trừ hoàn toàn nguy cơ xung đột bản quyền.
 
-Toàn văn giấy phép được cung cấp tại tệp **[LICENSE](LICENSE)**. Báo cáo chi tiết giấy phép của các thư viện phụ thuộc có tại **[DEPENDENCIES.md](DEPENDENCIES.md)**.
+Toàn văn giấy phép được cung cấp tại tệp **[LICENSE](LICENSE)**. Báo cáo chi tiết giấy phép của các thư viện phụ thuộc có tại **[DEPENDENCIES.md](docs/DEPENDENCIES.md)**.
 
 <div align="center">
   <sub>Xây dựng với ❤️ dành cho cộng đồng học tập & nghiên cứu. Nếu bạn thấy dự án hữu ích, hãy tặng <b>⭐ Star</b> trên GitHub!</sub>
