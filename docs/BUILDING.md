@@ -134,16 +134,12 @@ Dự án sử dụng **PyInstaller** (Giấy phép nguồn mở GPL v2 with exce
 Để biên dịch ứng dụng thành tệp thực thi độc lập:
 
 ```bash
-# 1. Cài đặt công cụ build
-pip install -e ".[build]"
+# Cách 1: Chạy kịch bản tự động 1-Click (Windows)
+scripts\build_windows_exe.bat
 
-# 2. Chạy kịch bản PyInstaller
-pyinstaller --noconfirm --onedir --windowed \
-    --name "Openmind" \
-    --add-data "ui;ui" \
-    --add-data "data/demo_lecture.json;data" \
-    --hidden-import "webview" \
-    --hidden-import "engineio.async_drivers.threading" \
-    main.py
+# Cách 2: Khởi chạy thủ công qua tệp cấu hình chuẩn OpenMind.spec
+python -m PyInstaller --noconfirm scripts/OpenMind.spec
 ```
-Tệp thực thi độc lập sẽ được tạo ra tại thư mục `dist/Openmind/`.
+
+Tệp thực thi độc lập kèm đầy đủ assets và C++ AI runtime sẽ được tạo ra tại thư mục `dist/OpenMind/OpenMind.exe`. Thư mục này có thể đóng gói thành file `.zip` dạng Portable để người dùng non-tech sử dụng ngay mà không cần cài đặt Python.
+
