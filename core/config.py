@@ -9,7 +9,12 @@ from pathlib import Path
 
 import json
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+import sys
+
+if getattr(sys, "frozen", False):
+    BASE_DIR = Path(sys.executable).resolve().parent
+else:
+    BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Tự động nạp cấu hình từ tệp .env nếu tồn tại (Chuẩn 12-Factor App & POSIX)
 _env_path = BASE_DIR / ".env"

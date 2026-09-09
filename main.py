@@ -17,11 +17,19 @@ if sys.stdout and hasattr(sys.stdout, "reconfigure"):
     except Exception:
         pass
 
-BASE_DIR = Path(__file__).resolve().parent
+IS_FROZEN = getattr(sys, "frozen", False)
+if IS_FROZEN:
+    BASE_DIR = Path(sys.executable).resolve().parent
+    BUNDLE_DIR = Path(getattr(sys, "_MEIPASS", BASE_DIR))
+else:
+    BASE_DIR = Path(__file__).resolve().parent
+    BUNDLE_DIR = BASE_DIR
 
 
 def ensure_environment():
     """Tự động kiểm tra, tạo venv và cài đặt thư viện cần thiết nếu chưa có."""
+    if IS_FROZEN:
+        return
     in_venv = (sys.prefix != getattr(sys, "base_prefix", sys.prefix)) or hasattr(sys, "real_prefix")
     
     if os.name == "nt":
@@ -82,7 +90,7 @@ def main():
     print("  OPEN-MIND — Trợ lý Học tập AI Toàn diện (100% Offline)")
     print("=" * 60)
 
-    WEB_DIR = BASE_DIR / "ui"
+    WEB_DIR = (BUNDLE_DIR / "ui") if (BUNDLE_DIR / "ui").exists() else (BASE_DIR / "ui")
     INDEX_HTML = WEB_DIR / "index.html"
 
     window = webview.create_window(

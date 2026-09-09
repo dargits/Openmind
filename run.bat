@@ -11,12 +11,24 @@ echo.
 REM 1. Kiem tra Python
 where python >nul 2>nul
 if %errorlevel% neq 0 (
-    echo [LOI] Khong tim thay Python tren he thong!
-    echo Vui long cai dat Python 3.10+ tu https://www.python.org/downloads/
-    echo Luu y: Nho tick chon Add Python to PATH khi cai dat.
-    echo.
-    pause
-    exit /b 1
+    echo [OpenMind] Khong tim thay Python tren he thong cua ban!
+    where winget >nul 2>nul
+    if %errorlevel% equ 0 (
+        echo [OpenMind] Phat hien Windows Package Manager (winget).
+        echo [OpenMind] Dang tu dong tai va cai dat Python 3.11 hoan toan tu dong...
+        echo Vui long cho trong giay lat...
+        winget install Python.Python.3.11 --silent --accept-package-agreements --accept-source-agreements
+        echo.
+        echo [OpenMind] Cai dat Python thanh cong! Vui long nhap dup lai run.bat de khoi chay ung dung.
+        pause
+        exit /b 0
+    ) else (
+        echo [LOI] Vui long cai dat Python 3.10+ tu https://www.python.org/downloads/
+        echo Luu y: Nho tick chon "Add Python to PATH" khi cai dat.
+        echo.
+        pause
+        exit /b 1
+    )
 )
 
 REM 2. Kiem tra va tao moi truong ao venv neu chua co
