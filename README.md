@@ -19,9 +19,9 @@
 [Cài đặt từ mã nguồn](docs/BUILDING.md) •
 [Kiến trúc hệ thống](docs/architecture.md) •
 [Đặc tả API](docs/api.md) •
-[Lịch sử thay đổi (Changelog)](CHANGELOG.md) •
+[Lịch sử thay đổi](docs/CHANGELOG.md) •
 [Thư viện phụ thuộc](docs/DEPENDENCIES.md) •
-[Đóng góp & Báo lỗi](CONTRIBUTING.md)
+[Đóng góp & Báo lỗi](docs/CONTRIBUTING.md)
 
 </div>
 
@@ -204,12 +204,14 @@ Open-mind/
 │   ├── flashcard_srs.py            # Triển khai thuật toán SuperMemo-2 (SM-2)
 │   ├── export_engine.py            # Xuất dữ liệu ra TXT, JSON, Anki CSV, HTML Report
 │   └── model_manager.py            # Quản lý kiểm tra & tải Model AI tự động
-├── 📁 docs/                         # Trung tâm tài liệu kỹ thuật chuyên sâu (Documentation Hub)
+├── 📁 docs/                         # Trung tâm tài liệu kỹ thuật hoàn chỉnh (Documentation Hub)
 │   ├── README.md                   # Cổng điều hướng & mục lục tài liệu kỹ thuật
 │   ├── architecture.md             # Sơ đồ & phân tích kiến trúc hệ thống đa tầng
 │   ├── api.md                      # Đặc tả các RESTful API endpoints của hệ thống
 │   ├── BUILDING.md                 # Hướng dẫn chi tiết biên dịch & cài đặt từ mã nguồn
 │   ├── DEPENDENCIES.md             # Báo cáo thư viện phụ thuộc & ma trận giấy phép
+│   ├── CHANGELOG.md                # Lịch sử phát triển các phiên bản (SemVer)
+│   ├── CONTRIBUTING.md             # Quy chuẩn đóng góp mã nguồn & Bug Tracker
 │   └── the-le-cuoc-thi-2026.pdf    # Thể lệ cuộc thi Phát triển PMMN tích hợp AI 2026
 ├── 📁 ui/                           # Giao diện người dùng Webview hiện đại (SPA)
 │   ├── css/style.css               # Design System hiện đại, responsive & glassmorphism
@@ -218,14 +220,13 @@ Open-mind/
 │   └── index.html                  # Cấu trúc giao diện Webview chính
 ├── 📁 data/                         # Thư mục lưu trữ dữ liệu người dùng (100% Offline)
 │   ├── demo_lecture.json           # Dữ liệu học tập mẫu hoàn chỉnh
-│   ├── openmind.db                 # Database SQLite người dùng (Tự sinh)
-│   ├── settings.json               # Cấu hình người dùng cá nhân (Tự sinh)
 │   └── .gitkeep
 ├── 📁 models/                       # Thư mục lưu trữ trọng số mô hình AI (Offline)
 │   └── README.md                   # Hướng dẫn chi tiết tải thủ công mô hình
 ├── 📁 scripts/                      # Kịch bản tự động hóa đóng gói & kiểm tra mã nguồn
 │   ├── add_license_headers.py      # Tiện ích tự động gắn SPDX License Header
-│   └── package_release.py          # Script đóng gói bản phát hành mở (.tar.gz & SHA256)
+│   ├── package_release.py          # Script đóng gói bản phát hành mở (.tar.gz & SHA256)
+│   └── run.sh                      # Kịch bản khởi chạy trên Linux/macOS
 ├── 📁 tests/                        # Bộ kiểm thử tự động & công cụ đo đạc
 │   ├── __init__.py
 │   ├── test_core.py                # Test Database CRUD, SM-2 SRS, RAG, Export, Pruner
@@ -235,13 +236,9 @@ Open-mind/
 │   └── pull_request_template.md    # Mẫu đóng góp Pull Request
 ├── .env.example                    # Tệp cấu hình môi trường mẫu (Cấu hình trước khi chạy/dịch)
 ├── pyproject.toml                  # Khai báo cấu hình dự án & đóng gói chuẩn PEP 517/518/621
-├── setup.py                        # Kịch bản cài đặt tương thích ngược (pip install -e .)
 ├── main.py                         # Entrypoint chính khởi chạy ứng dụng Desktop
 ├── requirements.txt                # Danh sách thư viện Python phụ thuộc
-├── run.bat                         # Kịch bản khởi chạy 1-Click trên Windows
-├── run.sh                          # Kịch bản khởi chạy 1-Click trên Linux/macOS
-├── CHANGELOG.md                    # Lịch sử thay đổi mã nguồn (Keep a Changelog)
-├── CONTRIBUTING.md                 # Hướng dẫn tiêu chuẩn đóng góp mã nguồn & Bug Tracker
+├── run.bat                         # Khởi chạy 1-Click thông minh trên Windows
 ├── LICENSE                         # Giấy phép mã nguồn mở MIT toàn văn & thông báo mục đích
 └── README.md                       # Tài liệu tổng quan dự án
 ```
