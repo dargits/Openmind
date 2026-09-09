@@ -17,8 +17,8 @@
 
 [Khởi động nhanh](#-hướng-dẫn-cài-đặt--khởi-chạy-quick-start) •
 [Cài đặt từ mã nguồn](BUILDING.md) •
-[Tính năng nổi bật](#-tính-năng-cốt-lõi-key-features) •
-[Kiến trúc hệ thống](#-kiến-trúc-hệ-thống-architecture) •
+[Kiến trúc hệ thống](docs/architecture.md) •
+[Đặc tả API](docs/api.md) •
 [Lịch sử thay đổi (Changelog)](CHANGELOG.md) •
 [Thư viện phụ thuộc](DEPENDENCIES.md) •
 [Đóng góp & Báo lỗi](CONTRIBUTING.md)
@@ -204,6 +204,10 @@ Open-mind/
 │   ├── flashcard_srs.py            # Triển khai thuật toán SuperMemo-2 (SM-2)
 │   ├── export_engine.py            # Xuất dữ liệu ra TXT, JSON, Anki CSV, HTML Report
 │   └── model_manager.py            # Quản lý kiểm tra & tải Model AI tự động
+├── 📁 docs/                         # Tài liệu kỹ thuật chuyên sâu & hồ sơ cuộc thi
+│   ├── architecture.md             # Sơ đồ & phân tích kiến trúc hệ thống đa tầng
+│   ├── api.md                      # Đặc tả các RESTful API endpoints của hệ thống
+│   └── the-le-cuoc-thi-2026.pdf    # Thể lệ cuộc thi Phát triển PMMN tích hợp AI 2026
 ├── 📁 ui/                           # Giao diện người dùng Webview hiện đại (SPA)
 │   ├── css/style.css               # Design System hiện đại, responsive & glassmorphism
 │   ├── js/                         # Logic giao diện & tương tác người dùng
