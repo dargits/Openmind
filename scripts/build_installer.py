@@ -118,7 +118,42 @@ def build_pyinstaller():
     print(f"\n✓ Biên dịch PyInstaller hoàn tất: {app_dir}")
 
 
+def sanitize_dist():
+    """Làm sạch toàn bộ dữ liệu cá nhân của người build trong thư mục dist trước khi đóng gói."""
+    app_dir = DIST_DIR / "OpenMind"
+    data_dir = app_dir / "data"
+    if data_dir.exists():
+        for db_file in data_dir.glob("*.db*"):
+            try:
+                db_file.unlink()
+                print(f"  -> Đã loại bỏ file dữ liệu cá nhân: {db_file.name}")
+            except Exception:
+                pass
+        for sub in ["downloads", "outputs", "samples"]:
+            sub_path = data_dir / sub
+            if sub_path.exists():
+                shutil.rmtree(sub_path, ignore_errors=True)
+                print(f"  -> Đã dọn dẹp thư mục tạm: data/{sub}")
+
+    # Đồng bộ mô hình Whisper Small sẵn có
+    models_dist = app_dir / "models"
+    models_dist.mkdir(parents=True, exist_ok=True)
+    whisper_src = REPO_ROOT / "models" / "faster-whisper-small"
+    whisper_dst = models_dist / "faster-whisper-small"
+    if whisper_src.exists() and not whisper_dst.exists():
+        print("  -> Đang nạp mô hình nhận diện giọng nói Whisper Small vào bộ phân phối...")
+        shutil.copytree(whisper_src, whisper_dst)
+
+    # Đảm bảo có settings.json sạch
+    settings_src = REPO_ROOT / "data" / "settings.json"
+    settings_dst = data_dir / "settings.json"
+    if settings_src.exists():
+        data_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(settings_src, settings_dst)
+
+
 def build_inno_setup(iscc_bin: Path):
+    sanitize_dist()
     log_header("BƯỚC 2: ĐÓNG GÓI BỘ CÀI ĐẶT WINDOWS (INNO SETUP)")
     print(f"Trình biên dịch: {iscc_bin}")
     print(f"File kịch bản:  {ISS_FILE.name}")

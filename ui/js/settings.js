@@ -297,6 +297,18 @@ function renderSettingsView() {
         <i data-lucide="download" style="width:14px;height:14px;"></i> Nạp dữ liệu mẫu
       </button>
     </div>
+
+    <div class="settings-row" style="padding-top:12px;margin-top:12px;border-top:1px solid var(--border);">
+      <div>
+        <div style="font-weight:600;font-size:13px;color:#ef4444;">Xóa sạch dữ liệu & Đặt lại xuất xưởng</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
+          Xóa toàn bộ bài giảng, thẻ ghi nhớ, kết quả thi và khởi tạo lại bài giảng mẫu sạch ban đầu
+        </div>
+      </div>
+      <button class="btn btn-danger btn-sm" id="btnResetDatabase" style="display:inline-flex;align-items:center;gap:6px;background:#ef4444;color:#fff;border:none;">
+        <i data-lucide="trash-2" style="width:14px;height:14px;"></i> Đặt lại dữ liệu sạch
+      </button>
+    </div>
   </div>
 
   <!-- 4. ABOUT -->
@@ -333,6 +345,7 @@ function renderSettingsView() {
   el('settingsRefresh')?.addEventListener('click', loadSettings);
   el('settingsSave')?.addEventListener('click', () => saveSettings(false));
   el('btnSeedDemo')?.addEventListener('click', handleSeedDemo);
+  el('btnResetDatabase')?.addEventListener('click', handleResetDatabase);
   el('btnCancelLlmDownload')?.addEventListener('click', handleCancelLlmDownload);
 
   el('inCloudProvider')?.addEventListener('change', () => {
@@ -486,6 +499,30 @@ async function handleSeedDemo() {
     }
   } catch (e) {
     showToast('Lỗi khi nạp demo: ' + e.message, 'error');
+  }
+}
+
+async function handleResetDatabase() {
+  const confirmed = confirm(
+    '⚠️ CẢNH BÁO XÓA DỮ LIỆU:\n\n' +
+    'Hành động này sẽ xóa toàn bộ bài giảng, thẻ ghi nhớ, kết quả thi và khôi phục ứng dụng về trạng thái sạch ban đầu (với bài giảng mẫu Cấu trúc Dữ liệu tiêu chuẩn).\n\n' +
+    'Bạn có chắc chắn muốn tiếp tục?'
+  );
+  if (!confirmed) return;
+
+  try {
+    showToast('Đang làm sạch cơ sở dữ liệu…', 'info');
+    const res = await API.reset_database_data();
+    if (res.ok) {
+      showToast('✓ Đã đặt lại dữ liệu sạch thành công!', 'success', 3500);
+      setTimeout(() => {
+        window.location.reload();
+      }, 700);
+    } else {
+      showToast(res.error || 'Lỗi đặt lại dữ liệu', 'error');
+    }
+  } catch (e) {
+    showToast('Lỗi khi đặt lại: ' + e.message, 'error');
   }
 }
 

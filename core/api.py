@@ -954,12 +954,15 @@ class API:
             base_url=base_url.strip() if base_url else None,
         )
 
-    def seed_demo_data(self, force: bool = False) -> dict:
+    def reset_database_data(self) -> dict:
+        """Xóa toàn bộ dữ liệu học tập cá nhân và khôi phục về trạng thái mẫu ban đầu."""
         try:
+            db.reset_database()
             from core.demo_seeder import seed_demo_data
-            return seed_demo_data(force=force)
+            seed_demo_data(force=True)
+            return {"ok": True, "message": "Đã đặt lại dữ liệu học tập thành công!"}
         except Exception as e:
-            return {"success": False, "message": f"Lỗi nạp dữ liệu: {e}"}
+            return {"ok": False, "error": str(e)}
 
 
 api = API()

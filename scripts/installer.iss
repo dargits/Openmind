@@ -63,13 +63,26 @@ english.LaunchProgram=Launch %1 now
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
+[InstallDelete]
+; Làm sạch cơ sở dữ liệu và tệp tải về cá nhân cũ của người build hoặc phiên bản cũ
+Type: files; Name: "{app}\data\openmind.db"
+Type: files; Name: "{app}\data\openmind.db-shm"
+Type: files; Name: "{app}\data\openmind.db-wal"
+Type: files; Name: "{app}\data\openmind.db-journal"
+Type: filesandordirs; Name: "{app}\data\downloads"
+Type: filesandordirs; Name: "{app}\data\outputs"
+Type: filesandordirs; Name: "{app}\data\samples"
+
 [Files]
-Source: "..\dist\OpenMind\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\dist\OpenMind\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.db,*.db-shm,*.db-wal,*.db-journal,*.log,*.download,data\downloads\*,data\outputs\*,data\samples\*,_internal\data\*.db*"
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\ui\logo.ico"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\ui\logo.ico"; Tasks: desktopicon
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}\data"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent

@@ -77,6 +77,7 @@ const API = {
   save_settings: (s) => API.call('save_settings', s),
   test_cloud_connection: (p, k, m, b) => API.call('test_cloud_connection', p, k, m || '', b || ''),
   seed_demo_data: (f) => API.call('seed_demo_data', f || false),
+  reset_database_data: () => API.call('reset_database_data'),
 
   export_txt: (id) => API.call('export_txt', id),
   export_html: (id) => API.call('export_html', id),
