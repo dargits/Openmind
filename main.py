@@ -86,21 +86,41 @@ from core.api import api
 
 
 def main():
-    print("=" * 60)
-    print("  OPEN-MIND — Trợ lý Học tập AI Toàn diện (100% Offline)")
-    print("=" * 60)
+    print("[Open-mind] Đang khởi chạy ứng dụng...")
 
     WEB_DIR = (BUNDLE_DIR / "ui") if (BUNDLE_DIR / "ui").exists() else (BASE_DIR / "ui")
     INDEX_HTML = WEB_DIR / "index.html"
 
+    # Tự động phát hiện độ phân giải màn hình để căn giữa và định cỡ phù hợp
+    try:
+        screens = webview.screens
+        if screens and len(screens) > 0:
+            primary = screens[0]
+            sw, sh = primary.width, primary.height
+        else:
+            sw, sh = 1920, 1080
+    except Exception:
+        sw, sh = 1920, 1080
+
+    # Tính toán kích thước responsive (tối đa 1380x880, nhưng không vượt quá 90% màn hình)
+    win_w = min(1380, max(1080, int(sw * 0.90)))
+    win_h = min(880, max(680, int(sh * 0.88)))
+
+    # Tọa độ căn giữa hoàn hảo trên màn hình
+    pos_x = max(0, (sw - win_w) // 2)
+    pos_y = max(0, (sh - win_h) // 2)
+
     window = webview.create_window(
-        title="Open-mind — Trợ lý Học tập AI Toàn diện",
+        title="Open-mind — Không gian Học tập AI Thông minh",
         url=INDEX_HTML.as_uri(),
         js_api=api,
-        width=1380,
-        height=900,
-        min_size=(1100, 720),
+        width=win_w,
+        height=win_h,
+        x=pos_x,
+        y=pos_y,
+        min_size=(min(1050, win_w), min(680, win_h)),
         background_color="#f8fafc",
+        text_select=True,
     )
 
     api.set_window(window)

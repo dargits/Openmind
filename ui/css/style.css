@@ -121,11 +121,17 @@ input, textarea, select { font: inherit; color: inherit; background: transparent
 a { color: inherit; text-decoration: none; }
 .hidden { display: none !important; }
 
+/* ── Selection ── */
+::selection {
+  background: rgba(99, 102, 241, 0.22);
+  color: #312e81;
+}
+
 /* ── Scrollbar ── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.20); }
+::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.35); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.45); }
 
 /* ══════════════════════════════════════════════════════════════
    KEYFRAME ANIMATIONS
@@ -591,7 +597,10 @@ a { color: inherit; text-decoration: none; }
 
 /* Quick actions grid */
 .quick-actions {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+}
+@media (max-width: 1100px) {
+  .quick-actions { grid-template-columns: repeat(2, 1fr); }
 }
 .qa-card {
   background: var(--bg-card);
@@ -1357,4 +1366,200 @@ a { color: inherit; text-decoration: none; }
   font-size: 13px;
   border-radius: 24px;
   letter-spacing: 0.02em;
+}
+
+/* ── Full-Text Search Highlight & Cards (P0) ── */
+mark {
+  background: rgba(251, 191, 36, 0.35);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.search-result-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.search-result-card:hover {
+  border-color: rgba(99,102,241,0.35);
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(99,102,241,0.08);
+}
+.search-result-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(99,102,241,0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.search-result-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+  margin-bottom: 3px;
+}
+.search-result-snippet {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.global-search-wrap {
+  position: relative;
+}
+.global-search-input {
+  width: 100%;
+  padding: 8px 12px 8px 34px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  font-size: 13px;
+  color: var(--text);
+  transition: border-color 0.2s;
+}
+.global-search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.08);
+}
+.global-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* ══════════════════════════════════════════════
+   P1 FEATURES: YouTube Import, Inline Notes, Multi-turn Chat
+══════════════════════════════════════════════ */
+
+/* YouTube Import Bar */
+.youtube-import-card {
+  margin-top: 10px;
+  background: var(--bg-card);
+  border: 1px dashed rgba(239, 68, 68, 0.4);
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.youtube-import-card:focus-within {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.02);
+}
+.youtube-import-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.youtube-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--text);
+  min-width: 0;
+}
+.youtube-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Inline Transcript Notes */
+.seg-line-wrap {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-md);
+  transition: background 0.15s ease;
+  padding: 3px 6px;
+}
+.seg-line-wrap:hover {
+  background: rgba(99, 102, 241, 0.04);
+}
+.seg-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  position: relative;
+}
+.seg-actions {
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.seg-line-wrap:hover .seg-actions {
+  opacity: 1;
+}
+.seg-note-btn {
+  padding: 2px 7px;
+  height: 22px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--accent);
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.seg-note-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+.seg-notes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0 6px 60px;
+}
+.seg-note-card {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-left: 3px solid #d97706;
+  border-radius: 6px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.seg-note-editor {
+  margin: 6px 0 8px 60px;
+  background: var(--bg-card);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+}
+
+.chat-citation-chip {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.chat-citation-chip:hover {
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--accent);
 }

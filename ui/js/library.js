@@ -94,10 +94,78 @@ async function loadLibrary() {
   refreshIcons();
 
   try {
-    const lectures = await API.list_lectures(LIB.activeFolder, LIB.searchQuery);
+    const query = LIB.searchQuery.trim();
+    let lectures = [];
+    let isFtsSearch = false;
+    let ftsResults = [];
+
+    if (query) {
+      // Dùng FTS5 search khi có query
+      isFtsSearch = true;
+      ftsResults = await API.search_all_lectures(query).catch(() => []);
+      lectures = ftsResults;
+    } else {
+      lectures = await API.list_lectures(LIB.activeFolder, '');
+    }
 
     if (el('libSubtitle')) {
-      el('libSubtitle').textContent = `${lectures.length} bài giảng${LIB.activeFolder ? ` · ${LIB.activeFolder}` : ''}`;
+      el('libSubtitle').textContent = isFtsSearch
+        ? `${lectures.length} kết quả cho "${escHtml(query)}"`
+        : `${lectures.length} bài giảng${LIB.activeFolder ? ` · ${LIB.activeFolder}` : ''}`;
+    }
+
+    // FTS Search Results Panel
+    if (isFtsSearch) {
+      if (!lectures.length) {
+        el('libGrid').innerHTML = `
+<div style="grid-column:1/-1;">
+  <div class="empty-state">
+    <div class="empty-icon"><i data-lucide="search-x" style="width:48px;height:48px;color:var(--text-subtle);"></i></div>
+    <div class="empty-title">Không tìm thấy kết quả</div>
+    <div class="empty-sub">Thử từ khóa khác hoặc xóa bộ lọc để xem toàn bộ thư viện</div>
+  </div>
+</div>`;
+        refreshIcons();
+        return;
+      }
+
+      el('libGrid').innerHTML = `
+<div style="grid-column:1/-1;display:flex;flex-direction:column;gap:8px;">
+  <div style="font-size:12px;font-weight:600;color:var(--text-muted);letter-spacing:0.04em;text-transform:uppercase;padding:0 2px;margin-bottom:4px;">
+    Kết quả tìm kiếm toàn văn — ${lectures.length} bài giảng
+  </div>
+  ${lectures.map(r => `
+  <div class="search-result-card" data-lid="${escHtml(r.id)}">
+    <div class="search-result-icon">
+      <i data-lucide="file-text" style="width:16px;height:16px;color:#4f46e5;"></i>
+    </div>
+    <div style="flex:1;min-width:0;">
+      <div class="search-result-title">${escHtml(r.title)}</div>
+      ${r.snippet
+        ? `<div class="search-result-snippet">${r.snippet}</div>`
+        : ''}
+      <div style="display:flex;gap:6px;margin-top:5px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--text-muted);">${r.folder_tag || 'General'}</span>
+        ${r.has_summary ? '<span style="font-size:11px;color:#059669;">✓ Tóm tắt</span>' : ''}
+        ${r.has_quiz ? '<span style="font-size:11px;color:#4338ca;">✓ Quiz</span>' : ''}
+        ${r.flashcard_count > 0 ? `<span style="font-size:11px;color:#b45309;">✓ ${r.flashcard_count} thẻ</span>` : ''}
+      </div>
+    </div>
+    <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--text-muted);flex-shrink:0;align-self:center;"></i>
+  </div>
+  `).join('')}
+</div>`;
+
+      el('libGrid').querySelectorAll('.search-result-card').forEach(card => {
+        card.addEventListener('click', () => {
+          State.lectureId = card.dataset.lid;
+          switchView('lecture');
+          setTimeout(() => { if (typeof loadLectureById === 'function') loadLectureById(card.dataset.lid); }, 80);
+        });
+      });
+
+      refreshIcons();
+      return;
     }
 
     if (!lectures.length) {
@@ -155,11 +223,16 @@ async function loadLibrary() {
         badges.push(`<span class="badge" style="background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0;font-size:11px;">Chưa tạo quiz/thẻ</span>`);
       }
 
+      const isPdf = !lec.audio_path;
+      const typeHtml = isPdf
+        ? `<span style="display:inline-flex;align-items:center;gap:4px;color:#ef4444;font-weight:600;"><i data-lucide="file-text" style="width:13px;height:13px;"></i> Slide / PDF</span>`
+        : `<span style="display:inline-flex;align-items:center;gap:4px;"><i data-lucide="clock" style="width:13px;height:13px;"></i> ${dur}</span>`;
+
       return `
 <div class="lecture-card" data-lid="${escHtml(lec.id)}">
   <div class="lec-cover" style="background:${palette.bg};border-bottom:1px solid ${palette.border};">
     <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.75);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.06);position:relative;z-index:1;border:1px solid rgba(255,255,255,0.9);">
-      <i data-lucide="${palette.icon}" style="width:24px;height:24px;color:${palette.color};"></i>
+      <i data-lucide="${isPdf ? 'file-text' : palette.icon}" style="width:24px;height:24px;color:${isPdf ? '#ef4444' : palette.color};"></i>
     </div>
     <div style="position:relative;z-index:1;">
       <div class="lec-tag"><span class="badge" style="color:${palette.color};background:${palette.badgeBg};border:1px solid ${palette.badgeBorder};box-shadow:0 1px 3px rgba(0,0,0,0.06);font-weight:700;">${escHtml(tag)}</span></div>
@@ -168,9 +241,7 @@ async function loadLibrary() {
   <div class="lec-body">
     <div class="lec-title" title="${escHtml(lec.title || '')}">${escHtml(lec.title || 'Bài giảng')}</div>
     <div class="lec-meta">
-      <span style="display:inline-flex;align-items:center;gap:5px;">
-        <i data-lucide="clock" style="width:13px;height:13px;"></i> ${dur}
-      </span>
+      ${typeHtml}
       <span style="display:inline-flex;align-items:center;gap:5px;">
         <i data-lucide="calendar" style="width:13px;height:13px;"></i> ${date}
       </span>

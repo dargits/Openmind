@@ -54,6 +54,33 @@ async function renderStatsView() {
     <div class="chart-bars" id="statsChart"></div>
   </div>
 
+  <!-- Analytical Section: 7-Day Review Forecast & Forgetting Curve -->
+  <div class="grid-2">
+    <!-- 7-Day Review Forecast Calendar -->
+    <div class="card" style="display:flex;flex-direction:column;">
+      <div class="card-header">
+        <span class="card-title">
+          <i data-lucide="calendar-days" style="width:16px;height:16px;color:#4f46e5;"></i>
+          Dự báo ôn tập 7 ngày tới
+        </span>
+        <span class="badge badge-accent" id="statsForecastTotal">0 thẻ</span>
+      </div>
+      <div class="forecast-container" id="statsForecastContent" style="padding:8px 0;flex:1;display:flex;flex-direction:column;justify-content:center;"></div>
+    </div>
+
+    <!-- Ebbinghaus Forgetting Curve & Memory Retention -->
+    <div class="card" style="display:flex;flex-direction:column;">
+      <div class="card-header">
+        <span class="card-title">
+          <i data-lucide="activity" style="width:16px;height:16px;color:#0891b2;"></i>
+          Độ bền trí nhớ & Đường cong lãng quên
+        </span>
+        <span class="badge badge-success" id="statsRetentionBadge">85% ghi nhớ</span>
+      </div>
+      <div class="forgetting-curve-wrap" id="statsRetentionContent" style="padding:6px 0;flex:1;display:flex;flex-direction:column;justify-content:space-between;"></div>
+    </div>
+  </div>
+
   <!-- Achievements + Recent activity -->
   <div class="grid-2">
     <!-- Achievements -->
@@ -91,12 +118,143 @@ async function loadStats() {
     renderMetrics(stats);
     renderStates(stats.card_states || {});
     renderChart(stats.daily_history || []);
+    renderForecast(stats.forecast_7days || []);
+    renderForgettingCurve(stats.forgetting_curve || {});
     renderActivity(stats.daily_history || []);
     renderAchievements(stats);
     refreshIcons();
   } catch (e) {
     showToast('Lỗi tải thống kê: ' + e.message, 'error');
   }
+}
+
+function renderForecast(forecast = []) {
+  const container = el('statsForecastContent');
+  const badgeTotal = el('statsForecastTotal');
+  if (!container) return;
+
+  if (!forecast || !forecast.length) {
+    container.innerHTML = `<div class="text-xs text-muted" style="text-align:center;padding:20px;">Chưa có dữ liệu dự báo thẻ ôn tập.</div>`;
+    return;
+  }
+
+  const totalDue = forecast.reduce((acc, f) => acc + (f.count || 0), 0);
+  if (badgeTotal) badgeTotal.textContent = `${totalDue} thẻ trong 7 ngày`;
+
+  const maxCount = Math.max(...forecast.map(f => f.count || 0), 1);
+
+  container.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(7, 1fr);gap:8px;padding:6px 2px;">
+      ${forecast.map(f => {
+        const pct = Math.max(Math.round((f.count / maxCount) * 100), f.count > 0 ? 12 : 4);
+        const isToday = f.is_today;
+        const color = isToday ? '#4f46e5' : (f.count > 0 ? '#0891b2' : '#94a3b8');
+        const bg = isToday ? 'rgba(99,102,241,0.09)' : 'rgba(148,163,184,0.06)';
+        return `
+          <div style="background:${bg};border-radius:10px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;border:${isToday ? '1px solid rgba(99,102,241,0.3)' : '1px solid transparent'};">
+            <div style="font-size:11px;font-weight:700;color:${isToday ? '#4f46e5' : 'var(--text-muted)'};white-space:nowrap;">${f.label}</div>
+            <div style="font-size:10px;color:var(--text-subtle);">${f.date.slice(5)}</div>
+            <div style="width:100%;height:48px;display:flex;align-items:flex-end;justify-content:center;padding:0 6px;">
+              <div style="width:100%;max-width:18px;height:${pct}%;background:${color};border-radius:4px;transition:height 0.3s ease;"></div>
+            </div>
+            <div style="font-size:12px;font-weight:800;color:${f.count > 0 ? color : 'var(--text-subtle)'};">${f.count}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    <div style="font-size:11.5px;color:var(--text-muted);display:flex;align-items:center;gap:6px;margin-top:10px;padding:0 4px;">
+      <i data-lucide="info" style="width:13px;height:13px;color:var(--accent);flex-shrink:0;"></i>
+      <span>Thuật toán SM-2 tự động phân bổ lịch thẻ khoa học, tránh dồn ứ trước kỳ thi.</span>
+    </div>
+  `;
+}
+
+function renderForgettingCurve(curveData = {}) {
+  const container = el('statsRetentionContent');
+  const badge = el('statsRetentionBadge');
+  if (!container) return;
+
+  const points = curveData.points || [];
+  const strength = curveData.strength_days || 3.0;
+  const avgEase = curveData.avg_ease || 2.5;
+  const retention = curveData.estimated_retention_pct || 85.0;
+
+  if (badge) {
+    badge.textContent = `~${retention}% ghi nhớ`;
+    badge.className = retention >= 80 ? 'badge badge-success' : 'badge badge-accent';
+  }
+
+  // Generate SVG path for forgetting curve
+  // SVG viewBox: 0 0 320 120
+  // X: day 0 to 30 mapped to 30 -> 300
+  // Y: retention 0 to 100 mapped to 105 -> 15
+  let pathD = '';
+  let areaD = '';
+  const mapX = day => 30 + (day / 30) * 270;
+  const mapY = ret => 105 - (ret / 100) * 90;
+
+  if (points.length) {
+    points.forEach((pt, i) => {
+      const x = mapX(pt.day);
+      const y = mapY(pt.retention);
+      if (i === 0) {
+        pathD += `M ${x} ${y}`;
+        areaD += `M ${x} 105 L ${x} ${y}`;
+      } else {
+        pathD += ` L ${x} ${y}`;
+        areaD += ` L ${x} ${y}`;
+      }
+    });
+    const lastX = mapX(points[points.length - 1].day);
+    areaD += ` L ${lastX} 105 Z`;
+  }
+
+  container.innerHTML = `
+    <div style="position:relative;width:100%;height:125px;margin:2px 0;">
+      <svg viewBox="0 0 320 120" style="width:100%;height:100%;overflow:visible;">
+        <defs>
+          <linearGradient id="curveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#0891b2" stop-opacity="0.25" />
+            <stop offset="100%" stop-color="#0891b2" stop-opacity="0.0" />
+          </linearGradient>
+        </defs>
+        <!-- Horizontal gridlines -->
+        <line x1="30" y1="15" x2="300" y2="15" stroke="rgba(148,163,184,0.15)" stroke-dasharray="3,3" />
+        <line x1="30" y1="60" x2="300" y2="60" stroke="rgba(148,163,184,0.15)" stroke-dasharray="3,3" />
+        <line x1="30" y1="105" x2="300" y2="105" stroke="rgba(148,163,184,0.2)" />
+
+        <text x="5" y="18" fill="var(--text-subtle)" font-size="9" font-family="sans-serif">100%</text>
+        <text x="10" y="63" fill="var(--text-subtle)" font-size="9" font-family="sans-serif">50%</text>
+        <text x="16" y="108" fill="var(--text-subtle)" font-size="9" font-family="sans-serif">0%</text>
+
+        <!-- Area and Curve -->
+        <path d="${areaD}" fill="url(#curveGrad)" />
+        <path d="${pathD}" fill="none" stroke="#0891b2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+
+        <!-- Key Day dots -->
+        ${[0, 1, 3, 7, 30].map(d => {
+          const pt = points.find(p => p.day === d) || { retention: 50 };
+          const cx = mapX(d);
+          const cy = mapY(pt.retention);
+          return `
+            <circle cx="${cx}" cy="${cy}" r="3.5" fill="#0891b2" stroke="#ffffff" stroke-width="1.5" />
+            <text x="${cx}" y="117" fill="var(--text-subtle)" font-size="8.5" text-anchor="middle" font-family="sans-serif">${d === 0 ? 'Hôm nay' : d + 'd'}</text>
+          `;
+        }).join('')}
+      </svg>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 8px;background:rgba(8,145,178,0.06);border-radius:10px;margin-top:6px;">
+      <div style="display:flex;flex-direction:column;gap:1px;">
+        <span style="font-size:11px;color:var(--text-muted);">Độ ổn định ghi nhớ (S)</span>
+        <span style="font-size:13px;font-weight:700;color:#0891b2;">${strength} ngày / chu kỳ</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1px;text-align:right;">
+        <span style="font-size:11px;color:var(--text-muted);">Hệ số dễ (Ease Factor)</span>
+        <span style="font-size:13px;font-weight:700;color:var(--text);">${avgEase} / 2.5</span>
+      </div>
+    </div>
+  `;
 }
 
 function renderMetrics(stats) {

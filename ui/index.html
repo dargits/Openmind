@@ -9,8 +9,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Open-mind — Trợ lý Học tập AI Toàn diện, 100% Offline. Phân tích bài giảng, Flashcard SM-2, Quiz AI, RAG Q&A." />
-  <title>Open-mind · AI Learning Companion</title>
+  <meta name="description" content="Open-mind — Không gian Học tập AI Đột phá. Phân tích bài giảng, Flashcard SM-2, Trắc nghiệm AI, RAG Tra cứu kiến thức." />
+  <title>Open-mind · AI Learning Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -30,18 +33,18 @@
       <img src="logo.jpg" alt="Open-mind" />
     </div>
     <h1 class="splash-title">Open-mind</h1>
-    <p class="splash-sub">AI Learning Companion · 100% Offline & Private</p>
+    <p class="splash-sub">Trợ lý Học tập AI & Phân tích Bài giảng Thông minh</p>
 
     <div class="splash-phases">
-      <div class="phase-pill" id="phase1">① Mô hình giọng nói</div>
-      <div class="phase-pill muted" id="phase2">② Mô hình ngôn ngữ</div>
+      <div class="phase-pill" id="phase1">① Nhận diện giọng nói</div>
+      <div class="phase-pill muted" id="phase2">② Động cơ ngôn ngữ AI</div>
     </div>
 
     <div class="splash-bar-wrap">
       <div class="splash-bar" id="splashBar" style="width:5%"></div>
     </div>
     <p class="splash-status" id="splashStatus">Đang khởi động…</p>
-    <p class="splash-hint" id="splashHint">Không cần kết nối Internet · Dữ liệu bảo mật tuyệt đối</p>
+    <p class="splash-hint" id="splashHint">Đang chuẩn bị không gian học tập của bạn…</p>
     <button class="btn btn-ghost btn-sm hidden" id="splashSkipBtn" style="margin-top:16px;font-size:12px;">
       Tiếp tục vào ứng dụng →
     </button>
@@ -131,7 +134,7 @@
         </div>
         <div class="flex justify-between">
           <span class="xp-label" id="sidebarXpText">0 / 100 XP</span>
-          <span class="xp-label" style="display:inline-flex;align-items:center;gap:3px;"><i data-lucide="shield-check" style="width:11px;height:11px;color:var(--success);"></i> Offline</span>
+          <span class="xp-label" id="sidebarEngineBadge" style="display:inline-flex;align-items:center;gap:3px;"><i data-lucide="cpu" style="width:11px;height:11px;color:var(--text-muted);"></i> Cục bộ</span>
         </div>
       </div>
     </nav>

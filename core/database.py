@@ -7,6 +7,7 @@
 import sqlite3
 import json
 import uuid
+import math
 from datetime import datetime, date, timedelta
 from typing import List, Dict, Any, Optional
 from core.config import DB_PATH
@@ -48,11 +49,12 @@ class Database:
             );
             """)
 
-            # Tự động migration thêm cột quiz_json nếu database cũ chưa có
-            try:
-                cursor.execute("ALTER TABLE lectures ADD COLUMN quiz_json TEXT;")
-            except Exception:
-                pass
+            # Tự động migration thêm cột nếu database cũ chưa có
+            for col in ["quiz_json", "notes_json", "chat_history_json"]:
+                try:
+                    cursor.execute(f"ALTER TABLE lectures ADD COLUMN {col} TEXT;")
+                except Exception:
+                    pass
 
             # Decks table
             cursor.execute("""
@@ -114,6 +116,21 @@ class Database:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_flashcards_deck ON flashcards(deck_id);")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_sessions_date ON study_sessions(session_date);")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_lectures_tag ON lectures(folder_tag);")
+
+            # FTS5 Full-Text Search virtual table
+            cursor.execute("""
+            CREATE VIRTUAL TABLE IF NOT EXISTS lectures_fts
+            USING fts5(id UNINDEXED, title, full_text, content=lectures, content_rowid=rowid);
+            """)
+
+            # Auto-rebuild FTS index if empty (first-time setup or new DB)
+            cursor.execute("SELECT COUNT(*) FROM lectures_fts")
+            fts_count = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM lectures")
+            lecture_count = cursor.fetchone()[0]
+            if lecture_count > 0 and fts_count == 0:
+                cursor.execute("INSERT INTO lectures_fts(lectures_fts) VALUES('rebuild')")
+
             conn.commit()
 
     # ==================== LECTURE CRUD ====================
@@ -160,6 +177,16 @@ class Database:
                     folder_tag=excluded.folder_tag;
                 """, (lid, title, audio_path, duration_sec, transcript_str, full_text, summary_str, mindmap_str, folder_tag))
             conn.commit()
+            # Sync FTS5 index: xoá bản ghi cũ và thêm mới để đảm bảo full_text luôn được index
+            try:
+                cursor.execute("DELETE FROM lectures_fts WHERE id = ?", (lid,))
+                cursor.execute(
+                    "INSERT INTO lectures_fts(id, title, full_text) VALUES (?, ?, ?)",
+                    (lid, title, full_text or "")
+                )
+                conn.commit()
+            except Exception:
+                pass
         return lid
 
     def save_quiz(self, lecture_id: str, quiz_data: List[Dict[str, Any]]):
@@ -182,7 +209,99 @@ class Database:
             res["summary"] = json.loads(res.get("summary_json") or "{}")
             res["mindmap"] = json.loads(res.get("mindmap_json") or "{}")
             res["quiz"] = json.loads(res.get("quiz_json") or "[]")
+            res["notes"] = json.loads(res.get("notes_json") or "[]")
+            res["chat_history"] = json.loads(res.get("chat_history_json") or "[]")
             return res
+
+    def save_lecture_note(self, lecture_id: str, note_id: Optional[str], timestamp_sec: float, text: str) -> List[Dict[str, Any]]:
+        """Lưu hoặc cập nhật một ghi chú gắn mốc thời gian."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT notes_json FROM lectures WHERE id = ?", (lecture_id,))
+            row = cursor.fetchone()
+            notes = json.loads(row[0] or "[]") if row and row[0] else []
+            now_iso = datetime.now().isoformat()
+
+            if note_id:
+                found = False
+                for n in notes:
+                    if n.get("id") == note_id:
+                        n["text"] = text.strip()
+                        n["timestamp_sec"] = float(timestamp_sec)
+                        n["updated_at"] = now_iso
+                        found = True
+                        break
+                if not found:
+                    notes.append({
+                        "id": note_id,
+                        "timestamp_sec": float(timestamp_sec),
+                        "text": text.strip(),
+                        "created_at": now_iso
+                    })
+            else:
+                new_id = f"note_{uuid.uuid4().hex[:8]}"
+                notes.append({
+                    "id": new_id,
+                    "timestamp_sec": float(timestamp_sec),
+                    "text": text.strip(),
+                    "created_at": now_iso
+                })
+            notes.sort(key=lambda x: x.get("timestamp_sec", 0.0))
+            cursor.execute("UPDATE lectures SET notes_json = ? WHERE id = ?", (json.dumps(notes, ensure_ascii=False), lecture_id))
+            conn.commit()
+            return notes
+
+    def delete_lecture_note(self, lecture_id: str, note_id: str) -> List[Dict[str, Any]]:
+        """Xóa ghi chú theo note_id."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT notes_json FROM lectures WHERE id = ?", (lecture_id,))
+            row = cursor.fetchone()
+            notes = json.loads(row[0] or "[]") if row and row[0] else []
+            notes = [n for n in notes if n.get("id") != note_id]
+            cursor.execute("UPDATE lectures SET notes_json = ? WHERE id = ?", (json.dumps(notes, ensure_ascii=False), lecture_id))
+            conn.commit()
+            return notes
+
+    def get_chat_history(self, lecture_id: str) -> List[Dict[str, Any]]:
+        """Lấy lịch sử hội thoại của bài giảng."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT chat_history_json FROM lectures WHERE id = ?", (lecture_id,))
+            row = cursor.fetchone()
+            if row and row[0]:
+                try:
+                    return json.loads(row[0])
+                except Exception:
+                    return []
+            return []
+
+    def save_chat_message(self, lecture_id: str, role: str, content: str, citations: Optional[List[Dict[str, Any]]] = None) -> List[Dict[str, Any]]:
+        """Lưu một tin nhắn hội thoại vào lịch sử bài giảng."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT chat_history_json FROM lectures WHERE id = ?", (lecture_id,))
+            row = cursor.fetchone()
+            history = json.loads(row[0] or "[]") if row and row[0] else []
+            msg = {
+                "id": f"msg_{uuid.uuid4().hex[:8]}",
+                "role": role,
+                "content": content,
+                "citations": citations or [],
+                "created_at": datetime.now().isoformat()
+            }
+            history.append(msg)
+            cursor.execute("UPDATE lectures SET chat_history_json = ? WHERE id = ?", (json.dumps(history, ensure_ascii=False), lecture_id))
+            conn.commit()
+            return history
+
+    def clear_chat_history(self, lecture_id: str) -> bool:
+        """Xóa toàn bộ lịch sử hội thoại của bài giảng."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE lectures SET chat_history_json = '[]' WHERE id = ?", (lecture_id,))
+            conn.commit()
+            return True
 
     def list_lectures(self, folder_tag: Optional[str] = None, search_query: str = "") -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
@@ -214,6 +333,54 @@ class Database:
                 d["quiz_count"] = len(quiz_list) if isinstance(quiz_list, list) else 0
                 rows.append(d)
             return rows
+
+    def search_lectures_fts(self, query: str, limit: int = 20) -> List[Dict[str, Any]]:
+        """
+        Full-text search across all lectures using SQLite FTS5.
+        Returns list of matches with title, snippet, and lecture metadata.
+        """
+        if not query or not query.strip():
+            return []
+        # Escape special FTS5 query characters to avoid syntax errors
+        safe_query = query.replace('"', '').replace("'", "").strip()
+        if not safe_query:
+            return []
+        fts_query = ' OR '.join(f'"{w}"' for w in safe_query.split() if w)
+
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute("""
+                SELECT
+                    l.id, l.title, l.folder_tag, l.duration_sec, l.created_at,
+                    snippet(lectures_fts, 2, '<mark>', '</mark>', '…', 20) AS snippet,
+                    CASE WHEN l.summary_json IS NOT NULL AND l.summary_json != '{}' THEN 1 ELSE 0 END AS has_summary,
+                    CASE WHEN l.quiz_json IS NOT NULL AND l.quiz_json != '[]' THEN 1 ELSE 0 END AS has_quiz,
+                    (SELECT COUNT(*) FROM flashcards f WHERE f.lecture_id = l.id) AS flashcard_count,
+                    rank
+                FROM lectures_fts
+                JOIN lectures l ON lectures_fts.id = l.id
+                WHERE lectures_fts MATCH ?
+                ORDER BY rank
+                LIMIT ?
+                """, (fts_query, limit))
+                rows = [dict(r) for r in cursor.fetchall()]
+                return rows
+            except Exception:
+                # Fallback sang LIKE search nếu FTS5 lỗi (ví dụ query đặc biệt)
+                cursor.execute("""
+                SELECT l.id, l.title, l.folder_tag, l.duration_sec, l.created_at,
+                    '' AS snippet,
+                    CASE WHEN l.summary_json IS NOT NULL AND l.summary_json != '{}' THEN 1 ELSE 0 END AS has_summary,
+                    CASE WHEN l.quiz_json IS NOT NULL AND l.quiz_json != '[]' THEN 1 ELSE 0 END AS has_quiz,
+                    (SELECT COUNT(*) FROM flashcards f WHERE f.lecture_id = l.id) AS flashcard_count,
+                    0 AS rank
+                FROM lectures l
+                WHERE l.title LIKE ? OR l.full_text LIKE ?
+                ORDER BY l.created_at DESC
+                LIMIT ?
+                """, (f"%{safe_query}%", f"%{safe_query}%", limit))
+                return [dict(r) for r in cursor.fetchall()]
 
     def delete_lecture(self, lecture_id: str):
         with self.get_connection() as conn:
@@ -284,6 +451,13 @@ class Database:
             ORDER BY f.created_at ASC
             """, (lecture_id,))
             return [dict(r) for r in cursor.fetchall()]
+
+    def get_deck(self, deck_id: str) -> Optional[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM decks WHERE id = ?", (deck_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
 
     def list_decks(self) -> List[Dict[str, Any]]:
         today = date.today().isoformat()
@@ -506,6 +680,8 @@ class Database:
             state_rows = cursor.fetchall()
             card_states = {r[0]: r[1] for r in state_rows}
 
+            retention_stats = self.get_retention_and_calendar_stats()
+
             return {
                 "total_lectures": total_lectures,
                 "total_cards": total_cards,
@@ -516,6 +692,97 @@ class Database:
                 "active_days": active_days,
                 "daily_history": daily_history,
                 "card_states": card_states,
+                "forecast_7days": retention_stats.get("forecast_7days", []),
+                "forgetting_curve": retention_stats.get("forgetting_curve", {}),
+            }
+
+    def get_retention_and_calendar_stats(self) -> Dict[str, Any]:
+        """Calculates 7-day review forecast and Ebbinghaus retention curve data."""
+        today = date.today()
+        weekday_names = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]
+
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+
+            # 7-day forecast
+            forecast = []
+            for d in range(7):
+                target_d = today + timedelta(days=d)
+                target_str = target_d.isoformat()
+                if d == 0:
+                    cursor.execute("SELECT COUNT(*) FROM flashcards WHERE due_date <= ?", (target_str,))
+                    count = cursor.fetchone()[0] or 0
+                    day_label = "Hôm nay"
+                elif d == 1:
+                    cursor.execute("SELECT COUNT(*) FROM flashcards WHERE due_date = ?", (target_str,))
+                    count = cursor.fetchone()[0] or 0
+                    day_label = "Ngày mai"
+                else:
+                    cursor.execute("SELECT COUNT(*) FROM flashcards WHERE due_date = ?", (target_str,))
+                    count = cursor.fetchone()[0] or 0
+                    day_label = weekday_names[target_d.weekday()]
+
+                forecast.append({
+                    "date": target_str,
+                    "label": day_label,
+                    "count": count,
+                    "is_today": (d == 0)
+                })
+
+            # Forgetting curve metrics based on cards with repetitions
+            cursor.execute("""
+            SELECT AVG(ease_factor), AVG(interval_days), COUNT(*)
+            FROM flashcards WHERE repetitions > 0
+            """)
+            rev_row = cursor.fetchone()
+            avg_ease = float(rev_row[0]) if rev_row and rev_row[0] is not None else 2.5
+            avg_interval = float(rev_row[1]) if rev_row and rev_row[1] is not None else 3.0
+            reviewed_count = int(rev_row[2]) if rev_row and rev_row[2] is not None else 0
+
+            # Memory strength S (in days)
+            if reviewed_count > 0:
+                strength_s = max(1.5, avg_interval * (avg_ease / 2.5))
+            else:
+                strength_s = 3.0  # baseline default
+
+            # Ebbinghaus retention curve points: R = exp(-t / S)
+            time_points = [0, 1, 2, 3, 5, 7, 10, 14, 21, 30]
+            curve_points = []
+            for t in time_points:
+                ret = round(100.0 * math.exp(-t / strength_s), 1)
+                curve_points.append({"day": t, "retention": ret})
+
+            # Current average estimated retention
+            cursor.execute("""
+            SELECT interval_days, ease_factor, last_reviewed
+            FROM flashcards WHERE last_reviewed IS NOT NULL
+            """)
+            cards_with_rev = cursor.fetchall()
+            if cards_with_rev:
+                total_ret = 0.0
+                for c in cards_with_rev:
+                    inv = max(1.0, float(c[0] or 1))
+                    ef = float(c[1] or 2.5)
+                    card_s = max(1.0, inv * (ef / 2.5))
+                    try:
+                        lr_date = datetime.fromisoformat(str(c[2]).split(".")[0]).date()
+                        elapsed = max(0, (today - lr_date).days)
+                    except Exception:
+                        elapsed = 1
+                    total_ret += math.exp(-elapsed / card_s)
+                est_retention_pct = round((total_ret / len(cards_with_rev)) * 100.0, 1)
+            else:
+                est_retention_pct = 85.0  # default healthy baseline
+
+            return {
+                "forecast_7days": forecast,
+                "forgetting_curve": {
+                    "strength_days": round(strength_s, 1),
+                    "avg_ease": round(avg_ease, 2),
+                    "reviewed_count": reviewed_count,
+                    "estimated_retention_pct": est_retention_pct,
+                    "points": curve_points
+                }
             }
 
 

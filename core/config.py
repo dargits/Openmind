@@ -36,9 +36,10 @@ DATA_DIR = Path(os.getenv("OPENMIND_DATA_DIR")) if os.getenv("OPENMIND_DATA_DIR"
 MODELS_DIR = Path(os.getenv("OPENMIND_MODELS_DIR")) if os.getenv("OPENMIND_MODELS_DIR") else BASE_DIR / "models"
 OUTPUTS_DIR = DATA_DIR / "outputs"
 SAMPLES_DIR = DATA_DIR / "samples"
+DOWNLOADS_DIR = DATA_DIR / "downloads"
 
 # Ensure directories exist
-for directory in [DATA_DIR, MODELS_DIR, OUTPUTS_DIR, SAMPLES_DIR]:
+for directory in [DATA_DIR, MODELS_DIR, OUTPUTS_DIR, SAMPLES_DIR, DOWNLOADS_DIR]:
     directory.mkdir(parents=True, exist_ok=True)
 
 DB_PATH = DATA_DIR / "openmind.db"
@@ -147,3 +148,53 @@ def get_whisper_model_path(model_size: str = DEFAULT_WHISPER_SIZE) -> str:
 
 def get_llm_model_path() -> Path:
     return MODELS_DIR / LLM_MODEL_FILENAME
+
+
+# ──────────────────────────────────────────────────────────────────
+# Hybrid Engine Configuration (Local vs Cloud Acceleration)
+# ──────────────────────────────────────────────────────────────────
+AI_ENGINE_MODE = os.getenv("OPENMIND_AI_ENGINE_MODE", _settings.get("ai_engine_mode", "local"))  # "local" | "cloud"
+CLOUD_PROVIDER = os.getenv("OPENMIND_CLOUD_PROVIDER", _settings.get("cloud_provider", "gemini"))  # "gemini" | "openai_compatible"
+
+# Auto-Pipeline: tự động sinh tóm tắt, quiz, flashcard sau khi phiên âm xong
+AUTO_PROCESS = _settings.get("auto_process", True)
+AUTO_PROCESS_QUIZ_COUNT = int(_settings.get("auto_process_quiz_count", 5))
+AUTO_PROCESS_CARD_COUNT = int(_settings.get("auto_process_card_count", 10))
+
+# Google Gemini
+GEMINI_API_KEY = os.getenv("OPENMIND_GEMINI_API_KEY", _settings.get("gemini_api_key", ""))
+GEMINI_MODEL = os.getenv("OPENMIND_GEMINI_MODEL", _settings.get("gemini_model", "gemini-3.5-flash-lite"))
+
+# OpenAI Compatible (Groq, DeepSeek, OpenAI, OpenRouter)
+OPENAI_API_KEY = os.getenv("OPENMIND_OPENAI_API_KEY", _settings.get("openai_api_key", ""))
+OPENAI_BASE_URL = os.getenv("OPENMIND_OPENAI_BASE_URL", _settings.get("openai_base_url", "https://api.openai.com/v1"))
+OPENAI_MODEL = os.getenv("OPENMIND_OPENAI_MODEL", _settings.get("openai_model", "gpt-4o-mini"))
+
+
+def reload_hybrid_settings(settings_dict: dict):
+    """Hot-reloads hybrid engine configuration at runtime."""
+    global AI_ENGINE_MODE, CLOUD_PROVIDER, GEMINI_API_KEY, GEMINI_MODEL
+    global OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL
+    global AUTO_PROCESS, AUTO_PROCESS_QUIZ_COUNT, AUTO_PROCESS_CARD_COUNT
+
+    if "ai_engine_mode" in settings_dict:
+        AI_ENGINE_MODE = str(settings_dict["ai_engine_mode"]).strip().lower()
+    if "cloud_provider" in settings_dict:
+        CLOUD_PROVIDER = str(settings_dict["cloud_provider"]).strip().lower()
+    if "gemini_api_key" in settings_dict:
+        GEMINI_API_KEY = str(settings_dict["gemini_api_key"]).strip()
+    if "gemini_model" in settings_dict:
+        GEMINI_MODEL = str(settings_dict["gemini_model"]).strip()
+    if "openai_api_key" in settings_dict:
+        OPENAI_API_KEY = str(settings_dict["openai_api_key"]).strip()
+    if "openai_base_url" in settings_dict:
+        OPENAI_BASE_URL = str(settings_dict["openai_base_url"]).strip()
+    if "openai_model" in settings_dict:
+        OPENAI_MODEL = str(settings_dict["openai_model"]).strip()
+    if "auto_process" in settings_dict:
+        AUTO_PROCESS = bool(settings_dict["auto_process"])
+    if "auto_process_quiz_count" in settings_dict:
+        AUTO_PROCESS_QUIZ_COUNT = int(settings_dict["auto_process_quiz_count"])
+    if "auto_process_card_count" in settings_dict:
+        AUTO_PROCESS_CARD_COUNT = int(settings_dict["auto_process_card_count"])
+
