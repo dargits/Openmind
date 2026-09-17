@@ -90,7 +90,7 @@ Sau khi cài đặt từ mã nguồn, chạy bộ kiểm thử tự động đ�
 ```bash
 python -m unittest tests/test_core.py -v
 ```
-Kết quả kỳ vọng: **Tất cả 9/9 tests đều đạt `OK`**.
+Kết quả kỳ vọng: **Tất cả 15/15 tests đều đạt `OK`** (bao gồm SQLite CRUD, FTS5 Search, SM-2 SRS, Ebbinghaus Forgetting Curve, BM25 RAG, Multi-turn Context, Export Anki/HTML/JSON, Vietnamese Phonetic Normalizer và TranscriptPruner).
 
 ---
 

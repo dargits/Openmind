@@ -22,7 +22,7 @@ if sys.stdout and hasattr(sys.stdout, "reconfigure"):
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DIST_DIR = REPO_ROOT / "dist"
-VERSION = "1.0.0"
+VERSION = "2.0.0"
 
 # Directories and files to strictly exclude from the release tarball
 EXCLUDE_NAMES = {
@@ -40,10 +40,13 @@ EXCLUDE_NAMES = {
     "dist",
     ".idea",
     ".vscode",
+    "downloads",
     "openmind.db",
     "openmind.db-shm",
     "openmind.db-wal",
     "settings.json",
+    ".env",
+    ".env.local",
 }
 
 def is_excluded(tarinfo):
@@ -51,8 +54,8 @@ def is_excluded(tarinfo):
     # Exclude files in exclude list
     if name in EXCLUDE_NAMES:
         return None
-    # Exclude compiled bytecode or model binary weights
-    if name.endswith((".pyc", ".pyo", ".gguf", ".bin", ".safetensors", ".pt", ".pth")):
+    # Exclude compiled bytecode, model binary weights, or downloaded media
+    if name.endswith((".pyc", ".pyo", ".gguf", ".bin", ".safetensors", ".pt", ".pth", ".mp3", ".wav", ".m4a", ".mp4")):
         return None
     return tarinfo
 
