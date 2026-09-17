@@ -17,6 +17,7 @@ Thư mục này tập hợp toàn bộ hồ sơ kỹ thuật, kiến trúc, đ�
 | 📝 **[Lịch Sử Thay Đổi (Changelog)](CHANGELOG.md)** | • Ghi chép lịch sử phát triển theo chuẩn Keep a Changelog<br>• Phân định rõ các tính năng Added, Fixed, Changed | Đáp ứng trọn vẹn **Tiêu chí 6 (10 điểm PoF)**: Có lịch sử sửa đổi mã nguồn. |
 | 🤝 **[Hướng Dẫn Đóng Góp (Contributing Guide)](CONTRIBUTING.md)** | • Quy chuẩn Code of Conduct & Git Workflow<br>• Hướng dẫn gửi Pull Request & Liên kết Bug Tracker | Quy chuẩn giao tiếp cộng đồng phát triển mã nguồn mở. |
 | 🏆 **[Thể Lệ Cuộc Thi 2026 (Contest Rules)](the-le-cuoc-thi-2026.pdf)** | • Thể lệ cuộc thi Phát triển PMMN tích hợp AI 2026<br>• Bảng tiêu chí đánh giá Vòng chấm mã nguồn (PoF) | Lưu trữ bản gốc thể lệ để đối chiếu quy chuẩn kỹ thuật. |
+| 📊 **[Báo Cáo Tiêu Chí PoF (Contest Rubric Mapping)](COMPETITION_POF.md)** | • Minh chứng chi tiết cho từng tiêu chí chấm điểm<br>• Đối chiếu PoF 50/50 điểm và Sản phẩm 50/50 điểm | Dành riêng cho Ban Giám Khảo đánh giá tối đa điểm số kỹ thuật. |
 
 ---
 
