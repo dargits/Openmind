@@ -554,7 +554,7 @@ async function renameLectureDialog() {
     try {
       await API.rename_lecture(LEC.lectureId, newTitle);
       showToast(`Đã đổi tên bài giảng thành "${newTitle}"`, 'success');
-      if (typeof loadLibrary === 'function') loadLibrary();
+      if (typeof window.syncAppData === 'function') window.syncAppData(true);
     } catch (err) {
       showToast('Lỗi khi đổi tên: ' + err.message, 'error');
     }
@@ -860,6 +860,7 @@ function appendSegment(seg) {
         LEC.notes = res.notes;
         showToast('Đã lưu ghi chú thành công', 'success');
         renderTranscript(LEC.segments);
+        if (typeof window.syncAppData === 'function') window.syncAppData(true);
       }
     } catch (err) {
       showToast('Lỗi lưu: ' + err.message, 'error');
@@ -993,6 +994,7 @@ function renderTranscript(segs) {
           LEC.notes = res.notes;
           showToast('Đã lưu ghi chú thành công', 'success');
           renderTranscript(LEC.segments);
+          if (typeof window.syncAppData === 'function') window.syncAppData(true);
         }
       } catch (err) {
         showToast('Lỗi lưu: ' + err.message, 'error');
@@ -1011,6 +1013,7 @@ function renderTranscript(segs) {
           LEC.notes = res.notes;
           showToast('Đã xóa ghi chú', 'info');
           renderTranscript(LEC.segments);
+          if (typeof window.syncAppData === 'function') window.syncAppData(true);
         }
       } catch (err) {
         showToast('Lỗi xóa: ' + err.message, 'error');

@@ -123,6 +123,21 @@ window.addEventListener('omEvent', e => {
   EventBus.emit(type, data);
 });
 
+// Centralized zero-flicker background database sync helper
+window.syncAppData = function(silent = true) {
+  refreshTopBar();
+  if (typeof loadLibrary === 'function') loadLibrary({ silent: true });
+  if (typeof loadDashboardData === 'function') loadDashboardData({ silent: true });
+  if (typeof loadStatsData === 'function' && State.currentView === 'stats') loadStatsData();
+};
+
+// Automatically synchronize freshest DB data on any processing event without reloading
+['transcribe:done', 'pdf:done', 'autopipeline:done', 'quiz:done', 'flashcards:done', 'youtube:done'].forEach(evt => {
+  EventBus.on(evt, () => {
+    setTimeout(() => window.syncAppData(true), 150);
+  });
+});
+
 // ──────────────────────────────────────────
 // Toast
 // ──────────────────────────────────────────
@@ -274,8 +289,6 @@ function switchView(name) {
   const target = el(`view-${name}`);
   if (target) {
     target.classList.remove('hidden');
-    target.style.animation = 'none';
-    requestAnimationFrame(() => { target.style.animation = 'fadeIn 0.25s ease'; });
   }
 
   qsa('.nav-item').forEach(b => b.classList.remove('active'));
