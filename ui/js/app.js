@@ -60,6 +60,8 @@ const API = {
   rename_lecture: (id, t) => API.call('rename_lecture', id, t),
   delete_lecture: (id) => API.call('delete_lecture', id),
   pick_audio_file: () => API.call('pick_audio_file'),
+  pick_pdf_file: () => API.call('pick_pdf_file'),
+  import_pdf_lecture: (p, t, ft) => API.call('import_pdf_lecture', p, t || '', ft || 'General'),
   get_audio_url: (p) => API.call('get_audio_url', p),
 
   start_transcribe: (p, pr, lid, t, ft) => API.call('start_transcribe', p, pr || '', lid || '', t || '', ft || 'General'),
@@ -72,12 +74,36 @@ const API = {
 
   get_stats: () => API.call('get_stats'),
   get_settings: () => API.call('get_settings'),
+  save_settings: (s) => API.call('save_settings', s),
+  test_cloud_connection: (p, k, m, b) => API.call('test_cloud_connection', p, k, m || '', b || ''),
   seed_demo_data: (f) => API.call('seed_demo_data', f || false),
 
   export_txt: (id) => API.call('export_txt', id),
   export_html: (id) => API.call('export_html', id),
   export_json: (id) => API.call('export_json', id),
+  export_apkg: (id) => API.call('export_apkg', id),
+  export_deck_apkg: (did) => API.call('export_deck_apkg', did),
+  search_all_lectures: (q) => API.call('search_all_lectures', q),
+
+  download_youtube_audio: (url) => API.call('download_youtube_audio', url),
+  save_lecture_note: (lid, nid, ts, text) => API.call('save_lecture_note', lid, nid, ts, text),
+  delete_lecture_note: (lid, nid) => API.call('delete_lecture_note', lid, nid),
+  clear_chat_history: (lid) => API.call('clear_chat_history', lid),
 };
+
+function updateEngineBadge(mode, provider) {
+  const badge = el('sidebarEngineBadge');
+  if (!badge) return;
+  if (mode === 'cloud') {
+    const provName = (provider === 'gemini' ? 'Gemini' : 'OpenAI');
+    badge.innerHTML = `<i data-lucide="zap" style="width:11px;height:11px;color:#0891b2;"></i> Đám mây (${provName})`;
+    badge.title = `Chế độ tăng tốc đám mây (${provName})`;
+  } else {
+    badge.innerHTML = `<i data-lucide="cpu" style="width:11px;height:11px;color:var(--text-muted);"></i> Cục bộ`;
+    badge.title = 'Chế độ tính toán cục bộ';
+  }
+  refreshIcons();
+}
 
 // ──────────────────────────────────────────
 // Global event bus (from Python push events)
@@ -376,7 +402,17 @@ async function renderDashboardView() {
         </div>
         <div>
           <div class="qa-title">Studio Bài giảng</div>
-          <div class="qa-sub">Xử lý & phân tích âm thanh</div>
+          <div class="qa-sub">Âm thanh & YouTube URL</div>
+        </div>
+      </div>
+
+      <div class="qa-card" id="qaPdf">
+        <div class="qa-icon" style="background:rgba(239,68,68,0.10);border:1px solid rgba(239,68,68,0.25);">
+          <i data-lucide="file-text" style="width:22px;height:22px;color:#ef4444;"></i>
+        </div>
+        <div>
+          <div class="qa-title">Nhập Slide / PDF</div>
+          <div class="qa-sub">Trích xuất trang & tạo bài học</div>
         </div>
       </div>
 
@@ -385,7 +421,7 @@ async function renderDashboardView() {
           <i data-lucide="book-open" style="width:22px;height:22px;color:#059669;"></i>
         </div>
         <div>
-          <div class="qa-title">Thư viện</div>
+          <div class="qa-title">Thư viện bài học</div>
           <div class="qa-sub" id="qaLibSub">Tải thông tin…</div>
         </div>
       </div>
@@ -439,6 +475,10 @@ async function renderDashboardView() {
   // Bind quick actions
   el('qaFlashcard')?.addEventListener('click', () => switchView('flashcard'));
   el('qaLecture')?.addEventListener('click', () => switchView('lecture'));
+  el('qaPdf')?.addEventListener('click', () => {
+    switchView('lecture');
+    setTimeout(() => { if (typeof pickPdf === 'function') pickPdf(); }, 120);
+  });
   el('qaLibrary')?.addEventListener('click', () => switchView('library'));
   el('dashStudyBtn')?.addEventListener('click', () => switchView('flashcard'));
   el('dashNewLecBtn')?.addEventListener('click', () => switchView('lecture'));
@@ -692,15 +732,8 @@ function setSplashStatus(text, phase, progress) {
 
 EventBus.on('splash:status', ({ text, phase, progress }) => setSplashStatus(text, phase, progress));
 EventBus.on('splash:done', () => dismissSplash());
-
-// Lắng nghe log debug prompt từ AI
-EventBus.on('debug:prompt', ({ type, title, prompt }) => {
-  const typeLabel = type === 'quiz' ? 'QUIZ (TRẮC NGHIỆM)' : 'FLASHCARDS (THẺ GHI NHỚ)';
-  console.group(`%c🤖 [DEBUG AI PROMPT] ${typeLabel} — ${title || 'Bài giảng'}`, 'color: #4f46e5; font-weight: bold; font-size: 13px; padding: 2px 6px; background: #e0e7ff; border-radius: 4px;');
-  console.log(`%c📝 Nội dung Prompt gửi tới LLM:`, 'color: #0f172a; font-weight: bold;');
-  console.log(prompt);
-  console.log(`%c📊 Độ dài: ${prompt.length} ký tự (~${prompt.split(/\s+/).length} từ)`, 'color: #64748b; font-style: italic;');
-  console.groupEnd();
+EventBus.on('settings:updated', ({ ai_engine_mode, cloud_provider }) => {
+  updateEngineBadge(ai_engine_mode, cloud_provider);
 });
 
 // ──────────────────────────────────────────
@@ -719,6 +752,14 @@ window.addEventListener('pywebviewready', async () => {
   }, 15000);
 
   el('splashSkipBtn')?.addEventListener('click', dismissSplash);
+
+  try {
+    // Nạp settings để cập nhật badge ngay từ đầu
+    const s = await API.get_settings();
+    if (s) {
+      updateEngineBadge(s.ai_engine_mode, s.cloud_provider);
+    }
+  } catch (_) {}
 
   try {
     await API.load_models();

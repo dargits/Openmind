@@ -181,6 +181,10 @@ function renderDeckList(decks) {
     </div>
     <div class="flex items-center gap-1">
       <span class="deck-pct ${isActive ? 'text-accent' : 'text-muted'}" style="font-size:12px;font-weight:800;margin-right:2px;">${pct}%</span>
+      <button class="btn btn-ghost btn-sm btn-export-deck" data-did="${escHtml(d.id)}"
+        style="padding:4px 6px;display:inline-flex;align-items:center;" title="Xuất bộ thẻ sang Anki (.apkg)">
+        <i data-lucide="package" style="width:12px;height:12px;color:var(--accent);"></i>
+      </button>
       <button class="btn btn-ghost btn-sm btn-rename-deck" data-did="${escHtml(d.id)}" data-name="${escHtml(d.name)}"
         style="padding:4px 6px;display:inline-flex;align-items:center;" title="Đổi tên bộ thẻ">
         <i data-lucide="pencil" style="width:12px;height:12px;color:var(--text-muted);"></i>
@@ -201,8 +205,23 @@ function renderDeckList(decks) {
 
   el('deckList').querySelectorAll('.deck-item').forEach(item => {
     item.addEventListener('click', e => {
-      if (e.target.closest('.btn-del-deck') || e.target.closest('.btn-rename-deck')) return;
+      if (e.target.closest('.btn-del-deck') || e.target.closest('.btn-rename-deck') || e.target.closest('.btn-export-deck')) return;
       selectDeck(item.dataset.did, item.dataset.name);
+    });
+  });
+
+  el('deckList').querySelectorAll('.btn-export-deck').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      const did = btn.dataset.did;
+      try {
+        const res = await API.export_deck_apkg(did);
+        if (res?.path) showToast(`Đã xuất Anki .apkg: ${res.path.split(/[\\\/]/).pop()}`, 'success');
+        else if (res?.cancelled) showToast('Đã huỷ xuất file', 'info');
+        else if (res?.error) showToast('Lỗi: ' + res.error, 'error');
+      } catch (err) {
+        showToast('Lỗi xuất Anki: ' + err.message, 'error');
+      }
     });
   });
 
@@ -286,8 +305,22 @@ async function selectDeck(deckId, deckName) {
       <button class="btn btn-ghost btn-sm" id="btnHeaderRenameDeck" title="Đổi tên bộ thẻ" style="padding:2px 6px;margin-left:6px;height:24px;display:inline-flex;align-items:center;">
         <i data-lucide="pencil" style="width:13px;height:13px;color:var(--text-muted);"></i>
       </button>
+      <button class="btn btn-ghost btn-sm" id="btnHeaderExportDeck" title="Xuất bộ thẻ sang Anki (.apkg)" style="padding:2px 8px;margin-left:6px;height:24px;display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--accent);background:rgba(99,102,241,0.08);border-radius:6px;">
+        <i data-lucide="package" style="width:13px;height:13px;"></i> Xuất .apkg
+      </button>
     `;
     el('btnHeaderRenameDeck')?.addEventListener('click', () => renameDeckDialog(FC.deckId, FC.deckName));
+    el('btnHeaderExportDeck')?.addEventListener('click', async () => {
+      if (!FC.deckId) return;
+      try {
+        const res = await API.export_deck_apkg(FC.deckId);
+        if (res?.path) showToast(`Đã xuất Anki .apkg: ${res.path.split(/[\\\/]/).pop()}`, 'success');
+        else if (res?.cancelled) showToast('Đã huỷ xuất file', 'info');
+        else if (res?.error) showToast('Lỗi: ' + res.error, 'error');
+      } catch (err) {
+        showToast('Lỗi xuất Anki: ' + err.message, 'error');
+      }
+    });
   }
   const decks = await API.get_decks();
   renderDeckList(decks);

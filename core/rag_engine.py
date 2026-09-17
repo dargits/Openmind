@@ -6,7 +6,7 @@
 
 import math
 import re
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 from core.llm_engine import llm_engine
 
 class RAGEngine:
@@ -92,12 +92,13 @@ class RAGEngine:
         scored_chunks.sort(key=lambda x: x[0], reverse=True)
         return [c for score, c in scored_chunks[:top_k] if score > 0] or chunks[:1]
 
-    def ask_question(self, query: str, segments: List[Dict[str, Any]], full_text: str = "") -> Dict[str, Any]:
+    def ask_question(self, query: str, segments: List[Dict[str, Any]], full_text: str = "",
+                     history: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
         """
-        Performs Local RAG Q&A:
+        Performs Grounded RAG Q&A with multi-turn conversational context:
         1. Chunks the transcript.
         2. Retrieves top relevant context chunks.
-        3. Formulates grounded prompt and queries LLM.
+        3. Formulates grounded prompt and queries LLM with chat history.
         """
         chunks = self.chunk_transcript(segments)
         if not chunks and full_text:
@@ -108,7 +109,15 @@ class RAGEngine:
                 "timestamp_label": "[Toàn bộ bài giảng]"
             }]
 
-        relevant_chunks = self.retrieve_relevant_chunks(query, chunks, top_k=3)
+        # Contextual search query: include previous user question if current query is very short/referential
+        search_query = query
+        if history and len(query.split()) <= 4:
+            for h in reversed(history):
+                if h.get("role") == "user" and h.get("content"):
+                    search_query = f"{h['content']} {query}"
+                    break
+
+        relevant_chunks = self.retrieve_relevant_chunks(search_query, chunks, top_k=3)
         context_parts = []
         citations = []
 
@@ -122,17 +131,21 @@ class RAGEngine:
 
         context_str = "\n\n".join(context_parts)
 
-        prompt = (
-            "Bạn là trợ lý giải đáp thắc mắc về bài giảng. "
-            "Hãy trả lời câu hỏi của người học DỰA TRÊN các đoạn trích từ bài giảng dưới đây. "
+        system_instruction = (
+            "Bạn là trợ lý giải đáp thắc mắc chuyên sâu về bài giảng. "
+            "Hãy trả lời câu hỏi của người học DỰA TRÊN các đoạn trích từ bài giảng và ngữ cảnh cuộc hội thoại. "
             "Nếu thông tin không có trong bài giảng, hãy nói rõ là bài giảng không đề cập đến. "
-            "Hãy trích dẫn mốc thời gian [MM:SS] nếu có thể.\n\n"
-            f"--- BÀI GIẢNG TRÍCH ĐOẠN ---\n{context_str}\n\n"
-            f"--- CÂU HỎI CỦA NGƯỜI HỌC ---\n{query}\n\n"
-            "--- TRẢ LỜI CỦA BẠN (ngắn gọn, chính xác bằng tiếng Việt) ---"
+            "Hãy trích dẫn mốc thời gian [MM:SS] nếu có thể để người học đối chiếu âm thanh gốc."
         )
 
-        answer = llm_engine.call_chat(prompt, max_tokens=600)
+        prompt = (
+            f"--- BÀI GIẢNG TRÍCH ĐOẠN LIÊN QUAN ---\n{context_str}\n\n"
+            f"--- CÂU HỎI CỦA NGƯỜI HỌC ---\n{query}\n\n"
+            "--- TRẢ LỜI CỦA BẠN (ngắn gọn, chính xác bằng tiếng Việt, trích dẫn mốc thời gian nếu có) ---"
+        )
+
+        recent_history = history[-6:] if history else None
+        answer = llm_engine.call_chat(prompt, system_prompt=system_instruction, history=recent_history, max_tokens=800)
         return {
             "answer": answer,
             "citations": citations

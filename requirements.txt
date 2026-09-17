@@ -22,3 +22,10 @@ pyinstaller>=6.10.0
 # Benchmark & Metrics (Optional)
 psutil>=5.9.0
 jiwer>=3.0.0
+
+# Media Import & Stream Download
+yt-dlp>=2024.0.0
+pypdf>=4.0.0
+
+# Flashcard Export (Anki .apkg)
+genanki>=0.13.0

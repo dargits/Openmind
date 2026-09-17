@@ -22,8 +22,15 @@ data/settings.json
 data/cache/
 data/outputs/
 data/samples/
+data/downloads/
 !data/.gitkeep
 !data/demo_lecture.json
+
+# Environment & API Keys
+.env
+.env.local
+.env.*.local
+*.env
 
 # Python Virtual Environments
 venv/

@@ -168,10 +168,49 @@ class LLMEngine:
                 return None
 
     def call_chat(self, prompt: str, system_prompt: str = SYSTEM_STUDY_PROMPT,
+                  history: Optional[List[Dict[str, Any]]] = None,
                   max_tokens: int = 1200, temperature: float = 0.1) -> str:
         if not prompt or not prompt.strip():
             return ""
 
+        # ──────── Hybrid Engine: Check if Cloud Acceleration is enabled ────────
+        import core.config as cfg
+        if getattr(cfg, "AI_ENGINE_MODE", "local") == "cloud":
+            try:
+                from core.cloud_client import cloud_client
+                provider = getattr(cfg, "CLOUD_PROVIDER", "gemini")
+                if provider == "gemini":
+                    api_key = getattr(cfg, "GEMINI_API_KEY", "")
+                    model = getattr(cfg, "GEMINI_MODEL", "gemini-1.5-flash")
+                    if api_key:
+                        return cloud_client.call_gemini(
+                            prompt=prompt,
+                            api_key=api_key,
+                            model=model,
+                            system_prompt=system_prompt,
+                            history=history,
+                            max_tokens=max_tokens,
+                            temperature=temperature,
+                        )
+                else:
+                    api_key = getattr(cfg, "OPENAI_API_KEY", "")
+                    base_url = getattr(cfg, "OPENAI_BASE_URL", "https://api.openai.com/v1")
+                    model = getattr(cfg, "OPENAI_MODEL", "gpt-4o-mini")
+                    if api_key:
+                        return cloud_client.call_openai_compatible(
+                            prompt=prompt,
+                            api_key=api_key,
+                            base_url=base_url,
+                            model=model,
+                            system_prompt=system_prompt,
+                            history=history,
+                            max_tokens=max_tokens,
+                            temperature=temperature,
+                        )
+            except Exception as e:
+                print(f"[LLM Hybrid Cảnh báo] Lỗi khi gọi Cloud API: {e}. Đang tự động chuyển sang mô hình Local Offline...")
+
+        # ──────── Local Engine: llama.cpp GGUF ────────
         if self.model is None:
             self.load_model()
         if self.model is None:
@@ -179,17 +218,24 @@ class LLMEngine:
             if not model_path.exists():
                 raise FileNotFoundError(
                     f"Không tìm thấy tệp mô hình GGUF tại: {model_path}.\n"
-                    "Vui lòng đặt tệp '{LLM_MODEL_FILENAME}' vào thư mục models/."
+                    f"Vui lòng đặt tệp '{LLM_MODEL_FILENAME}' vào thư mục models/ hoặc bật chế độ Cloud API trong Cài đặt."
                 )
             raise RuntimeError(
                 "Không thể khởi động mô hình AI Qwen 2.5 (có thể do thiếu RAM hoặc context quá lớn).\n"
-                "Hãy thử giảm Kích thước context hoặc Số luồng CPU trong phần Cài đặt."
+                "Hãy thử giảm Kích thước context hoặc Số luồng CPU, hoặc chuyển sang chế độ Cloud API trong Cài đặt."
             )
 
         messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt}
+            {"role": "system", "content": system_prompt}
         ]
+        if history:
+            for h in history:
+                r = h.get("role", "user")
+                c = h.get("content", "")
+                if c:
+                    role_mapped = "assistant" if r in ["ai", "assistant", "model"] else "user"
+                    messages.append({"role": role_mapped, "content": c})
+        messages.append({"role": "user", "content": prompt})
 
         try:
             output = self.model.create_chat_completion(
@@ -203,31 +249,96 @@ class LLMEngine:
             if "context" in err_str.lower() or "exceed" in err_str.lower() or "ggml_assert" in err_str.lower():
                 raise RuntimeError(
                     "Độ dài văn bản bài giảng vượt quá giới hạn Context của mô hình.\n"
-                    "Gợi ý: Tăng 'Kích thước context' lên 4096 hoặc 8192 trong Cài đặt."
+                    "Gợi ý: Tăng 'Kích thước context' lên 4096 hoặc 8192, hoặc bật chế độ Cloud API để xử lý văn bản cực dài."
                 )
             raise RuntimeError(f"Lỗi khi xử lý qua AI: {err_str}")
 
+    @staticmethod
+    def _repair_json_string(candidate: str) -> Optional[Any]:
+        """Attempts to repair a truncated or malformed JSON object or array."""
+        if not candidate:
+            return None
+        s = candidate.strip()
+        in_string = False
+        escape = False
+        stack = []
+
+        for ch in s:
+            if escape:
+                escape = False
+                continue
+            if ch == '\\':
+                escape = True
+                continue
+            if ch == '"':
+                in_string = not in_string
+                continue
+            if not in_string:
+                if ch in '{[':
+                    stack.append(ch)
+                elif ch == '}' and stack and stack[-1] == '{':
+                    stack.pop()
+                elif ch == ']' and stack and stack[-1] == '[':
+                    stack.pop()
+
+        repaired = s
+        if in_string:
+            repaired += '"'
+
+        # Xoá dấu phẩy hoặc khóa lửng ở cuối
+        repaired = re.sub(r",\s*$", "", repaired)
+        repaired = re.sub(r',\s*"[^"]*"\s*:\s*$', "", repaired)
+        repaired = re.sub(r',\s*"[^"]*"\s*$', "", repaired)
+
+        # Đóng toàn bộ ngoặc nhọn và ngoặc vuông chưa đóng
+        while stack:
+            opener = stack.pop()
+            if opener == '{':
+                repaired += '}'
+            elif opener == '[':
+                repaired += ']'
+
+        try:
+            return json.loads(repaired)
+        except Exception:
+            return None
+
     def _extract_json(self, raw: str) -> Any:
-        cleaned = re.sub(r"```json\s*", "", raw)
-        cleaned = re.sub(r"```\s*", "", cleaned).strip()
+        if not raw:
+            return None
+        # 1. Bóc tách và làm sạch thẻ markdown ```json ... ```
+        cleaned = re.sub(r"^```(?:json)?\s*", "", raw.strip(), flags=re.IGNORECASE)
+        cleaned = re.sub(r"\s*```$", "", cleaned).strip()
+
+        # 2. Thử parse trực tiếp
         try:
             return json.loads(cleaned)
         except Exception:
-            match = re.search(r"(\[.*\]|\{.*\})", cleaned, re.DOTALL)
-            if match:
-                try:
-                    return json.loads(match.group(1))
-                except Exception:
-                    pass
-            # Phục hồi nếu mảng JSON bị cắt ngang cuối dòng
-            if "[" in cleaned:
-                sub = cleaned[cleaned.find("["):]
-                last_brace = sub.rfind("}")
-                if last_brace != -1:
-                    try:
-                        return json.loads(sub[:last_brace+1] + "]")
-                    except Exception:
-                        pass
+            pass
+
+        # 3. Tìm cặp ngoặc ngoài cùng { ... } hoặc [ ... ]
+        match = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", cleaned)
+        if match:
+            try:
+                return json.loads(match.group(1))
+            except Exception:
+                pass
+
+        # 4. Tự động sửa chữa JSON Object bị cắt ngắn giữa chừng
+        start_brace = cleaned.find("{")
+        start_bracket = cleaned.find("[")
+
+        if start_brace != -1 and (start_bracket == -1 or start_brace < start_bracket):
+            repaired = self._repair_json_string(cleaned[start_brace:])
+            if repaired is not None:
+                return repaired
+
+        # 5. Tự động sửa chữa JSON Array bị cắt ngắn giữa chừng
+        if start_bracket != -1:
+            repaired = self._repair_json_string(cleaned[start_bracket:])
+            if repaired is not None:
+                return repaired
+
         return None
 
     # ==================== 1. TÓM TẮT PHÂN CẤP (HIERARCHICAL SUMMARY) ====================
@@ -255,16 +366,50 @@ class LLMEngine:
             "CHỈ trả về JSON hợp lệ, không thêm chữ giải thích nào khác."
         )
 
-        raw = self.call_chat(prompt, max_tokens=900)
+        # Cung cấp max_tokens dồi dào (3500) để không bao giờ bị cắt ngắn giữa chừng
+        raw = self.call_chat(prompt, max_tokens=3500)
         parsed = self._extract_json(raw)
         if isinstance(parsed, dict) and "overview" in parsed:
             return parsed
-        
+
+        # Regex cứu hộ trích xuất chính xác overview và key_takeaways nếu JSON bị lỗi cú pháp
+        overview_text = ""
+        m_ov = re.search(r'"overview"\s*:\s*"((?:\\.|[^"\\])*)', raw)
+        if m_ov:
+            try:
+                overview_text = m_ov.group(1).encode('utf-8').decode('unicode_escape', errors='ignore')
+            except Exception:
+                overview_text = m_ov.group(1)
+            overview_text = overview_text.replace('\\"', '"').replace('\\n', '\n').strip()
+
+        takeaways = []
+        m_tk = re.search(r'"key_takeaways"\s*:\s*\[([\s\S]*?)(?:\]|\Z)', raw)
+        if m_tk:
+            raw_items = re.findall(r'"((?:\\.|[^"\\])*)"', m_tk.group(1))
+            for it in raw_items:
+                clean_it = it.replace('\\"', '"').replace('\\n', ' ').strip()
+                if clean_it and len(clean_it) > 3:
+                    takeaways.append(clean_it)
+
+        if overview_text or takeaways:
+            return {
+                "overview": overview_text or "Tóm tắt tổng quan bài giảng",
+                "key_takeaways": takeaways,
+                "sections": []
+            }
+
+        # Làm sạch hoàn toàn nếu chỉ còn raw text
+        clean_raw = re.sub(r"^```(?:json)?\s*", "", raw.strip(), flags=re.IGNORECASE)
+        clean_raw = re.sub(r"\s*```$", "", clean_raw).strip()
+        clean_raw = re.sub(r"^\s*\{\s*\"overview\"\s*:\s*\"?", "", clean_raw, flags=re.IGNORECASE).strip()
+        clean_raw = re.sub(r"\"?\s*\}\s*$", "", clean_raw).strip()
+
         return {
-            "overview": raw.strip(),
+            "overview": clean_raw,
             "key_takeaways": [],
             "sections": []
         }
+
 
     # ==================== 2. SINH QUIZ TRẮC NGHIỆM ĐA ĐỘ KHÓ ====================
     def _sanitize_quiz_item(self, q: Any, fallback_idx: int = 0) -> Optional[Dict[str, Any]]:
@@ -390,21 +535,9 @@ class LLMEngine:
                 f"Nội dung bài giảng:\n{clean_text}"
             )
 
-            print("\n" + "═" * 70)
-            print(f"🤖 [DEBUG AI - QUIZ BATCH {attempt}] Cần: {curr_batch_target} câu | Đã có: {len(valid_questions)}/{target_total}")
-            print("═" * 70)
-
-            if on_prompt and attempt == 1:
-                try:
-                    on_prompt(prompt)
-                except Exception:
-                    pass
-
             t0 = time.time()
-            max_tokens = max(600, min(2400, curr_batch_target * 240))
+            max_tokens = max(1000, min(3500, curr_batch_target * 350))
             raw = self.call_chat(prompt, max_tokens=max_tokens, temperature=0.25)
-            duration = time.time() - t0
-            print(f"✅ [DEBUG AI - QUIZ BATCH {attempt} FINISHED] Thời gian: {duration:.2f}s | Output: {len(raw)} ký tự\n")
 
             parsed = self._extract_json(raw)
             if isinstance(parsed, dict):
@@ -510,21 +643,9 @@ class LLMEngine:
                 f"Transcript bài giảng:\n{clean_text}"
             )
 
-            print("\n" + "═" * 70)
-            print(f"🤖 [DEBUG AI - FLASHCARDS BATCH {attempt}] Cần: {curr_batch_target} thẻ | Đã có: {len(valid_cards)}/{target_total}")
-            print("═" * 70)
-
-            if on_prompt and attempt == 1:
-                try:
-                    on_prompt(prompt)
-                except Exception:
-                    pass
-
             t0 = time.time()
-            max_tokens = max(500, min(2000, curr_batch_target * 140))
+            max_tokens = max(800, min(3000, curr_batch_target * 200))
             raw = self.call_chat(prompt, max_tokens=max_tokens, temperature=0.25)
-            duration = time.time() - t0
-            print(f"✅ [DEBUG AI - FLASHCARDS BATCH {attempt} FINISHED] Thời gian: {duration:.2f}s | Output: {len(raw)} ký tự\n")
 
             parsed = self._extract_json(raw)
             if isinstance(parsed, dict):
@@ -574,7 +695,7 @@ class LLMEngine:
             f"Nội dung:\n{full_text}"
         )
 
-        raw = self.call_chat(prompt, max_tokens=800)
+        raw = self.call_chat(prompt, max_tokens=2500)
         parsed = self._extract_json(raw)
         if isinstance(parsed, dict) and "topic" in parsed:
             return parsed

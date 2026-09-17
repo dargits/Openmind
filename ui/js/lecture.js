@@ -23,6 +23,9 @@ const LEC = {
   quizData: null,
   quizAnswers: {},
   activeTab: 'transcript',
+  notes: [],
+  chatHistory: [],
+  onlyNotesFilter: false,
 };
 
 // ──────────────────────────────────────────
@@ -80,25 +83,52 @@ function renderLectureView() {
   <!-- Upload Zone / Audio Player Row -->
   <div id="lecUploadRow" style="flex-shrink:0;">
     <!-- Before file is picked -->
-    <div id="lecUploadZone" class="upload-zone" style="${LEC.audioPath ? 'display:none;' : ''}">
+    <div id="lecUploadZone" class="upload-zone" style="${LEC.audioPath || LEC.lectureId ? 'display:none;' : ''}">
       <div class="upload-zone-icon">
-        <i data-lucide="music" style="width:26px;height:26px;color:#4f46e5;"></i>
+        <i data-lucide="folder-plus" style="width:26px;height:26px;color:#4f46e5;"></i>
       </div>
       <div style="flex:1;text-align:left;">
-        <div class="upload-zone-title">Kéo & thả file âm thanh vào đây</div>
-        <div class="upload-zone-sub">MP3, WAV, M4A, AAC — hoặc nhấn để chọn file</div>
+        <div class="upload-zone-title">Nạp bài giảng vào Không gian học tập</div>
+        <div class="upload-zone-sub">Âm thanh (MP3, WAV, M4A) hoặc Tài liệu Slide bài giảng (PDF)</div>
       </div>
-      <button class="btn btn-primary" id="lecPickAudio"
-        style="flex-shrink:0;display:inline-flex;align-items:center;gap:7px;">
-        <i data-lucide="folder-open" style="width:16px;height:16px;"></i> Chọn file
-      </button>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="btn btn-secondary" id="lecPickPdf"
+          style="display:inline-flex;align-items:center;gap:6px;background:rgba(239,68,68,0.08);color:#ef4444;border-color:rgba(239,68,68,0.25);">
+          <i data-lucide="file-text" style="width:15px;height:15px;"></i> Nhập Slide / PDF
+        </button>
+        <button class="btn btn-primary" id="lecPickAudio"
+          style="display:inline-flex;align-items:center;gap:6px;">
+          <i data-lucide="music" style="width:15px;height:15px;"></i> Chọn file âm thanh
+        </button>
+      </div>
     </div>
 
-    <!-- After file is picked -->
-    <div id="lecAudioRow" style="${!LEC.audioPath ? 'display:none;' : ''}display:flex;gap:10px;align-items:center;width:100%;min-width:0;">
+    <!-- YouTube Import Row -->
+    <div id="lecYoutubeBar" class="youtube-import-card" style="${LEC.audioPath || LEC.lectureId ? 'display:none;' : ''}">
+      <div class="youtube-import-input-wrap">
+        <i data-lucide="youtube" style="width:20px;height:20px;color:#ef4444;flex-shrink:0;"></i>
+        <input type="text" id="ytUrlInput" class="youtube-input"
+          placeholder="Hoặc dán link bài giảng YouTube (https://www.youtube.com/watch?v=...)..." />
+        <button id="ytDownloadBtn" class="btn btn-secondary" style="flex-shrink:0;display:inline-flex;align-items:center;gap:6px;">
+          <i data-lucide="download-cloud" style="width:15px;height:15px;"></i> Tải & Nạp
+        </button>
+      </div>
+      <div id="ytProgressRow" style="display:none;margin-top:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+          <span id="ytProgressStatus" style="color:var(--text);font-weight:600;">Đang chuẩn bị tải...</span>
+          <span id="ytProgressPercent" style="color:var(--accent);font-weight:700;">0%</span>
+        </div>
+        <div class="progress-bar-wrap" style="height:6px;background:rgba(148,163,184,0.2);border-radius:4px;overflow:hidden;">
+          <div id="ytProgressBar" style="width:0%;height:100%;background:linear-gradient(90deg, #ef4444, #4f46e5);transition:width 0.2s ease;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- After file is picked / loaded -->
+    <div id="lecAudioRow" style="${!LEC.audioPath && !LEC.lectureId ? 'display:none;' : ''}display:flex;gap:10px;align-items:center;width:100%;min-width:0;">
       <div class="upload-zone-file" style="flex:1;min-width:0;overflow:hidden;display:flex;align-items:center;gap:12px;">
-        <div style="width:36px;height:36px;border-radius:9px;background:rgba(99,102,241,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <i data-lucide="music" style="width:18px;height:18px;color:#4f46e5;"></i>
+        <div id="lecFileIconWrap" style="width:36px;height:36px;border-radius:9px;background:${LEC.audioPath ? 'rgba(99,102,241,0.12)' : 'rgba(239,68,68,0.12)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i id="lecFileIcon" data-lucide="${LEC.audioPath ? 'music' : 'file-text'}" style="width:18px;height:18px;color:${LEC.audioPath ? '#4f46e5' : '#ef4444'};"></i>
         </div>
         <div style="flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center;">
           <div style="display:flex;align-items:center;gap:6px;min-width:0;">
@@ -107,13 +137,13 @@ function renderLectureView() {
               <i data-lucide="pencil" style="width:12px;height:12px;color:var(--text-muted);"></i>
             </button>
           </div>
-          <div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">File âm thanh sẵn sàng</div>
+          <div id="lecFileTypeLabel" style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${LEC.audioPath ? 'File âm thanh sẵn sàng' : 'Tài liệu PDF / Slide bài giảng'}</div>
         </div>
-        <audio controls id="lecAudio" style="width:250px;height:32px;flex-shrink:0;"></audio>
+        <audio controls id="lecAudio" style="${LEC.audioPath ? '' : 'display:none;'}width:250px;height:32px;flex-shrink:0;"></audio>
       </div>
       <button class="btn btn-ghost btn-sm" id="lecChangeFile"
         style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;">
-        <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i> Đổi file
+        <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i> Nạp bài khác
       </button>
       <select class="select" id="lecFolder" style="width:130px;font-size:13px;flex-shrink:0;">
         <option value="General">General</option>
@@ -161,6 +191,16 @@ function renderLectureView() {
     </div>
   </div>
 
+  <!-- Auto-Pipeline Progress Banner -->
+  <div id="autoPipelineBanner" style="display:none;flex-shrink:0;background:linear-gradient(135deg,rgba(99,102,241,0.05) 0%,rgba(6,182,212,0.04) 100%);border:1px solid rgba(99,102,241,0.18);border-radius:12px;padding:12px 16px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <i data-lucide="zap" style="width:15px;height:15px;color:#4f46e5;"></i>
+      <span style="font-size:13px;font-weight:700;color:#4f46e5;">Xử lý tự động đang chạy</span>
+      <span style="font-size:11px;color:#94a3b8;margin-left:auto;">AI đang phân tích bài giảng của bạn…</span>
+    </div>
+    <div id="autoPipelineBar" style="display:flex;flex-direction:column;gap:4px;"></div>
+  </div>
+
   <!-- Content Tabs -->
   <div class="tabs">
     <div class="tab-nav">
@@ -183,12 +223,23 @@ function renderLectureView() {
 
     <div class="tab-panels">
       <!-- 1. Transcript Panel -->
-      <div class="tab-panel" id="tab-transcript">
-        <div id="transcriptBox" style="height:100%;overflow-y:auto;display:flex;flex-direction:column;gap:3px;padding:2px;">
+      <div class="tab-panel" id="tab-transcript" style="display:flex;flex-direction:column;height:100%;">
+        <div id="transcriptFilterBar" style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px 8px;border-bottom:1px solid rgba(148,163,184,0.12);margin-bottom:6px;flex-shrink:0;">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button id="filterAllTranscript" class="btn btn-sm btn-primary" style="padding:3px 10px;font-size:12px;border-radius:14px;">Tất cả</button>
+            <button id="filterNotesOnly" class="btn btn-sm btn-ghost" style="padding:3px 10px;font-size:12px;border-radius:14px;display:inline-flex;align-items:center;gap:4px;">
+              <i data-lucide="sticky-note" style="width:12px;height:12px;color:#d97706;"></i> Chỉ đoạn có ghi chú (<span id="notesCountBadge">0</span>)
+            </button>
+          </div>
+          <span style="font-size:11px;color:var(--text-muted);display:inline-flex;align-items:center;gap:4px;">
+            <i data-lucide="bookmark-plus" style="width:12px;height:12px;color:var(--accent);"></i> Rê chuột vào câu để thêm ghi chú
+          </span>
+        </div>
+        <div id="transcriptBox" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;padding:2px;">
           <div class="empty-state" style="height:100%;">
             <div class="empty-icon"><i data-lucide="mic-off" style="width:48px;height:48px;color:var(--text-subtle);"></i></div>
             <div class="empty-title">Chưa có bản ghi âm</div>
-            <div class="empty-sub">Chọn file âm thanh và nhấn "① Phiên âm" để bắt đầu</div>
+            <div class="empty-sub">Chọn file âm thanh hoặc link YouTube và nhấn "① Phiên âm" để bắt đầu</div>
           </div>
         </div>
       </div>
@@ -233,14 +284,22 @@ function renderLectureView() {
       </div>
 
       <!-- 5. Chat Q&A Panel -->
-      <div class="tab-panel hidden" id="tab-chat">
-        <div style="display:flex;flex-direction:column;height:100%;gap:12px;">
-          <div class="chat-history" id="chatHistory">
+      <div class="tab-panel hidden" id="tab-chat" style="display:flex;flex-direction:column;height:100%;">
+        <div style="display:flex;flex-direction:column;height:100%;gap:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px;border-bottom:1px solid rgba(148,163,184,0.12);flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--text);">
+              <i data-lucide="message-square" style="width:14px;height:14px;color:#4f46e5;"></i> Hội thoại trợ lý bài giảng đa lượt
+            </div>
+            <button id="chatClearBtn" class="btn btn-ghost btn-sm" title="Xóa toàn bộ lịch sử hỏi đáp của bài giảng này" style="font-size:11.5px;padding:2px 8px;height:24px;display:inline-flex;align-items:center;gap:4px;color:var(--text-muted);">
+              <i data-lucide="trash-2" style="width:12px;height:12px;"></i> Xóa hội thoại
+            </button>
+          </div>
+          <div class="chat-history" id="chatHistory" style="flex:1;overflow-y:auto;">
             <div class="chat-msg chat-ai" style="max-width:92%;display:flex;gap:10px;">
               <div style="width:28px;height:28px;border-radius:8px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                 <i data-lucide="bot" style="width:15px;height:15px;color:#4f46e5;"></i>
               </div>
-              <div>Xin chào! Tôi là trợ lý AI học tập cục bộ. Hãy đặt câu hỏi về nội dung bài giảng, tôi sẽ tìm kiếm ngữ cảnh và trả lời kèm <strong>mốc thời gian</strong> để bạn đối chiếu với âm thanh gốc.</div>
+              <div>Xin chào! Tôi là trợ lý AI học tập. Hãy đặt câu hỏi về nội dung bài giảng, tôi sẽ nhớ toàn bộ ngữ cảnh hội thoại và kèm <strong>mốc thời gian</strong> để bạn đối chiếu âm thanh gốc.</div>
             </div>
           </div>
           <div class="chat-input-row" style="flex-shrink:0;">
@@ -269,24 +328,51 @@ function renderLectureView() {
   el('lecChangeFile')?.addEventListener('click', () => {
     el('lecAudioRow').style.display = 'none';
     el('lecUploadZone').style.removeProperty('display');
+    if (el('lecYoutubeBar')) el('lecYoutubeBar').style.removeProperty('display');
     LEC.audioPath = null;
     LEC.audioUrl = null;
     LEC.title = null;
     if (el('lecAudio')) el('lecAudio').src = '';
   });
 
+  // YouTube Download
+  el('ytDownloadBtn')?.addEventListener('click', startYoutubeDownload);
+  el('ytUrlInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') startYoutubeDownload(); });
+
+  // Transcript Note Filters
+  el('filterAllTranscript')?.addEventListener('click', () => {
+    LEC.onlyNotesFilter = false;
+    el('filterAllTranscript')?.classList.add('btn-primary');
+    el('filterAllTranscript')?.classList.remove('btn-ghost');
+    el('filterNotesOnly')?.classList.add('btn-ghost');
+    el('filterNotesOnly')?.classList.remove('btn-primary');
+    renderTranscript(LEC.segments);
+  });
+  el('filterNotesOnly')?.addEventListener('click', () => {
+    LEC.onlyNotesFilter = true;
+    el('filterNotesOnly')?.classList.add('btn-primary');
+    el('filterNotesOnly')?.classList.remove('btn-ghost');
+    el('filterAllTranscript')?.classList.add('btn-ghost');
+    el('filterAllTranscript')?.classList.remove('btn-primary');
+    renderTranscript(LEC.segments);
+  });
+
+  // Pick PDF and Audio
+  el('lecPickAudio')?.addEventListener('click', pickAudio);
+  el('lecPickPdf')?.addEventListener('click', pickPdf);
+
+  // Clear Chat History
+  el('chatClearBtn')?.addEventListener('click', clearChatHistory);
+
   // Drag & drop on upload zone
   const zone = el('lecUploadZone');
   if (zone) {
-    zone.addEventListener('click', e => {
-      if (!e.target.closest('#lecPickAudio')) pickAudio();
-    });
     zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
     zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
     zone.addEventListener('drop', async e => {
       e.preventDefault();
       zone.classList.remove('drag-over');
-      showToast('Kéo thả không được hỗ trợ — vui lòng dùng nút "Chọn file"', 'info');
+      showToast('Kéo thả không được hỗ trợ — vui lòng dùng nút "Chọn file" hoặc "Nhập PDF"', 'info');
     });
   }
 
@@ -321,12 +407,14 @@ async function loadLecture(lectureId, initialTab = 'transcript') {
     LEC.audioPath = lec.audio_path || null;
     LEC.segments = lec.transcript || [];
     LEC.fullText = lec.full_text || '';
+    LEC.notes = lec.notes || [];
+    LEC.chatHistory = lec.chat_history || [];
     LEC.quizData = null;
     LEC.quizAnswers = {};
 
     if (el('lecFolder') && lec.folder_tag) el('lecFolder').value = lec.folder_tag;
 
-    // Audio setup
+    // Audio / PDF header setup
     const name = lec.title || (LEC.audioPath ? LEC.audioPath.split(/[\\\/]/).pop() : '') || 'Bài giảng';
     LEC.title = name;
     if (el('lecFileName')) {
@@ -336,10 +424,31 @@ async function loadLecture(lectureId, initialTab = 'transcript') {
     if (LEC.audioPath) {
       try {
         LEC.audioUrl = await API.get_audio_url(LEC.audioPath);
-        if (el('lecAudio')) el('lecAudio').src = LEC.audioUrl;
-        if (el('lecAudioRow')) { el('lecAudioRow').style.display = 'flex'; }
+        if (el('lecAudio')) {
+          el('lecAudio').src = LEC.audioUrl;
+          el('lecAudio').style.display = 'block';
+        }
+        if (el('lecAudioRow')) el('lecAudioRow').style.display = 'flex';
         if (el('lecUploadZone')) el('lecUploadZone').style.display = 'none';
+        if (el('lecYoutubeBar')) el('lecYoutubeBar').style.display = 'none';
+        if (el('lecFileTypeLabel')) el('lecFileTypeLabel').textContent = 'File âm thanh sẵn sàng';
+        if (el('lecFileIcon')) {
+          el('lecFileIcon').setAttribute('data-lucide', 'music');
+          el('lecFileIcon').style.color = '#4f46e5';
+        }
+        if (el('lecFileIconWrap')) el('lecFileIconWrap').style.background = 'rgba(99,102,241,0.12)';
       } catch (_) { }
+    } else if (LEC.lectureId) {
+      if (el('lecAudio')) el('lecAudio').style.display = 'none';
+      if (el('lecAudioRow')) el('lecAudioRow').style.display = 'flex';
+      if (el('lecUploadZone')) el('lecUploadZone').style.display = 'none';
+      if (el('lecYoutubeBar')) el('lecYoutubeBar').style.display = 'none';
+      if (el('lecFileTypeLabel')) el('lecFileTypeLabel').textContent = 'Tài liệu PDF / Slide bài giảng';
+      if (el('lecFileIcon')) {
+        el('lecFileIcon').setAttribute('data-lucide', 'file-text');
+        el('lecFileIcon').style.color = '#ef4444';
+      }
+      if (el('lecFileIconWrap')) el('lecFileIconWrap').style.background = 'rgba(239,68,68,0.12)';
     }
 
     // Transcript
@@ -358,15 +467,27 @@ async function loadLecture(lectureId, initialTab = 'transcript') {
       }
     }
 
-    // Reset chat
+    // Restore or reset chat history
     if (el('chatHistory')) {
-      el('chatHistory').innerHTML = `
+      if (LEC.chatHistory?.length) {
+        el('chatHistory').innerHTML = '';
+        LEC.chatHistory.forEach(msg => {
+          const citHtml = msg.citations?.length
+            ? `<div class="chat-citation"><span style="display:inline-flex;align-items:center;gap:4px;"><i data-lucide="clock" style="width:12px;height:12px;color:var(--accent);"></i> Mốc thời gian:</span> ${msg.citations.map(c =>
+              `<span class="chat-citation-chip" data-time="${c.start}">${fmtDuration(c.start)}</span>`
+            ).join('')}</div>`
+            : '';
+          appendChat(msg.role === 'user' ? 'user' : 'ai', (msg.content || '').replace(/\n/g, '<br>') + citHtml);
+        });
+      } else {
+        el('chatHistory').innerHTML = `
 <div class="chat-msg chat-ai" style="max-width:92%;display:flex;gap:10px;">
   <div style="width:28px;height:28px;border-radius:8px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
     <i data-lucide="bot" style="width:15px;height:15px;color:#4f46e5;"></i>
   </div>
-  <div>Đã tải bài giảng <strong>${escHtml(lec.title || '')}</strong>. Bạn có thể đặt câu hỏi về nội dung bài giảng này!</div>
+  <div>Đã nạp bài giảng <strong>${escHtml(lec.title || '')}</strong>. Bạn có thể đặt câu hỏi về nội dung bài giảng này, AI sẽ nhớ toàn bộ ngữ cảnh hội thoại!</div>
 </div>`;
+      }
     }
 
     // Tóm tắt & Mindmap: Tự động nạp dữ liệu đã tạo
@@ -469,6 +590,47 @@ async function pickAudio() {
   }
 }
 
+async function pickPdf() {
+  try {
+    const path = await API.pick_pdf_file();
+    if (!path) return;
+    const name = path.split(/[\\\/]/).pop();
+    const folder = el('lecFolder')?.value || 'General';
+
+    LEC.audioPath = null;
+    LEC.audioUrl = null;
+    LEC.title = name.replace(/\.pdf$/i, '');
+    LEC.segments = [];
+    LEC.fullText = '';
+    LEC.isTranscribing = true;
+
+    if (el('lecFileName')) {
+      el('lecFileName').textContent = LEC.title;
+      el('lecFileName').title = LEC.title;
+    }
+    if (el('lecAudioRow')) el('lecAudioRow').style.display = 'flex';
+    if (el('lecUploadZone')) el('lecUploadZone').style.display = 'none';
+    if (el('lecYoutubeBar')) el('lecYoutubeBar').style.display = 'none';
+    if (el('lecAudio')) el('lecAudio').style.display = 'none';
+    if (el('lecFileTypeLabel')) el('lecFileTypeLabel').textContent = 'Tài liệu PDF / Slide bài giảng';
+    if (el('lecFileIcon')) {
+      el('lecFileIcon').setAttribute('data-lucide', 'file-text');
+      el('lecFileIcon').style.color = '#ef4444';
+    }
+    if (el('lecFileIconWrap')) el('lecFileIconWrap').style.background = 'rgba(239,68,68,0.12)';
+
+    showStatus(`Đang đọc và trích xuất tài liệu PDF: ${name}…`, 0.1);
+    switchTabTo('transcript');
+    TaskTimer.start(['transcribeElapsedTimer']);
+
+    await API.import_pdf_lecture(path, LEC.title, folder);
+    showToast(`Bắt đầu xử lý tài liệu: ${name}`, 'info');
+    refreshIcons();
+  } catch (e) {
+    showToast('Lỗi nạp PDF: ' + e.message, 'error');
+  }
+}
+
 // ──────────────────────────────────────────
 // Transcription
 // ──────────────────────────────────────────
@@ -535,37 +697,328 @@ EventBus.on('transcribe:error', ({ message }) => {
   showToast('Lỗi phiên âm: ' + message, 'error', 4000);
 });
 
+// PDF Import Event Listeners
+EventBus.on('pdf:start', ({ path }) => {
+  showStatus('Đang đọc và trích xuất nội dung PDF/Slide…', 0.1);
+  if (el('transcriptBox')) {
+    el('transcriptBox').innerHTML = `
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;color:var(--text-muted);padding:40px 20px;">
+  <i data-lucide="file-text" class="spin" style="width:38px;height:38px;color:#ef4444;"></i>
+  <div style="font-weight:700;color:var(--text);font-size:16px;">Đang trích xuất cấu trúc văn bản tài liệu PDF…</div>
+  <div style="font-size:13px;max-width:520px;text-align:center;line-height:1.5;">Hệ thống đang phân tích từng trang slide và định dạng thành các phân đoạn học tập.</div>
+  <div id="transcribeElapsedTimer" style="display:inline-block;padding:6px 16px;background:rgba(239,68,68,0.08);color:#ef4444;font-weight:700;font-size:13px;border-radius:20px;border:1px solid rgba(239,68,68,0.2);">
+    Thời gian đã chạy: 00:00
+  </div>
+</div>`;
+    refreshIcons();
+  }
+});
+
+EventBus.on('pdf:progress', ({ current, total, progress, text }) => {
+  showStatus(text || `Trích xuất trang ${current}/${total}`, (progress || 0) / 100);
+});
+
+EventBus.on('pdf:done', data => {
+  const elapsed = TaskTimer.stop();
+  LEC.isTranscribing = false;
+  LEC.lectureId = data.lecture_id;
+  LEC.title = data.title;
+  LEC.audioPath = null;
+  LEC.audioUrl = null;
+  LEC.segments = data.segments || [];
+  LEC.fullText = data.full_text || '';
+  hideStatus();
+
+  renderTranscript(LEC.segments);
+  updateStepButtons();
+  showToast(`Đã nạp ${data.total_pages} trang tài liệu PDF (${fmtDuration(elapsed)})!`, 'success', 3500);
+  switchTabTo('transcript');
+  if (typeof loadLibrary === 'function') loadLibrary();
+});
+
+EventBus.on('pdf:error', ({ message }) => {
+  TaskTimer.stop();
+  LEC.isTranscribing = false;
+  hideStatus();
+  showToast('Lỗi xử lý PDF: ' + message, 'error', 4000);
+});
+
+// ──────────────────────────────────────────
+// Auto-Pipeline Progress UI
+// ──────────────────────────────────────────
+let _pipelineSteps = [];
+
+function _renderPipelineBar() {
+  const container = el('autoPipelineBar');
+  if (!container) return;
+  container.innerHTML = _pipelineSteps.map((step, i) => {
+    const icon = step.status === 'done' ? 'check-circle' :
+                 step.status === 'error' ? 'alert-circle' :
+                 step.status === 'running' ? 'loader-2' : 'circle';
+    const color = step.status === 'done' ? '#059669' :
+                  step.status === 'error' ? '#ef4444' :
+                  step.status === 'running' ? '#4f46e5' : '#94a3b8';
+    const spinClass = step.status === 'running' ? ' class="spin"' : '';
+    return `
+<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;
+  background:${step.status === 'running' ? 'rgba(99,102,241,0.07)' : step.status === 'done' ? 'rgba(5,150,105,0.06)' : 'transparent'};
+  border:1px solid ${step.status === 'running' ? 'rgba(99,102,241,0.2)' : step.status === 'done' ? 'rgba(5,150,105,0.2)' : 'rgba(148,163,184,0.15)'};
+  transition:all 0.3s ease;">
+  <i data-lucide="${icon}"${spinClass} style="width:15px;height:15px;color:${color};flex-shrink:0;"></i>
+  <span style="font-size:12.5px;font-weight:${step.status === 'running' ? 700 : 500};color:${color};">${escHtml(step.text || step.name)}</span>
+  ${step.status !== 'pending' && step.status !== 'running' ? '' : `<span style="font-size:11px;color:#94a3b8;margin-left:auto;">${i + 1}/3</span>`}
+</div>`;
+  }).join('');
+  refreshIcons();
+}
+
+EventBus.on('autopipeline:start', ({ steps }) => {
+  _pipelineSteps = (steps || []).map(name => ({ name, text: name, status: 'pending' }));
+  const banner = el('autoPipelineBanner');
+  if (banner) {
+    banner.style.display = '';
+    banner.style.animation = 'fadeIn 0.3s ease';
+  }
+  _renderPipelineBar();
+});
+
+EventBus.on('autopipeline:step', ({ step, status, text }) => {
+  if (_pipelineSteps[step]) {
+    _pipelineSteps[step].status = status;
+    _pipelineSteps[step].text = text;
+  }
+  _renderPipelineBar();
+});
+
+EventBus.on('autopipeline:done', () => {
+  const doneCount = _pipelineSteps.filter(s => s.status === 'done').length;
+  showToast(`✅ Xử lý tự động hoàn tất! ${doneCount}/3 tác vụ thành công.`, 'success', 4000);
+  // Ẩn banner sau 5 giây
+  setTimeout(() => {
+    const banner = el('autoPipelineBanner');
+    if (banner) {
+      banner.style.transition = 'opacity 0.6s ease';
+      banner.style.opacity = '0';
+      setTimeout(() => { banner.style.display = 'none'; banner.style.opacity = ''; }, 650);
+    }
+  }, 5000);
+});
+
 function appendSegment(seg) {
   if (!el('transcriptBox')) return;
   const ts = fmtDuration(seg.start);
+  const sTime = seg.start || 0;
+  const noteIdPrefix = `editor_${Math.round(sTime * 10)}_${Math.floor(Math.random() * 1000)}`;
+
   const div = document.createElement('div');
-  div.className = 'seg-line';
+  div.className = 'seg-line-wrap';
+  div.setAttribute('data-start', sTime);
   div.innerHTML = `
-    <span class="seg-ts" title="Nhấn để nghe" data-time="${seg.start}">${ts}</span>
-    <span class="seg-text">${escHtml(seg.text)}</span>`;
+    <div class="seg-line">
+      <span class="seg-ts" title="Nhấn để nghe" data-time="${sTime}">${ts}</span>
+      <span class="seg-text">${escHtml(seg.text)}</span>
+      <div class="seg-actions">
+        <button class="seg-note-btn btn-add-note" data-editor="${noteIdPrefix}" data-time="${sTime}" title="Thêm ghi chú cá nhân tại mốc này">
+          <i data-lucide="bookmark-plus" style="width:12px;height:12px;"></i> Ghi chú
+        </button>
+      </div>
+    </div>
+    <div class="seg-note-editor" id="${noteIdPrefix}" style="display:none;">
+      <textarea class="input w-full" rows="2" placeholder="Nhập ghi chú cho đoạn ${ts}…" style="font-size:12.5px;resize:vertical;"></textarea>
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:6px;">
+        <button class="btn btn-ghost btn-sm btn-cancel-note" data-editor="${noteIdPrefix}">Huỷ</button>
+        <button class="btn btn-primary btn-sm btn-save-note" data-time="${sTime}" data-editor="${noteIdPrefix}">Lưu ghi chú</button>
+      </div>
+    </div>`;
+
   div.querySelector('.seg-ts').addEventListener('click', () => {
     const audio = el('lecAudio');
     if (audio && seg.start !== undefined) { audio.currentTime = seg.start; audio.play(); }
   });
+  div.querySelector('.btn-add-note')?.addEventListener('click', () => {
+    const editor = el(noteIdPrefix);
+    if (editor) {
+      editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+      if (editor.style.display === 'block') editor.querySelector('textarea')?.focus();
+    }
+  });
+  div.querySelector('.btn-cancel-note')?.addEventListener('click', () => {
+    const editor = el(noteIdPrefix);
+    if (editor) editor.style.display = 'none';
+  });
+  div.querySelector('.btn-save-note')?.addEventListener('click', async () => {
+    if (!LEC.lectureId) {
+      showToast('Vui lòng đợi phiên âm hoàn tất để lưu ghi chú', 'warning');
+      return;
+    }
+    const editor = el(noteIdPrefix);
+    const text = editor?.querySelector('textarea')?.value?.trim();
+    if (!text) return showToast('Nội dung ghi chú không được để trống', 'warning');
+    try {
+      const res = await API.save_lecture_note(LEC.lectureId, null, sTime, text);
+      if (res?.notes) {
+        LEC.notes = res.notes;
+        showToast('Đã lưu ghi chú thành công', 'success');
+        renderTranscript(LEC.segments);
+      }
+    } catch (err) {
+      showToast('Lỗi lưu: ' + err.message, 'error');
+    }
+  });
+
   el('transcriptBox').appendChild(div);
   el('transcriptBox').scrollTop = el('transcriptBox').scrollHeight;
+  refreshIcons();
 }
 
 function renderTranscript(segs) {
-  if (!el('transcriptBox') || !segs?.length) return;
-  el('transcriptBox').innerHTML = segs.map(s => `
-<div class="seg-line">
-  <span class="seg-ts" data-time="${s.start}" title="Click để nghe từ điểm này">${fmtDuration(s.start)}</span>
-  <span class="seg-text">${escHtml(s.text)}</span>
-</div>`).join('');
+  const container = el('transcriptBox');
+  if (!container) return;
 
-  el('transcriptBox').querySelectorAll('.seg-ts').forEach(btn => {
+  const notes = LEC.notes || [];
+  const badge = el('notesCountBadge');
+  if (badge) badge.textContent = notes.length;
+
+  if (!segs?.length) {
+    if (LEC.fullText?.trim()) {
+      segs = [{ start: 0, text: LEC.fullText }];
+    } else {
+      return;
+    }
+  }
+
+  let displaySegs = segs;
+  if (LEC.onlyNotesFilter) {
+    displaySegs = segs.filter(s => {
+      const sTime = s.start || 0;
+      return notes.some(n => Math.abs(n.timestamp_sec - sTime) < 2.0 || (n.timestamp_sec >= sTime && (s.end ? n.timestamp_sec < s.end : n.timestamp_sec < sTime + 5)));
+    });
+    if (!displaySegs.length) {
+      container.innerHTML = `
+        <div class="empty-state" style="height:100%;padding:40px 20px;">
+          <div class="empty-icon"><i data-lucide="sticky-note" style="width:44px;height:44px;color:var(--text-subtle);"></i></div>
+          <div class="empty-title">Chưa có ghi chú nào</div>
+          <div class="empty-sub">Chuyển sang "Tất cả", rê chuột vào bất kỳ câu nào và nhấn "Ghi chú" để lưu lại ý quan trọng!</div>
+        </div>`;
+      refreshIcons();
+      return;
+    }
+  }
+
+  container.innerHTML = displaySegs.map((s, idx) => {
+    const sTime = s.start || 0;
+    const segNotes = notes.filter(n => Math.abs(n.timestamp_sec - sTime) < 2.0 || (n.timestamp_sec >= sTime && (s.end ? n.timestamp_sec < s.end : n.timestamp_sec < sTime + 5)));
+    const noteIdPrefix = `editor_${Math.round(sTime * 10)}_${idx}`;
+
+    const notesHtml = segNotes.length ? `
+      <div class="seg-notes-container">
+        ${segNotes.map(n => `
+          <div class="seg-note-card" data-id="${n.id}">
+            <div style="display:flex;align-items:flex-start;gap:6px;width:100%;">
+              <i data-lucide="sticky-note" style="width:13px;height:13px;color:#d97706;flex-shrink:0;margin-top:2px;"></i>
+              <div style="flex:1;font-size:12.5px;color:var(--text);word-break:break-word;">${escHtml(n.text)}</div>
+              <button class="btn btn-ghost btn-sm btn-del-note" data-id="${n.id}" title="Xóa ghi chú" style="padding:2px 5px;height:20px;color:var(--text-muted);">
+                <i data-lucide="trash-2" style="width:11px;height:11px;"></i>
+              </button>
+            </div>
+          </div>
+        `).join('')}
+      </div>` : '';
+
+    const isPdfDoc = !LEC.audioPath;
+    const timeLabel = isPdfDoc ? `Trang ${s.page || Math.round(sTime)}` : fmtDuration(sTime);
+    const timeTitle = isPdfDoc ? `Trang tài liệu ${s.page || Math.round(sTime)}` : 'Click để nghe từ điểm này';
+
+    return `
+    <div class="seg-line-wrap" data-start="${sTime}">
+      <div class="seg-line">
+        <span class="seg-ts" data-time="${sTime}" title="${timeTitle}">${timeLabel}</span>
+        <span class="seg-text">${escHtml(s.text)}</span>
+        <div class="seg-actions">
+          <button class="seg-note-btn btn-add-note" data-editor="${noteIdPrefix}" data-time="${sTime}" title="Thêm ghi chú cá nhân tại mốc này">
+            <i data-lucide="bookmark-plus" style="width:12px;height:12px;"></i> Ghi chú
+          </button>
+        </div>
+      </div>
+      ${notesHtml}
+      <div class="seg-note-editor" id="${noteIdPrefix}" style="display:none;">
+        <textarea class="input w-full" rows="2" placeholder="Nhập ghi chú cho ${isPdfDoc ? 'trang này' : 'đoạn ' + fmtDuration(sTime)}…" style="font-size:12.5px;resize:vertical;"></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:6px;">
+          <button class="btn btn-ghost btn-sm btn-cancel-note" data-editor="${noteIdPrefix}">Huỷ</button>
+          <button class="btn btn-primary btn-sm btn-save-note" data-time="${sTime}" data-editor="${noteIdPrefix}">Lưu ghi chú</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  container.querySelectorAll('.seg-ts').forEach(btn => {
     btn.addEventListener('click', () => {
       const t = parseFloat(btn.dataset.time) || 0;
       const audio = el('lecAudio');
       if (audio) { audio.currentTime = t; audio.play(); }
     });
   });
+
+  container.querySelectorAll('.btn-add-note').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const editorId = btn.dataset.editor;
+      const editor = el(editorId);
+      if (editor) {
+        editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+        if (editor.style.display === 'block') editor.querySelector('textarea')?.focus();
+      }
+    });
+  });
+
+  container.querySelectorAll('.btn-cancel-note').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const editor = el(btn.dataset.editor);
+      if (editor) editor.style.display = 'none';
+    });
+  });
+
+  container.querySelectorAll('.btn-save-note').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!LEC.lectureId) {
+        showToast('Vui lòng đợi phiên âm hoàn tất để lưu ghi chú', 'warning');
+        return;
+      }
+      const editor = el(btn.dataset.editor);
+      const text = editor?.querySelector('textarea')?.value?.trim();
+      if (!text) return showToast('Nội dung ghi chú không được để trống', 'warning');
+      const time = parseFloat(btn.dataset.time) || 0;
+      try {
+        const res = await API.save_lecture_note(LEC.lectureId, null, time, text);
+        if (res?.notes) {
+          LEC.notes = res.notes;
+          showToast('Đã lưu ghi chú thành công', 'success');
+          renderTranscript(LEC.segments);
+        }
+      } catch (err) {
+        showToast('Lỗi lưu: ' + err.message, 'error');
+      }
+    });
+  });
+
+  container.querySelectorAll('.btn-del-note').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const noteId = btn.dataset.id;
+      if (!noteId || !LEC.lectureId) return;
+      try {
+        const res = await API.delete_lecture_note(LEC.lectureId, noteId);
+        if (res?.notes) {
+          LEC.notes = res.notes;
+          showToast('Đã xóa ghi chú', 'info');
+          renderTranscript(LEC.segments);
+        }
+      } catch (err) {
+        showToast('Lỗi xóa: ' + err.message, 'error');
+      }
+    });
+  });
+
+  refreshIcons();
 }
 
 // ──────────────────────────────────────────
@@ -820,6 +1273,35 @@ async function triggerSummaryGeneration() {
 
 function renderSummary(summary, mindmap) {
   if (!el('summaryBox')) return;
+
+  // Tự động làm sạch nếu overview bị lưu dưới dạng raw JSON hoặc khối mã markdown ```json
+  if (summary && typeof summary.overview === 'string') {
+    let ov = summary.overview.trim();
+    if (ov.startsWith('```json') || ov.startsWith('```') || (ov.startsWith('{') && ov.includes('"overview"'))) {
+      try {
+        const cleaned = ov.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+        const parsed = JSON.parse(cleaned);
+        if (parsed && parsed.overview) {
+          summary.overview = parsed.overview;
+          if (Array.isArray(parsed.key_takeaways) && (!summary.key_takeaways || !summary.key_takeaways.length)) {
+            summary.key_takeaways = parsed.key_takeaways;
+          }
+          if (Array.isArray(parsed.sections) && (!summary.sections || !summary.sections.length)) {
+            summary.sections = parsed.sections;
+          }
+        }
+      } catch (e) {
+        // Nếu parse JSON lỗi (do cắt ngắn), dùng regex bóc tách trực tiếp chuỗi overview
+        const m = ov.match(/"overview"\s*:\s*"((?:\\.|[^"\\])*)/);
+        if (m && m[1]) {
+          summary.overview = m[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').trim();
+        } else {
+          summary.overview = ov.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').replace(/^\s*\{\s*"overview"\s*:\s*"?/i, '').replace(/"?\s*\}\s*$/i, '').trim();
+        }
+      }
+    }
+  }
+
   const hasOverview = summary && (summary.overview || (Array.isArray(summary.key_takeaways) && summary.key_takeaways.length));
   const hasMindmap = mindmap && (mindmap.topic || (Array.isArray(mindmap.children) && mindmap.children.length));
 
@@ -1159,11 +1641,14 @@ async function sendChat() {
   await API.ask_rag(q, LEC.lectureId);
 }
 
-EventBus.on('rag:done', ({ answer, citations }) => {
+EventBus.on('rag:done', ({ answer, citations, chat_history }) => {
   qs('.chat-thinking')?.remove();
+  if (chat_history) {
+    LEC.chatHistory = chat_history;
+  }
   const citHtml = citations?.length
     ? `<div class="chat-citation"><span style="display:inline-flex;align-items:center;gap:4px;"><i data-lucide="clock" style="width:12px;height:12px;color:var(--accent);"></i> Mốc thời gian:</span> ${citations.map(c =>
-      `<span class="chat-citation-chip">${fmtDuration(c.start)}</span>`
+      `<span class="chat-citation-chip" data-time="${c.start}" title="Nhấn để nghe mốc này">${c.timestamp || fmtDuration(c.start)}</span>`
     ).join('')}</div>`
     : '';
   appendChat('ai', escHtml(answer).replace(/\n/g, '<br>') + citHtml);
@@ -1173,6 +1658,37 @@ EventBus.on('rag:error', ({ message }) => {
   qs('.chat-thinking')?.remove();
   appendChat('ai', `<span style="display:inline-flex;align-items:center;gap:5px;color:var(--danger);"><i data-lucide="alert-triangle" style="width:14px;height:14px;"></i> ${escHtml(message)}</span>`);
 });
+
+async function clearChatHistory() {
+  if (!LEC.lectureId) return;
+  const idx = await showModal(
+    'Xóa lịch sử hội thoại',
+    '<p class="text-muted" style="font-size:13.5px;">Bạn có chắc chắn muốn làm mới toàn bộ lịch sử hỏi đáp của bài giảng này không?</p>',
+    [
+      { label: 'Huỷ', class: 'btn-ghost' },
+      { label: 'Xóa lịch sử', class: 'btn-danger' }
+    ]
+  );
+  if (idx !== 1) return;
+
+  try {
+    await API.clear_chat_history(LEC.lectureId);
+    LEC.chatHistory = [];
+    if (el('chatHistory')) {
+      el('chatHistory').innerHTML = `
+<div class="chat-msg chat-ai" style="max-width:92%;display:flex;gap:10px;">
+  <div style="width:28px;height:28px;border-radius:8px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+    <i data-lucide="bot" style="width:15px;height:15px;color:#4f46e5;"></i>
+  </div>
+  <div>Lịch sử trò chuyện đã được làm mới. Bạn có thể đặt câu hỏi mới về bài giảng này!</div>
+</div>`;
+    }
+    refreshIcons();
+    showToast('Đã xóa toàn bộ lịch sử hội thoại', 'info');
+  } catch (err) {
+    showToast('Lỗi khi xóa lịch sử: ' + err.message, 'error');
+  }
+}
 
 function appendChat(role, htmlContent) {
   if (!el('chatHistory')) return;
@@ -1187,12 +1703,114 @@ function appendChat(role, htmlContent) {
         <i data-lucide="bot" style="width:15px;height:15px;color:#4f46e5;"></i>
       </div>
       <div class="chat-ai">${htmlContent}</div>`;
+
+    // Gắn sự kiện nhảy mốc audio khi nhấp vào chip citation
+    div.querySelectorAll('.chat-citation-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const t = parseFloat(chip.dataset.time);
+        const audio = el('lecAudio');
+        if (audio && !isNaN(t)) {
+          audio.currentTime = t;
+          audio.play();
+        }
+      });
+    });
   }
 
   el('chatHistory').appendChild(div);
   el('chatHistory').scrollTop = el('chatHistory').scrollHeight;
   refreshIcons();
 }
+
+// ──────────────────────────────────────────
+// YouTube Import Handlers
+// ──────────────────────────────────────────
+async function startYoutubeDownload() {
+  const url = el('ytUrlInput')?.value?.trim();
+  if (!url) return showToast('Vui lòng dán đường link YouTube', 'warning');
+
+  const btn = el('ytDownloadBtn');
+  const input = el('ytUrlInput');
+  const progressRow = el('ytProgressRow');
+
+  if (btn) btn.disabled = true;
+  if (input) input.disabled = true;
+  if (progressRow) progressRow.style.display = 'block';
+
+  const bar = el('ytProgressBar');
+  const pct = el('ytProgressPercent');
+  const st = el('ytProgressStatus');
+  if (bar) bar.style.width = '5%';
+  if (pct) pct.textContent = '5%';
+  if (st) st.textContent = 'Đang kết nối tới YouTube…';
+
+  try {
+    const res = await API.download_youtube_audio(url);
+    if (res?.error) {
+      showToast(res.error, 'error');
+      if (btn) btn.disabled = false;
+      if (input) input.disabled = false;
+      if (progressRow) progressRow.style.display = 'none';
+    }
+  } catch (err) {
+    showToast('Lỗi tải YouTube: ' + err.message, 'error');
+    if (btn) btn.disabled = false;
+    if (input) input.disabled = false;
+    if (progressRow) progressRow.style.display = 'none';
+  }
+}
+
+EventBus.on('youtube:progress', ({ percent, text, speed }) => {
+  const bar = el('ytProgressBar');
+  const pct = el('ytProgressPercent');
+  const st = el('ytProgressStatus');
+  if (bar) bar.style.width = `${percent}%`;
+  if (pct) pct.textContent = `${percent}%`;
+  if (st && text) st.textContent = text;
+});
+
+EventBus.on('youtube:done', async ({ audio_path, title, duration_sec }) => {
+  const btn = el('ytDownloadBtn');
+  const input = el('ytUrlInput');
+  const progressRow = el('ytProgressRow');
+
+  if (btn) btn.disabled = false;
+  if (input) { input.disabled = false; input.value = ''; }
+  if (progressRow) progressRow.style.display = 'none';
+
+  LEC.audioPath = audio_path;
+  LEC.title = title;
+  if (el('lecFileName')) {
+    el('lecFileName').textContent = title;
+    el('lecFileName').title = title;
+  }
+
+  try {
+    LEC.audioUrl = await API.get_audio_url(audio_path);
+    if (el('lecAudio')) el('lecAudio').src = LEC.audioUrl;
+    if (el('lecAudioRow')) el('lecAudioRow').style.display = 'flex';
+    if (el('lecUploadZone')) el('lecUploadZone').style.display = 'none';
+    if (el('lecYoutubeBar')) el('lecYoutubeBar').style.display = 'none';
+  } catch (e) {
+    console.error('Lỗi nạp audio YouTube:', e);
+  }
+
+  updateStepButtons();
+  refreshIcons();
+  showToast(`Đã tải & nạp bài giảng: "${title}" (${fmtDuration(duration_sec)})`, 'success', 5000);
+});
+
+EventBus.on('youtube:error', ({ message }) => {
+  const btn = el('ytDownloadBtn');
+  const input = el('ytUrlInput');
+  const progressRow = el('ytProgressRow');
+
+  if (btn) btn.disabled = false;
+  if (input) input.disabled = false;
+  if (progressRow) progressRow.style.display = 'none';
+
+  showToast(message || 'Lỗi tải video YouTube', 'error', 6000);
+});
 
 // ──────────────────────────────────────────
 // Export
@@ -1204,17 +1822,19 @@ async function showExportMenu() {
     `<p class="text-muted" style="font-size:13px;margin-bottom:4px;">Chọn định dạng xuất mong muốn:</p>`,
     [
       { label: 'Văn bản (.txt)', class: 'btn-ghost' },
-      { label: 'Báo cáo HTML', class: 'btn-ghost' },
+      { label: 'Báo cáo HTML (+ Ghi chú)', class: 'btn-ghost' },
       { label: 'Gói JSON', class: 'btn-ghost' },
+      { label: 'Gói thẻ Anki (.apkg)', class: 'btn-ghost' },
       { label: 'Huỷ', class: 'btn-ghost' },
     ]
   );
-  if (idx === 3 || idx === -1) return;
+  if (idx === 4 || idx === -1) return;
   try {
     let result;
     if (idx === 0) result = await API.export_txt(LEC.lectureId);
     else if (idx === 1) result = await API.export_html(LEC.lectureId);
     else if (idx === 2) result = await API.export_json(LEC.lectureId);
+    else if (idx === 3) result = await API.export_apkg(LEC.lectureId);
 
     if (result?.path) showToast(`Đã xuất: ${result.path.split(/[\\\/]/).pop()}`, 'success');
     else if (result?.cancelled) showToast('Đã huỷ xuất file', 'info');

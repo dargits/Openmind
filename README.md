@@ -1,17 +1,17 @@
 <div align="center">
 
 # 🧠 Open-mind
-### *Offline AI-Powered Academic Lecture Copilot & Active Recall Learning Workspace*
+### *Smart AI Lecture Copilot & Active Recall Learning Workspace*
 
 <p align="center">
-  <b>Biến mọi file ghi âm bài giảng thành hệ sinh thái học tập thông minh — 100% On-Device, Bảo mật tuyệt đối & Không cần kết nối Internet.</b>
+  <b>Biến mọi file ghi âm bài giảng thành không gian học tập thông minh — Xử lý giọng nói trên thiết bị kết hợp suy luận AI thế hệ mới.</b>
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 [![Python Version](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![AI Runtime](https://img.shields.io/badge/AI_Runtime-100%25_Offline-success.svg?style=for-the-badge&logo=cpu&logoColor=white)](#)
+[![AI Architecture](https://img.shields.io/badge/Architecture-Hybrid_AI-success.svg?style=for-the-badge&logo=openai&logoColor=white)](#)
 [![STT Engine](https://img.shields.io/badge/STT-faster--whisper-8A2BE2.svg?style=for-the-badge&logo=openai&logoColor=white)](https://github.com/SYSTRAN/faster-whisper)
-[![LLM Engine](https://img.shields.io/badge/LLM-Qwen2.5--3B--Instruct_GGUF-FF6F00.svg?style=for-the-badge&logo=huggingface&logoColor=white)](https://github.com/ggerganov/llama.cpp)
+[![LLM Engine](https://img.shields.io/badge/LLM-Gemini_3.5_%2F_Qwen_2.5-FF6F00.svg?style=for-the-badge&logo=google&logoColor=white)](#)
 [![UI Runtime](https://img.shields.io/badge/UI-Modern_Webview-008080.svg?style=for-the-badge&logo=googlechrome&logoColor=white)](#)
 [![Cross-Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-555555.svg?style=for-the-badge)](#)
 
@@ -29,11 +29,11 @@
 
 ## 📖 Giới thiệu (Overview)
 
-**Open-mind** là ứng dụng trợ lý học tập AI cục bộ chuyên sâu (Local AI Copilot) dành cho sinh viên, nghiên cứu sinh, giảng viên và người tự học. 
+**Open-mind** là ứng dụng trợ lý học tập AI thông minh (AI Learning Copilot) dành cho sinh viên, nghiên cứu sinh, giảng viên và người tự học.
 
-Khác biệt hoàn toàn với các giải pháp đám mây (Cloud AI) tiềm ẩn rủi ro lộ lọt dữ liệu và chi phí API đắt đỏ, Open-mind mang toàn bộ sức mạnh của các mô hình AI tiên tiến nhất hiện nay (**faster-whisper** & **Qwen 2.5 3B Instruct**) trực tiếp về máy tính cá nhân của bạn.
+Ứng dụng kết hợp sức mạnh của kiến trúc **Hybrid AI**: xử lý âm thanh bài giảng ngay trên thiết bị bằng **faster-whisper** (bảo đảm dữ liệu ghi âm không cần tải lên mạng), đồng thời hỗ trợ tăng tốc suy luận siêu tốc qua **Cloud API (Google Gemini, OpenAI, Groq)** hoặc chạy độc lập bằng **Local LLM (Qwen 2.5 GGUF)**.
 
-Hệ thống cung cấp một quy trình khép kín: từ chuyển đổi âm thanh bài giảng thô thành văn bản có mốc thời gian (*Timestamps*), phục hồi thuật ngữ chuyên ngành tiếng Việt/Anh (*Code-switching*), tóm tắt phân cấp & sinh sơ đồ tư duy (*Mindmap*), trắc nghiệm tự động (*AI Quiz*), hệ thống thẻ ghi nhớ lặp lại ngắt quãng (*Spaced Repetition SM-2*), đến hỏi đáp tra cứu ngữ cảnh trực tiếp trên bài giảng (*Local RAG*).
+Hệ thống cung cấp một quy trình học tập khép kín: từ chuyển đổi âm thanh bài giảng thô thành văn bản có mốc thời gian (*Timestamps*), phục hồi thuật ngữ chuyên ngành tiếng Việt/Anh (*Code-switching*), tóm tắt phân cấp & sinh sơ đồ tư duy (*Mindmap*), trắc nghiệm tự động (*AI Quiz*), hệ thống thẻ ghi nhớ lặp lại ngắt quãng (*Spaced Repetition SM-2*), đến hỏi đáp tra cứu ngữ cảnh trực tiếp trên bài giảng (*Contextual RAG*).
 
 ---
 

@@ -292,6 +292,284 @@ class TestCoreModules(unittest.TestCase):
         self.assertEqual(len(cards_15), 15)
         self.assertEqual(card_call_count, 2)
 
+    def test_cloud_client_and_hybrid_fallback(self):
+        from unittest.mock import patch, MagicMock
+        from core.cloud_client import cloud_client
+        import core.config as cfg
+        from core.llm_engine import llm_engine
+
+        # 1. Test Gemini REST call formatting
+        with patch("requests.post") as mock_post:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = {
+                "candidates": [
+                    {"content": {"parts": [{"text": "Phản hồi mẫu từ Gemini"}]}}
+                ]
+            }
+            mock_post.return_value = mock_resp
+
+            res = cloud_client.call_gemini("Câu hỏi kiểm tra", api_key="test_gemini_key", model="gemini-1.5-flash")
+            self.assertEqual(res, "Phản hồi mẫu từ Gemini")
+            self.assertIn("gemini-1.5-flash:generateContent", mock_post.call_args[0][0])
+            self.assertIn("test_gemini_key", mock_post.call_args[0][0])
+
+        # 2. Test OpenAI-compatible REST call formatting
+        with patch("requests.post") as mock_post:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = {
+                "choices": [
+                    {"message": {"content": "Phản hồi từ OpenAI"}}
+                ]
+            }
+            mock_post.return_value = mock_resp
+
+            res = cloud_client.call_openai_compatible("Câu hỏi", api_key="test_openai_key", model="gpt-4o-mini")
+            self.assertEqual(res, "Phản hồi từ OpenAI")
+            self.assertEqual(mock_post.call_args[1]["headers"]["Authorization"], "Bearer test_openai_key")
+
+        # 3. Test test_connection helper
+        with patch("requests.post") as mock_post:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = {
+                "candidates": [{"content": {"parts": [{"text": "OK"}]}}]
+            }
+            mock_post.return_value = mock_resp
+
+            status = cloud_client.test_connection("gemini", "dummy_key")
+            self.assertTrue(status["ok"])
+            self.assertIn("thành công", status["message"].lower())
+
+        # 3b. Test Gemini Auto-Quota Cascade (429 Rate Limit Fallback)
+        with patch("requests.post") as mock_post:
+            resp_429 = MagicMock()
+            resp_429.status_code = 429
+            resp_429.text = "RESOURCE_EXHAUSTED: Quota exceeded for gemini-3.8-flash"
+            resp_429.json.return_value = {"error": {"message": "Quota exceeded", "code": 429}}
+
+            resp_200 = MagicMock()
+            resp_200.status_code = 200
+            resp_200.json.return_value = {
+                "choices": [{"message": {"content": "Phản hồi cứu hộ từ model tiếp theo"}}]
+            }
+
+            # Model đầu tiên gặp 429 ở cả OpenAI gateway và Native REST -> tự động nhảy sang model kế tiếp thành công 200
+            mock_post.side_effect = [resp_429, resp_429, resp_429, resp_200]
+            result = cloud_client.call_gemini("Test prompt", api_key="dummy_key", model="gemini-3.8-flash")
+            self.assertEqual(result, "Phản hồi cứu hộ từ model tiếp theo")
+
+        # 4. Test Hybrid Fallback: Khi bật cloud mode nhưng gặp lỗi mạng -> tự động fallback sang local
+        original_mode = getattr(cfg, "AI_ENGINE_MODE", "local")
+        try:
+            cfg.AI_ENGINE_MODE = "cloud"
+            cfg.CLOUD_PROVIDER = "gemini"
+            cfg.GEMINI_API_KEY = "invalid_key"
+
+            with patch("core.cloud_client.cloud_client.call_gemini", side_effect=RuntimeError("Mất kết nối mạng Internet")):
+                # Mock hàm xử lý local của engine để kiểm tra nó có được gọi khi cloud lỗi không
+                fake_local_response = "Kết quả dự phòng từ Local Model"
+                original_create_chat = getattr(llm_engine, "model", None)
+                mock_model = MagicMock()
+                mock_model.create_chat_completion.return_value = {
+                    "choices": [{"message": {"content": fake_local_response}}]
+                }
+                llm_engine.model = mock_model
+
+                output = llm_engine.call_chat("Tóm tắt bài giảng này")
+                self.assertEqual(output, fake_local_response)
+        finally:
+            cfg.AI_ENGINE_MODE = original_mode
+            llm_engine.model = original_create_chat
+
+    def test_truncated_and_markdown_json_parsing(self):
+        from core.llm_engine import llm_engine
+
+        # Case 1: Markdown code fence with inline json tag
+        raw_markdown = '```json\n{"id": "root", "topic": "Mạng máy tính", "children": []}\n```'
+        parsed = llm_engine._extract_json(raw_markdown)
+        self.assertIsInstance(parsed, dict)
+        self.assertEqual(parsed.get("topic"), "Mạng máy tính")
+
+        # Case 2: JSON Object bị cắt ngắn giữa chừng (như trường hợp người dùng gặp phải)
+        truncated_raw = (
+            '```json { "overview": "Bài giảng cung cấp kiến thức toàn diện về DNS.", '
+            '"key_takeaways": [ "Ý 1: Khái niệm DNS", "Ý 2: Bản ghi A và AAAA", "Ý 3: CNAME trong khi MX'
+        )
+        parsed_trunc = llm_engine._extract_json(truncated_raw)
+        self.assertIsNotNone(parsed_trunc)
+        self.assertIn("overview", parsed_trunc)
+        self.assertEqual(parsed_trunc["overview"], "Bài giảng cung cấp kiến thức toàn diện về DNS.")
+        self.assertIn("key_takeaways", parsed_trunc)
+        self.assertTrue(len(parsed_trunc["key_takeaways"]) >= 2)
+
+        # Case 3: Test generate_hierarchical_summary với chuỗi bị cắt ngắn
+        llm_engine.call_chat = lambda prompt, **kw: truncated_raw
+        summary = llm_engine.generate_hierarchical_summary("Văn bản bài giảng bất kỳ...")
+        self.assertIsInstance(summary, dict)
+        self.assertIn("DNS", summary["overview"])
+        self.assertNotIn("```json", summary["overview"])
+        self.assertNotIn('{"overview":', summary["overview"])
+        self.assertTrue(len(summary["key_takeaways"]) >= 2)
+
+
+    def test_p1_features(self):
+        """Tests for P1 features: YouTube URL validation, Inline Notes and Multi-turn Chat."""
+        from core.api import API
+        import uuid
+
+        # 1. YouTube URL validation
+        api = API()
+        self.assertIn("error", api.download_youtube_audio(""))
+        self.assertIn("error", api.download_youtube_audio("https://facebook.com/video"))
+
+        # 2. Database Inline Notes
+        lid = "p1_test_" + uuid.uuid4().hex[:6]
+        self.db.save_lecture(title="Test P1", lecture_id=lid, full_text="Nội dung bài giảng")
+        notes = self.db.save_lecture_note(lid, None, 20.0, "Ghi chú mốc 20s")
+        notes = self.db.save_lecture_note(lid, None, 5.0, "Ghi chú mốc 5s")
+        self.assertEqual(len(notes), 2)
+        self.assertEqual(notes[0]["timestamp_sec"], 5.0)
+        self.assertEqual(notes[1]["timestamp_sec"], 20.0)
+
+        # Delete note
+        notes = self.db.delete_lecture_note(lid, notes[0]["id"])
+        self.assertEqual(len(notes), 1)
+        self.assertEqual(notes[0]["timestamp_sec"], 20.0)
+
+        # 3. Multi-turn Chat History
+        chat = self.db.save_chat_message(lid, "user", "Câu hỏi 1")
+        chat = self.db.save_chat_message(lid, "ai", "Trả lời 1", citations=[{"start": 20.0}])
+        self.assertEqual(len(chat), 2)
+        self.assertEqual(chat[1]["role"], "ai")
+
+        retrieved = self.db.get_chat_history(lid)
+        self.assertEqual(len(retrieved), 2)
+
+        self.db.clear_chat_history(lid)
+        self.assertEqual(len(self.db.get_chat_history(lid)), 0)
+
+        # 4. RAG ask_question with history
+        from core.rag_engine import rag_engine
+        history = [
+            {"role": "user", "content": "Thuật ngữ TCP là gì?"},
+            {"role": "ai", "content": "TCP là giao thức hướng kết nối."}
+        ]
+        # Test mock ask_question handles history without error
+        original_call_chat = rag_engine.llm_engine.call_chat if hasattr(rag_engine, 'llm_engine') else None
+        try:
+            from core.llm_engine import llm_engine
+            llm_engine.call_chat = lambda prompt, **kwargs: f"Mock response with {len(kwargs.get('history') or [])} turns"
+            res = rag_engine.ask_question("Giải thích thêm", segments=[{"start": 0.0, "end": 10.0, "text": "TCP hoạt động ở tầng giao vận"}], history=history)
+            self.assertIn("Mock response", res["answer"])
+        finally:
+            pass
+
+        self.db.delete_lecture(lid)
+
+    def test_ebbinghaus_retention_and_calendar_stats(self):
+        # Tạo thẻ với các ngày ôn tập khác nhau
+        deck_id = self.db.create_deck("Deck SRS Stats")
+        from datetime import date, timedelta
+        today = date.today()
+
+        # Thẻ due hôm nay
+        c1 = self.db.add_flashcard(deck_id, "F1", "B1")
+        self.db.update_card_srs(c1, ease_factor=2.6, interval_days=3, repetitions=2, due_date=today.isoformat(), state="review")
+
+        # Thẻ due ngày mai
+        c2 = self.db.add_flashcard(deck_id, "F2", "B2")
+        tomorrow = (today + timedelta(days=1)).isoformat()
+        self.db.update_card_srs(c2, ease_factor=2.4, interval_days=5, repetitions=3, due_date=tomorrow, state="review")
+
+        # Gọi get_retention_and_calendar_stats
+        stats = self.db.get_retention_and_calendar_stats()
+        self.assertIn("forecast_7days", stats)
+        self.assertIn("forgetting_curve", stats)
+
+        forecast = stats["forecast_7days"]
+        self.assertEqual(len(forecast), 7)
+        self.assertTrue(forecast[0]["is_today"])
+        self.assertGreaterEqual(forecast[0]["count"], 1)
+
+        curve = stats["forgetting_curve"]
+        self.assertIn("strength_days", curve)
+        self.assertIn("points", curve)
+        self.assertEqual(len(curve["points"]), 10)
+        # Điểm ngày 0 phải là 100%
+        self.assertEqual(curve["points"][0]["retention"], 100.0)
+        # Điểm ngày 30 phải nhỏ hơn ngày 0
+        self.assertLess(curve["points"][-1]["retention"], curve["points"][0]["retention"])
+
+        # Kiểm tra get_stats_overview bao gồm các trường này
+        overview = self.db.get_stats_overview()
+        self.assertIn("forecast_7days", overview)
+        self.assertIn("forgetting_curve", overview)
+
+    def test_anki_apkg_and_html_notes_export(self):
+        from core.export_engine import export_engine
+        flashcards = [
+            {"front": "CPU là gì?", "back": "Central Processing Unit", "hint": "Bộ não máy tính"},
+            {"front": "RAM là gì?", "back": "Random Access Memory", "hint": "Bộ nhớ tạm thời"}
+        ]
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".apkg") as f:
+            apkg_path = f.name
+
+        try:
+            ok = export_engine.export_anki_apkg(apkg_path, flashcards, "Kiến trúc máy tính")
+            self.assertTrue(ok)
+            self.assertTrue(os.path.exists(apkg_path))
+            self.assertGreater(os.path.getsize(apkg_path), 0)
+        finally:
+            if os.path.exists(apkg_path):
+                os.remove(apkg_path)
+
+        # Test HTML report with personal notes
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as f:
+            html_path = f.name
+
+        try:
+            lecture_data = {
+                "title": "Kiến trúc máy tính",
+                "summary": {"overview": "Tổng quan về CPU và RAM"},
+                "transcript": [{"start": 10.0, "end": 20.0, "text": "CPU thực thi các chỉ lệnh"}],
+                "notes": [{"timestamp_sec": 15.0, "text": "Thầy nhấn mạnh phần ALU và thanh ghi"}]
+            }
+            export_engine.export_html_report(html_path, lecture_data)
+            with open(html_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            self.assertIn("Ghi chú cá nhân", content)
+            self.assertIn("Thầy nhấn mạnh phần ALU", content)
+        finally:
+            if os.path.exists(html_path):
+                os.remove(html_path)
+
+    def test_pdf_segment_structure(self):
+        # Giả lập import lecture từ PDF
+        segments = [
+            {"start": 1, "end": 1, "page": 1, "text": "Slide 1: Giới thiệu môn học"},
+            {"start": 2, "end": 2, "page": 2, "text": "Slide 2: Chương trình và tài liệu"}
+        ]
+        full_text = "[Trang 1]\nSlide 1: Giới thiệu môn học\n\n[Trang 2]\nSlide 2: Chương trình và tài liệu"
+        lid = self.db.save_lecture(
+            title="Slide Mon Hoc",
+            audio_path="",
+            duration_sec=120,
+            transcript=segments,
+            full_text=full_text,
+            folder_tag="CNTT"
+        )
+        self.assertIsNotNone(lid)
+
+        lec = self.db.get_lecture(lid)
+        self.assertEqual(len(lec["transcript"]), 2)
+        self.assertEqual(lec["transcript"][0]["page"], 1)
+        self.assertEqual(lec["audio_path"], "")
+        self.db.delete_lecture(lid)
+
 
 if __name__ == "__main__":
     unittest.main()
+
+
