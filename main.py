@@ -7,7 +7,19 @@
 import os
 import sys
 import subprocess
+import multiprocessing
 from pathlib import Path
+
+# Đảm bảo hỗ trợ PyInstaller freeze trên Windows (bắt buộc cho multiprocessing & C-extensions)
+multiprocessing.freeze_support()
+
+# Pre-import các thư viện C-extension chính trên main thread để tránh re-initialization error
+try:
+    import numpy
+    import av
+    import faster_whisper
+except Exception:
+    pass
 
 # Ensure UTF-8 output on Windows console
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):

@@ -8,6 +8,12 @@ import os
 import re
 from pathlib import Path
 from typing import Callable, Optional, List, Dict, Any
+
+try:
+    from faster_whisper import WhisperModel
+except ImportError:
+    WhisperModel = None
+
 from core.config import (
     get_whisper_model_path,
     DEFAULT_WHISPER_SIZE,
@@ -130,7 +136,9 @@ class STTEngine:
         model_size: Optional[str] = None,
         progress_callback: Optional[Callable[[str], None]] = None
     ):
-        from faster_whisper import WhisperModel
+        global WhisperModel
+        if WhisperModel is None:
+            from faster_whisper import WhisperModel
         import core.config as cfg
 
         size = model_size or self.model_size
@@ -142,8 +150,13 @@ class STTEngine:
 
         # Unload existing model if reloading
         if self.model is not None:
-            del self.model
+            try:
+                del self.model
+            except Exception:
+                pass
             self.model = None
+            import gc
+            gc.collect()
 
         cpu_threads = getattr(cfg, "WHISPER_CPU_THREADS", min(16, max(4, os.cpu_count() or 8)))
         try:
@@ -152,7 +165,7 @@ class STTEngine:
                 device=cfg.WHISPER_DEVICE,
                 compute_type=cfg.WHISPER_COMPUTE_TYPE,
                 cpu_threads=cpu_threads,
-                num_workers=2,
+                num_workers=1,
             )
             return self.model
         except Exception as e:
@@ -165,7 +178,7 @@ class STTEngine:
                     device="cpu",
                     compute_type="int8",
                     cpu_threads=cpu_threads,
-                    num_workers=2,
+                    num_workers=1,
                 )
                 return self.model
             raise RuntimeError(f"Không thể tải mô hình giọng nói '{size}'. Lỗi: {e}")

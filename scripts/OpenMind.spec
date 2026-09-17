@@ -22,7 +22,10 @@ hidden_imports = [
     'sqlite3',
     'pydantic',
     'faster_whisper',
-] + collect_submodules('webview')
+    'numpy',
+    'av',
+    'multiprocessing',
+] + collect_submodules('webview') + collect_submodules('av')
 
 datas = [
     (str(ROOT_DIR / 'ui'), 'ui'),
