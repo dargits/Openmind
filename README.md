@@ -169,34 +169,57 @@ Open-mind giải quyết bài toán cạn kiệt Quota API miễn phí thông qu
 
 ---
 
-## 🚀 Khởi động Nhanh (Quick Start)
+## 🚀 Hướng dẫn Cài đặt & Khởi động (Installation & Quick Start)
 
-Ứng dụng có cơ chế **tự động hoàn toàn**: tự tạo môi trường ảo, tự cài thư viện và tải dữ liệu mẫu ban đầu.
+### 📦 Cách 1: Tải Bản Cài Đặt Chính Thức (Khuyên dùng cho Người dùng phổ thông)
 
-### Cách 1: Chạy 1-Click (Khuyên dùng)
-- **Windows:** Nhấp đúp vào file [`run.bat`](run.bat) (hoặc gõ `.\run.bat` trong Terminal).
-- **Linux / macOS:** Chạy `./run.sh`.
+> [!TIP]
+> Bạn **không cần cài đặt Python, không cần cấu hình dòng lệnh**! Tải bản phát hành chính thức đóng gói sẵn để cài đặt trong vài giây.
 
-### Cách 2: Cài đặt Dạng Gói Chuẩn PEP 517/518 (Building from Source)
+1. **Tải bộ cài đặt mới nhất**:
+   Truy cập mục 👉 **[GitHub Releases - Open-mind Official Releases](https://github.com/dargits/Openmind/releases)**.
+
+2. **Các tệp tải về có sẵn**:
+   - 🪟 **Bản cài đặt Windows (Khuyên dùng)**: `OpenMind_Setup.exe` (~95 MB — Bản siêu nhẹ, tự động cấu hình Shortcut & Menu).
+   - 📦 **Bản phát hành mã nguồn mở POSIX**: `openmind-v2.1.0.tar.gz` (1.22 MB) hoặc `openmind-v2.1.0.tar.xz` (0.95 MB).
+   - 🔐 **Mã kiểm tra toàn vẹn**: `openmind-v2.1.0-SHA256SUMS.txt`.
+
+3. **Tiến hành cài đặt & Sử dụng**:
+   - Nhấp đúp vào file `OpenMind_Setup.exe` vừa tải về.
+   - Nhấn **Next** $\rightarrow$ **Install** để hoàn tất cài đặt (Tự động tạo biểu tượng ngoài Desktop).
+   - Mở ứng dụng **Open-mind**: Ứng dụng đã được tích hợp sẵn khóa Gemini AI Cloud tốc độ cao và tự động nạp mô hình STT Whisper Small trên màn hình Splash Screen ngay lần đầu tiên mở ứng dụng.
+
+---
+
+### ⚡ Cách 2: Chạy 1-Click Trực Tiếp từ Mã Nguồn
+Dành cho người dùng muốn chạy trực tiếp thư mục repo mà không cần cài đặt phần mềm:
+- **Trên Windows:** Nhấp đúp vào file [`run.bat`](run.bat) (hoặc gõ `.\run.bat` trong Terminal). Hệ thống sẽ tự động khởi tạo môi trường `venv` và mở giao diện.
+- **Trên Linux / macOS:** Mở Terminal và chạy `./run.sh`.
+
+---
+
+### 🛠️ Cách 3: Cài đặt Dạng Gói Chuẩn PEP 517/518 (Dành cho Lập trình viên)
+Xem hướng dẫn chi tiết từng bước tại tài liệu **[docs/BUILDING.md](docs/BUILDING.md)**.
+
 ```bash
-# 1. Clone mã nguồn
+# 1. Nhân bản mã nguồn từ GitHub
 git clone https://github.com/dargits/Openmind.git
 cd Openmind
 
-# 2. Tạo & kích hoạt môi trường ảo
+# 2. Tạo & kích hoạt môi trường ảo Python (>= 3.10)
 python -m venv venv
 # Windows:
 venv\Scripts\activate
 # Linux/macOS:
 source venv/bin/activate
 
-# 3. Cài đặt ở chế độ Editable Package chuẩn mở
+# 3. Cài đặt ở chế độ Editable Package chuẩn mực
 pip install --upgrade pip setuptools wheel
 pip install -e .
 
-# 4. Khởi chạy ứng dụng
+# 4. Khởi chạy ứng dụng Desktop
 python main.py
-# (Hoặc gõ lệnh: open-mind)
+# (Hoặc gõ lệnh trực tiếp: open-mind)
 ```
 
 ---

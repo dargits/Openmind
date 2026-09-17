@@ -7,6 +7,26 @@ và dự án này tuân thủ chuẩn [Semantic Versioning](https://semver.org/s
 
 ---
 
+## [2.1.0] - 2026-09-17
+### 🚀 Bản phát hành Nâng cấp Trải nghiệm Người dùng & Bộ cài đặt Siêu nhẹ
+
+#### Added
+- **Popup Modal Đặt lại Dữ liệu Trực tiếp trên Giao diện (In-App Modal)**:
+  - Thay thế hộp thoại cảnh báo mặc định của trình duyệt bằng giao diện Modal Glassmorphism hiện đại (Backdrop blur 8px, bo góc 20px, hỗ trợ phím `Escape` và nút đóng `X`).
+  - Hỗ trợ 2 chế độ đặt lại dữ liệu linh hoạt:
+    1. *Xóa sạch hoàn toàn (Về 0)*: Trả về không gian học tập trống hoàn toàn (0 bài giảng, 0 thẻ, 0 streak) để người dùng tự do bắt đầu học từ đầu.
+    2. *Đặt lại & Nạp dữ liệu mẫu*: Làm mới cơ sở dữ liệu và nạp lại bài giảng mẫu CNTT tiêu chuẩn.
+- **Bộ Cài đặt Siêu nhẹ (Lightweight Installer - 95MB)**:
+  - Tối ưu hóa file cài đặt `OpenMind_Setup.exe` giảm từ 510MB xuống còn **95.28MB** (giảm hơn 80% dung lượng).
+  - Tích hợp cơ chế tự động tải mô hình STT Whisper Small khi người dùng khởi chạy ứng dụng lần đầu với thanh tiến trình trực quan trên Splash screen.
+- **Tích hợp sẵn Gemini Cloud AI API Key**:
+  - Nhúng cấu hình khóa API mặc định tốc độ cao để người dùng có thể sử dụng tính năng tóm tắt, mindmap, quiz ngay sau khi cài đặt mà không cần thiết lập thủ công.
+
+#### Fixed
+- Khắc phục sự cố tự động nạp lại bài giảng mẫu sau khi người dùng chủ động xóa dữ liệu học tập.
+
+---
+
 ## [2.0.0] - 2026-09-17
 ### 🚀 Phiên bản Thương mại Hoàn thiện (Open-mind Pro Suite)
 
