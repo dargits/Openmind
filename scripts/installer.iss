@@ -81,8 +81,13 @@ Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\ui\logo.ico"; Tasks: desktopicon
 
+[Dirs]
+Name: "{app}\models"; Permissions: users-modify
+Name: "{app}\data"; Permissions: users-modify
+
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\data"
+Type: filesandordirs; Name: "{app}\models"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent

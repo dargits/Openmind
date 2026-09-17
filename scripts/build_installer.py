@@ -1,23 +1,10 @@
-#!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2026 Open-mind Contributors
-# SPDX-License-Identifier: MIT
-#
-# Purpose: Open-mind Professional Setup Builder
-# Automates the complete production build pipeline:
-# 1. Icon preparation (PNG/JPG -> Multi-size ICO)
-# 2. PyInstaller standalone compilation (dist/OpenMind/)
-# 3. Inno Setup compiler detection & installation (ISCC.exe)
-# 4. Packaging into dist/OpenMind_Setup.exe
-# 5. Integrity hashing & verification (SHA-256)
-
-import os
+﻿import os
 import sys
 import shutil
 import hashlib
 import subprocess
 from pathlib import Path
 
-# Ensure UTF-8 output on Windows console
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -71,17 +58,14 @@ def ensure_icon():
 
 
 def find_or_install_iscc() -> Path:
-    # 1. Check PATH
     iscc_path = shutil.which("iscc") or shutil.which("ISCC")
     if iscc_path and Path(iscc_path).exists():
         return Path(iscc_path)
 
-    # 2. Check standard installation folders
     for path in INNO_SETUP_SEARCH_PATHS:
         if path.exists():
             return path
 
-    # 3. Attempt automated installation via winget if missing
     print("\n[Inno Setup] Chưa phát hiện Inno Setup Compiler (ISCC.exe) trên máy.")
     print("  -> Đang tự động cài đặt Inno Setup 6 thông qua winget...")
     try:
@@ -119,7 +103,7 @@ def build_pyinstaller():
 
 
 def sanitize_dist():
-    """Làm sạch toàn bộ dữ liệu cá nhân của người build trong thư mục dist trước khi đóng gói."""
+    """Làm sạch dữ liệu cá nhân & tạo thư mục rỗng cho models để file cài đặt siêu nhẹ."""
     app_dir = DIST_DIR / "OpenMind"
     data_dir = app_dir / "data"
     if data_dir.exists():
@@ -135,88 +119,75 @@ def sanitize_dist():
                 shutil.rmtree(sub_path, ignore_errors=True)
                 print(f"  -> Đã dọn dẹp thư mục tạm: data/{sub}")
 
-    # Đồng bộ mô hình Whisper Small sẵn có
+    # Không nhúng mô hình AI nặng (~460MB) vào file setup để file cài đặt siêu nhẹ (~50MB)
+    # Ứng dụng sẽ tự động tải Whisper Small khi người dùng khởi chạy lần đầu
     models_dist = app_dir / "models"
+    if models_dist.exists():
+        shutil.rmtree(models_dist, ignore_errors=True)
     models_dist.mkdir(parents=True, exist_ok=True)
-    whisper_src = REPO_ROOT / "models" / "faster-whisper-small"
-    whisper_dst = models_dist / "faster-whisper-small"
-    if whisper_src.exists() and not whisper_dst.exists():
-        print("  -> Đang nạp mô hình nhận diện giọng nói Whisper Small vào bộ phân phối...")
-        shutil.copytree(whisper_src, whisper_dst)
-
-    # Đảm bảo có settings.json sạch
-    settings_src = REPO_ROOT / "data" / "settings.json"
-    settings_dst = data_dir / "settings.json"
-    if settings_src.exists():
-        data_dir.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(settings_src, settings_dst)
+    print("  -> Đã cấu hình gói cài đặt siêu nhẹ: Mô hình STT sẽ tự động tải khi người dùng mở ứng dụng.")
 
 
-def build_inno_setup(iscc_bin: Path):
-    sanitize_dist()
+def build_inno_setup(iscc_path: Path):
     log_header("BƯỚC 2: ĐÓNG GÓI BỘ CÀI ĐẶT WINDOWS (INNO SETUP)")
-    print(f"Trình biên dịch: {iscc_bin}")
+    print(f"Trình biên dịch: {iscc_path}")
     print(f"File kịch bản:  {ISS_FILE.name}")
     print("Đang nén dữ liệu chuẩn LZMA2 và tạo OpenMind_Setup.exe...\n")
 
-    cmd = [str(iscc_bin), str(ISS_FILE)]
+    cmd = [str(iscc_path), str(ISS_FILE)]
     result = subprocess.run(cmd, cwd=str(SCRIPTS_DIR))
     if result.returncode != 0:
         print("\n[LỖI] Inno Setup đóng gói thất bại!")
         sys.exit(1)
 
     if not SETUP_EXE.exists():
-        # Look for any setup exe in dist
-        candidates = list(DIST_DIR.glob("*Setup*.exe"))
-        if candidates:
-            final_exe = candidates[0]
-        else:
-            print(f"\n[LỖI] Không tìm thấy file cài đặt trong {DIST_DIR}")
-            sys.exit(1)
-    else:
-        final_exe = SETUP_EXE
+        print(f"\n[LỖI] Không tìm thấy file setup đích: {SETUP_EXE}")
+        sys.exit(1)
 
-    size_mb = final_exe.stat().st_size / (1024 * 1024)
-    sha256 = compute_sha256(final_exe)
 
-    # Save checksum
-    checksum_file = DIST_DIR / f"{final_exe.stem}-SHA256.txt"
-    checksum_file.write_text(f"{sha256}  {final_exe.name}\n", encoding="utf-8")
+def verify_and_report():
+    sha256 = compute_sha256(SETUP_EXE)
+    size_mb = SETUP_EXE.stat().st_size / (1024 * 1024)
 
-    log_header("🎉 ĐÓNG GÓI THÀNH CÔNG: OPENMIND_SETUP.EXE")
-    print(f"  • File cài đặt:  {final_exe}")
-    print(f"  • Kích thước:    {size_mb:.2f} MB")
+    sha_file = DIST_DIR / "OpenMind_Setup-SHA256.txt"
+    sha_file.write_text(f"{sha256}  OpenMind_Setup.exe\n", encoding="utf-8")
+
+    log_header("🎉 ĐÓNG GÓI THÀNH CÔNG: OPENMIND_SETUP.EXE (BẢN SIÊU NHẸ)")
+    print(f"  • File cài đặt:  {SETUP_EXE}")
+    print(f"  • Kích thước:    {size_mb:.2f} MB (Siêu nhẹ, tải siêu nhanh!)")
     print(f"  • SHA-256:       {sha256}")
-    print(f"  • Checksum file: {checksum_file.name}")
+    print(f"  • Checksum file: {sha_file.name}")
     print("\nNgười dùng chỉ cần tải file OpenMind_Setup.exe và bấm Next để cài đặt!")
-    print("Không cần cài đặt Python, không cần cài thư viện, mở lên dùng ngay.")
-    print("=" * 68)
+    print("Khi mở app lần đầu, ứng dụng sẽ tự động tải mô hình Whisper Small qua Splash Screen.")
+    print("=" * 68 + "\n")
 
 
 def main():
-    log_header("OPEN-MIND - BỘ TẠO BẢN CÀI ĐẶT THƯƠNG MẠI (STANDALONE SETUP BUILDER)")
+    print("=" * 68)
+    print("  OPEN-MIND - BỘ TẠO BẢN CÀI ĐẶT SIÊU NHẸ (LIGHTWEIGHT SETUP BUILDER)")
+    print("=" * 68)
     print(f"Thư mục dự án: {REPO_ROOT}")
 
-    # 1. Prepare icon
     ensure_icon()
 
-    # 2. Check Inno Setup before building
-    iscc_bin = find_or_install_iscc()
+    iscc_path = find_or_install_iscc()
+    if not iscc_path:
+        print("\n[CẢNH BÁO] Không tìm thấy Inno Setup compiler (ISCC.exe).")
+        print("  -> Vui lòng cài đặt Inno Setup 6 từ: https://jrsoftware.org/isdl.php")
+        print("  -> Tiếp tục biên dịch PyInstaller standalone (dist/OpenMind/)...")
 
-    # 3. Build standalone executable
+    # 1. PyInstaller compile
     build_pyinstaller()
 
-    # 4. Build Inno Setup
-    if iscc_bin and iscc_bin.exists():
-        build_inno_setup(iscc_bin)
+    # 2. Sanitize dist
+    sanitize_dist()
+
+    # 3. Inno Setup compile
+    if iscc_path:
+        build_inno_setup(iscc_path)
+        verify_and_report()
     else:
-        print("\n" + "!" * 68)
-        print("[CHÚ Ý] Đã biên dịch xong thư mục chạy Portable tại: dist\\OpenMind\\")
-        print("Để tạo file OpenMind_Setup.exe tự động:")
-        print("  1. Cài đặt Inno Setup 6 từ: https://jrsoftware.org/isdl.php")
-        print("     (hoặc chạy lệnh: winget install JRSoftware.InnoSetup)")
-        print("  2. Chạy lại script này để xuất file OpenMind_Setup.exe hoàn chỉnh.")
-        print("!" * 68)
+        print("\n[Hoàn tất] Thư mục ứng dụng đã được tạo tại: dist/OpenMind/")
 
 
 if __name__ == "__main__":
