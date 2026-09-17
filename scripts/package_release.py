@@ -1,16 +1,9 @@
-#!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2026 Open-mind Contributors
-# SPDX-License-Identifier: MIT
-# Purpose: Script to package Open-mind source code into standard open archive
-# formats (.tar.gz and .tar.xz) for production distribution.
-
-import os
+﻿import os
 import sys
 import tarfile
 import hashlib
 from pathlib import Path
 
-# Ensure UTF-8 output on Windows console
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -20,9 +13,8 @@ if sys.stdout and hasattr(sys.stdout, "reconfigure"):
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DIST_DIR = REPO_ROOT / "dist"
-VERSION = "2.0.0"
+VERSION = "2.1.0"
 
-# Directories and files to strictly exclude from the release tarball
 EXCLUDE_NAMES = {
     ".git",
     ".github",
@@ -49,10 +41,8 @@ EXCLUDE_NAMES = {
 
 def is_excluded(tarinfo):
     name = Path(tarinfo.name).name
-    # Exclude files in exclude list
     if name in EXCLUDE_NAMES:
         return None
-    # Exclude compiled bytecode, model binary weights, or downloaded media
     if name.endswith((".pyc", ".pyo", ".gguf", ".bin", ".safetensors", ".pt", ".pth", ".mp3", ".wav", ".m4a", ".mp4")):
         return None
     return tarinfo
@@ -66,42 +56,32 @@ def compute_sha256(file_path: Path) -> str:
 
 def package():
     DIST_DIR.mkdir(parents=True, exist_ok=True)
-    archive_name = f"openmind-v{VERSION}.tar.gz"
-    output_path = DIST_DIR / archive_name
-
-    print("=" * 65)
-    print(f"📦 Đang đóng gói Bản Phát Hành Mở: {archive_name}")
-    print("=" * 65)
-    print("Định dạng: GZIP Compressed Tarball (.tar.gz - Tiêu chuẩn Open Source POSIX)")
-
-    with tarfile.open(output_path, "w:gz") as tar:
+    
+    # 1. Package .tar.gz (Open Standard POSIX)
+    gz_name = f"openmind-v{VERSION}.tar.gz"
+    gz_path = DIST_DIR / gz_name
+    print(f"📦 Đang đóng gói bản phát hành mở: {gz_name}...")
+    with tarfile.open(gz_path, "w:gz") as tar:
+        tar.add(REPO_ROOT, arcname=f"openmind-v{VERSION}", filter=is_excluded)
+    
+    # 2. Package .tar.xz (High-efficiency Open Standard)
+    xz_name = f"openmind-v{VERSION}.tar.xz"
+    xz_path = DIST_DIR / xz_name
+    print(f"📦 Đang đóng gói bản phát hành mở: {xz_name}...")
+    with tarfile.open(xz_path, "w:xz") as tar:
         tar.add(REPO_ROOT, arcname=f"openmind-v{VERSION}", filter=is_excluded)
 
-    size_mb = output_path.stat().st_size / (1024 * 1024)
-    sha256 = compute_sha256(output_path)
+    sha_gz = compute_sha256(gz_path)
+    sha_xz = compute_sha256(xz_path)
 
-    # Save sha256 checksum
     checksum_file = DIST_DIR / f"openmind-v{VERSION}-SHA256SUMS.txt"
-    checksum_file.write_text(f"{sha256}  {archive_name}\n", encoding="utf-8")
+    checksum_content = f"{sha_gz}  {gz_name}\n{sha_xz}  {xz_name}\n"
+    checksum_file.write_text(checksum_content, encoding="utf-8")
 
-    print(f"\n✓ Đóng gói thành công!")
-    print(f"  • Đường dẫn: {output_path}")
-    print(f"  • Dung lượng: {size_mb:.2f} MB")
-    print(f"  • SHA-256:   {sha256}")
-    print(f"  • Checksum:  {checksum_file}")
-
-    print("\n" + "=" * 65)
-    print("📋 HƯỚNG DẪN TẠO GITHUB RELEASE:")
-    print("=" * 65)
-    print(f"1. Tạo Git Tag phiên bản:")
-    print(f"   git tag -a v{VERSION} -m \"Release version {VERSION}\"")
-    print(f"   git push origin v{VERSION}")
-    print(f"\n2. Truy cập GitHub tạo Release:")
-    print(f"   URL: https://github.com/dargits/Openmind/releases/new")
-    print(f"   - Tag version: v{VERSION}")
-    print(f"   - Release title: Open-mind v{VERSION} — Official Release")
-    print(f"   - Attach binary/archive: Tải file '{archive_name}' và '{checksum_file.name}' lên!")
-    print("=" * 65)
+    print("\n✓ Đóng gói phát hành định dạng mở hoàn tất:")
+    print(f"  • {gz_path.name} ({gz_path.stat().st_size / (1024*1024):.2f} MB) - SHA256: {sha_gz}")
+    print(f"  • {xz_path.name} ({xz_path.stat().st_size / (1024*1024):.2f} MB) - SHA256: {sha_xz}")
+    print(f"  • Checksum: {checksum_file.name}")
 
 if __name__ == "__main__":
     package()
