@@ -27,6 +27,7 @@ hidden_imports = [
 datas = [
     (str(ROOT_DIR / 'ui'), 'ui'),
     (str(ROOT_DIR / 'data' / 'demo_lecture.json'), 'data'),
+    (str(ROOT_DIR / 'data' / 'settings.json'), 'data'),
     (str(ROOT_DIR / '.env.example'), '.'),
 ]
 

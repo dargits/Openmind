@@ -897,7 +897,7 @@ class API:
             # Hybrid Engine fields
             "ai_engine_mode": getattr(cfg, "AI_ENGINE_MODE", "cloud"),
             "cloud_provider": getattr(cfg, "CLOUD_PROVIDER", "gemini"),
-            "gemini_api_key": getattr(cfg, "GEMINI_API_KEY", ""),
+            "gemini_api_key": getattr(cfg, "GEMINI_API_KEY", "") or getattr(cfg, "DEFAULT_GEMINI_API_KEY", ""),
             "gemini_model": getattr(cfg, "GEMINI_MODEL", "gemini-1.5-flash"),
             "openai_api_key": getattr(cfg, "OPENAI_API_KEY", ""),
             "openai_base_url": getattr(cfg, "OPENAI_BASE_URL", "https://api.openai.com/v1"),
