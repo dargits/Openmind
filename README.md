@@ -13,7 +13,7 @@
 [![AI Architecture](https://img.shields.io/badge/AI-Hybrid_(Cloud_%2B_Offline)-6366f1.svg?style=flat-square)](#-kiến-trúc-hybrid-ai--auto-fallback)
 [![STT Engine](https://img.shields.io/badge/STT-faster--whisper_int8-8A2BE2.svg?style=flat-square)](https://github.com/SYSTRAN/faster-whisper)
 [![Anki Export](https://img.shields.io/badge/Export-Anki_.apkg-00BFFF.svg?style=flat-square)](#-tính-năng-cốt-lõi)
-[![Tests](https://img.shields.io/badge/Tests-15%2F15_Passing-10b981.svg?style=flat-square)](#-kiểm-thử-tự-động-testing)
+[![Tests](https://img.shields.io/badge/Tests-16%2F16_Passing-10b981.svg?style=flat-square)](#-kiểm-thử-tự-động-testing)
 
 [Khởi động nhanh](#-khởi-động-nhanh-quick-start) •
 [Tính năng cốt lõi](#-tính-năng-cốt-lõi) •
@@ -208,7 +208,7 @@ Dự án đi kèm bộ kiểm thử đơn vị tự động bao quát toàn bộ
 ```bash
 python -m unittest tests/test_core.py -v
 ```
-> **Kết quả:** `Ran 15 tests in 0.95s` — **15/15 tests OK**.
+> **Kết quả:** `Ran 16 tests in 1.1s` — **16/16 tests OK**.
 
 ---
 
@@ -240,15 +240,15 @@ Open-mind/
 │   ├── architecture.md             # Sơ đồ & phân tích kiến trúc hệ thống chi tiết
 │   ├── api.md                      # Đặc tả toàn bộ giao diện lập trình IPC API
 │   ├── BUILDING.md                 # Hướng dẫn chi tiết biên dịch & đóng gói từ mã nguồn
-│   ├── DEPENDENCIES.md             # Báo cáo 100% thư viện phụ thuộc & ma trận giấy phép
-│   ├── CHANGELOG.md                # Lịch sử thay đổi mã nguồn chuẩn Keep a Changelog
-│   └── COMPETITION_POF.md          # Báo cáo minh chứng đáp ứng tiêu chí cuộc thi PMMN & AI
-├── 📁 tests/                        # Bộ kiểm thử tự động 15 unit tests & benchmark
-├── 📁 scripts/                      # Kịch bản đóng gói bản phát hành mở .tar.gz & PyInstaller
+│   └── DEPENDENCIES.md             # Báo cáo 100% thư viện phụ thuộc & ma trận giấy phép
+├── 📁 tests/                        # Bộ kiểm thử tự động 16 unit tests
+├── 📁 scripts/                      # Kịch bản đóng gói Windows Setup (.exe) & source release (.tar.gz)
 ├── main.py                         # Entrypoint chính khởi chạy ứng dụng Desktop
 ├── run.bat                         # Khởi chạy 1-Click thông minh trên Windows
 ├── pyproject.toml                  # Cấu hình dự án & đóng gói chuẩn PEP 517/518/621
 ├── requirements.txt                # Danh sách thư viện Python phụ thuộc
+├── CHANGELOG.md                    # Lịch sử phát triển & cập nhật tính năng
+├── CONTRIBUTING.md                 # Hướng dẫn đóng góp mã nguồn
 └── LICENSE                         # Giấy phép mã nguồn mở MIT toàn văn (OSI-approved)
 ```
 

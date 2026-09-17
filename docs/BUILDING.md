@@ -1,6 +1,6 @@
 # 🛠️ Hướng Dẫn Biên Dịch & Cài Đặt Từ Mã Nguồn (Building & Installing From Source)
 
-Tài liệu này cung cấp hướng dẫn chi tiết từng bước để cấu hình, cài đặt, kiểm thử và đóng gói ứng dụng **Open-mind** trực tiếp từ mã nguồn bằng **100% công cụ mã nguồn mở tiêu chuẩn** (Python, pip, setuptools, wheel, PyInstaller), tuân thủ nghiêm ngặt tiêu chí PoF của cuộc thi.
+Tài liệu này cung cấp hướng dẫn chi tiết từng bước để cấu hình, cài đặt, kiểm thử và đóng gói ứng dụng **Open-mind** trực tiếp từ mã nguồn bằng **100% công cụ mã nguồn mở tiêu chuẩn** (Python, pip, setuptools, wheel, PyInstaller), đáp ứng tiêu chuẩn production ổn định trên nhiều nền tảng.
 
 ---
 
@@ -90,7 +90,7 @@ Sau khi cài đặt từ mã nguồn, chạy bộ kiểm thử tự động đ�
 ```bash
 python -m unittest tests/test_core.py -v
 ```
-Kết quả kỳ vọng: **Tất cả 15/15 tests đều đạt `OK`** (bao gồm SQLite CRUD, FTS5 Search, SM-2 SRS, Ebbinghaus Forgetting Curve, BM25 RAG, Multi-turn Context, Export Anki/HTML/JSON, Vietnamese Phonetic Normalizer và TranscriptPruner).
+Kết quả kỳ vọng: **Tất cả 16/16 tests đều đạt `OK`** (bao gồm SQLite CRUD, FTS5 Search, SM-2 SRS, Ebbinghaus Forgetting Curve, BM25 RAG, Multi-turn Context, Export Anki/HTML/JSON, Vietnamese Phonetic Normalizer và TranscriptPruner).
 
 ---
 
@@ -131,11 +131,11 @@ python E:\openmind\main.py
 
 Dự án sử dụng **PyInstaller** (Giấy phép nguồn mở GPL v2 with exception) — công cụ tiêu chuẩn hàng đầu trong cộng đồng Python, tuyệt đối không sử dụng công cụ nguồn đóng hay công cụ tự tạo.
 
-Để biên dịch ứng dụng thành tệp thực thi độc lập:
+Để biên dịch ứng dụng thành tệp thực thi độc lập hoặc bộ cài Windows Setup:
 
 ```bash
-# Cách 1: Chạy kịch bản tự động 1-Click (Windows)
-scripts\build_windows_exe.bat
+# Cách 1: Đóng gói bản cài đặt Windows Setup tự động (.exe installer qua Inno Setup)
+scripts\build_windows_setup.bat
 
 # Cách 2: Khởi chạy thủ công qua tệp cấu hình chuẩn OpenMind.spec
 python -m PyInstaller --noconfirm scripts/OpenMind.spec

@@ -24,8 +24,6 @@ Tài liệu này cung cấp thông tin minh bạch về toàn bộ các thư vi�
 | **requests** | `>=2.28.0` | Thực hiện các yêu cầu HTTP kiểm tra tính sẵn sàng của tài nguyên | [psf/requests](https://github.com/psf/requests) | **Apache 2.0** | ✅ Có |
 | **tqdm** | `>=4.65.0` | Thanh tiến trình hiển thị quá trình tải mô hình và xử lý dữ liệu | [tqdm/tqdm](https://github.com/tqdm/tqdm) | **MIT / MPL 2.0** | ✅ Có |
 | **pyinstaller** | `>=6.10.0` | Công cụ mã nguồn mở hỗ trợ đóng gói ứng dụng độc lập | [pyinstaller/pyinstaller](https://github.com/pyinstaller/pyinstaller) | **GPL v2 with Exception** | ✅ Có |
-| **psutil** | `>=5.9.0` | Giám sát tài nguyên hệ thống (RAM, CPU usage) khi benchmark | [giampaolo/psutil](https://github.com/giampaolo/psutil) | **BSD-3-Clause** | ✅ Có |
-| **jiwer** | `>=3.0.0` | Tính toán tỷ lệ lỗi từ (Word Error Rate - WER) khi benchmark STT | [jitsi/jiwer](https://github.com/jitsi/jiwer) | **Apache 2.0** | ✅ Có |
 | **yt-dlp** | `>=2024.0.0` | Tải và trích xuất luồng âm thanh bài giảng từ YouTube | [yt-dlp/yt-dlp](https://github.com/yt-dlp/yt-dlp) | **The Unlicense** | ✅ Có |
 | **pypdf** | `>=4.0.0` | Trích xuất văn bản và phân tích cấu trúc tài liệu PDF/Slide bài giảng | [py-pdf/pypdf](https://github.com/py-pdf/pypdf) | **BSD-3-Clause** | ✅ Có |
 | **genanki** | `>=0.13.0` | Tạo và đóng gói trực tiếp bộ thẻ nhớ Anki định dạng nhị phân `.apkg` | [kerrickstaley/genanki](https://github.com/kerrickstaley/genanki) | **MIT License** | ✅ Có |
@@ -51,9 +49,9 @@ Dự án **Open-mind** được phát hành dưới giấy phép **MIT License**
 
 1. **Thư viện cấp phép MIT (faster-whisper, llama-cpp-python, pydub, genanki):**
    - Giấy phép MIT hoàn toàn tự do, cho phép nhúng, phân phối và tích hợp thương mại/phi thương mại mà không có bất kỳ xung đột nào.
-2. **Thư viện cấp phép BSD 3-Clause (pywebview, psutil, pypdf):**
+2. **Thư viện cấp phép BSD 3-Clause (pywebview, pypdf):**
    - Giấy phép BSD thuộc nhóm cấp phép tự do (permissive), hoàn toàn tương thích với MIT khi giữ nguyên thông báo bản quyền gốc.
-3. **Thư viện cấp phép Apache 2.0 (huggingface-hub, requests, jiwer):**
+3. **Thư viện cấp phép Apache 2.0 (huggingface-hub, requests):**
    - Theo công bố của Quỹ Phần mềm Tự do (FSF) và OSI, mã nguồn cấp phép MIT hoàn toàn có thể tích hợp và phân phối cùng các thư viện Apache 2.0.
 4. **Thư viện cấp phép The Unlicense (yt-dlp):**
    - Đưa mã nguồn vào phạm vi công cộng (Public Domain), trao quyền tự do tối đa, tương thích hoàn toàn 100% với MIT.
@@ -62,4 +60,4 @@ Dự án **Open-mind** được phát hành dưới giấy phép **MIT License**
 6. **Thư viện cấp phép MPL 2.0 / MIT (tqdm):**
    - Cấp phép kép (dual-license), Open-mind sử dụng theo điều khoản MIT.
 
-**Kết luận:** Mã nguồn dự án Open-mind **hoàn toàn tương thích 100%** với tất cả các giấy phép của các thư viện phụ thuộc, đáp ứng tối đa tiêu chí đánh giá giấy phép nguồn mở (OSI-approved) của cuộc thi.
+**Kết luận:** Mã nguồn dự án Open-mind **hoàn toàn tương thích 100%** với tất cả các giấy phép của các thư viện phụ thuộc, đáp ứng tiêu chuẩn nguồn mở quốc tế (OSI-approved) và sẵn sàng cho môi trường production.

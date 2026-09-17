@@ -55,11 +55,6 @@ dependencies = [
 [project.optional-dependencies]
 build = [
     "pyinstaller>=6.10.0",
-]
-benchmark = [
-    "psutil>=5.9.0",
-    "jiwer>=3.0.0",
-]
 dev = [
     "pytest>=7.0.0",
 ]
