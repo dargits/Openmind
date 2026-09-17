@@ -169,42 +169,66 @@ function showToast(msg, type = 'info', duration = 3200) {
 // ──────────────────────────────────────────
 function showModal(title, bodyHtml, actions = []) {
   return new Promise(resolve => {
-    const overlay = document.getElementById('modalOverlay');
-    const box = document.getElementById('modalBox');
+    const overlay = document.getElementById("modalOverlay");
+    const box = document.getElementById("modalBox");
 
     const actionsHtml = actions.map((a, i) =>
-      `<button class="btn ${a.class || 'btn-ghost'}" data-idx="${i}">${a.label}</button>`
-    ).join('');
+      `<button class="btn ${a.class || "btn-ghost"}" data-idx="${i}" style="${a.style || ""}">${a.label}</button>`
+    ).join("");
 
     box.innerHTML = `
-      <div class="modal-title">${title}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div class="modal-title" style="margin-bottom:0;">${title}</div>
+        <button id="modalCloseBtn" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:background 0.15s;" onmouseover="this.style.background='rgba(0,0,0,0.06)'" onmouseout="this.style.background='none'">
+          <i data-lucide="x" style="width:18px;height:18px;"></i>
+        </button>
+      </div>
       <div class="modal-body">${bodyHtml}</div>
       <div class="modal-actions">${actionsHtml}</div>
     `;
 
-    box.querySelectorAll('[data-idx]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        overlay.classList.add('hidden');
+    const cleanUp = () => {
+      overlay.classList.add("hidden");
+      document.removeEventListener("keydown", onKeyDown);
+    };
+
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") {
+        cleanUp();
+        resolve(-1);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+
+    box.querySelector("#modalCloseBtn")?.addEventListener("click", () => {
+      cleanUp();
+      resolve(-1);
+    });
+
+    box.querySelectorAll("[data-idx]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        cleanUp();
         resolve(parseInt(btn.dataset.idx));
       });
     });
 
-    overlay.classList.remove('hidden');
-    overlay.addEventListener('click', e => {
-      if (e.target === overlay) { overlay.classList.add('hidden'); resolve(-1); }
-    }, { once: true });
+    overlay.classList.remove("hidden");
+    overlay.onclick = (e) => {
+      if (e.target === overlay) {
+        cleanUp();
+        resolve(-1);
+      }
+    };
 
     refreshIcons();
   });
 }
 
 function closeModal() {
-  document.getElementById('modalOverlay').classList.add('hidden');
+  document.getElementById("modalOverlay")?.classList.add("hidden");
 }
 
-// ──────────────────────────────────────────
-// Helpers & Lucide Icons
-// ──────────────────────────────────────────
 function el(id) { return document.getElementById(id); }
 function html(id, c) { const e = el(id); if (e) e.innerHTML = c; }
 function qs(sel, parent = document) { return parent.querySelector(sel); }

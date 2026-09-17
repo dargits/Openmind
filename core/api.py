@@ -954,13 +954,29 @@ class API:
             base_url=base_url.strip() if base_url else None,
         )
 
-    def reset_database_data(self) -> dict:
-        """Xóa toàn bộ dữ liệu học tập cá nhân và khôi phục về trạng thái mẫu ban đầu."""
+    def reset_database_data(self, seed_demo: bool = False) -> dict:
+        """Xoa toan bo du lieu hoc tap ca nhan (dat lai ve 0 sach hoac khoi phuc du lieu mau)."""
         try:
             db.reset_database()
-            from core.demo_seeder import seed_demo_data
-            seed_demo_data(force=True)
-            return {"ok": True, "message": "Đã đặt lại dữ liệu học tập thành công!"}
+            from core.config import SETTINGS_PATH
+            import json
+            settings = {}
+            if SETTINGS_PATH.exists():
+                try:
+                    with open(SETTINGS_PATH, "r", encoding="utf-8") as sf:
+                        settings = json.load(sf)
+                except Exception:
+                    pass
+            settings["has_initialized_db"] = True
+            with open(SETTINGS_PATH, "w", encoding="utf-8") as sf:
+                json.dump(settings, sf, indent=2, ensure_ascii=False)
+
+            if seed_demo:
+                from core.demo_seeder import seed_demo_data
+                seed_demo_data(force=True)
+                return {"ok": True, "message": "Đã đặt lại và khôi phục dữ liệu bài giảng mẫu thành công!"}
+            else:
+                return {"ok": True, "message": "Đã xóa sạch toàn bộ dữ liệu học tập (về 0 bài giảng, 0 thẻ, 0 streak) thành công!"}
         except Exception as e:
             return {"ok": False, "error": str(e)}
 
