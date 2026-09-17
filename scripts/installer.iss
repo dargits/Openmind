@@ -49,7 +49,16 @@ CloseApplications=yes
 RestartApplications=no
 
 [Languages]
+Name: "vietnamese"; MessagesFile: "Vietnamese.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[CustomMessages]
+vietnamese.CreateDesktopIcon=Tạo biểu tượng ngoài màn hình Desktop
+vietnamese.AdditionalIcons=Tùy chọn bổ sung:
+vietnamese.LaunchProgram=Khởi chạy %1 ngay bây giờ
+english.CreateDesktopIcon=Create a &desktop shortcut
+english.AdditionalIcons=Additional shortcuts:
+english.LaunchProgram=Launch %1 now
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
@@ -63,4 +72,4 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\ui\logo.ico"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
