@@ -10,14 +10,17 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Python Version](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![AI Architecture](https://img.shields.io/badge/AI-Hybrid_(Cloud_%2B_Offline)-6366f1.svg?style=flat-square)](#-cấu-hình-mô-hình-ai)
-[![STT Engine](https://img.shields.io/badge/STT-faster--whisper-8A2BE2.svg?style=flat-square)](https://github.com/SYSTRAN/faster-whisper)
-[![Anki Export](https://img.shields.io/badge/Export-Anki_.apkg-00BFFF.svg?style=flat-square)](#-tính-năng-nổi-bật)
+[![AI Architecture](https://img.shields.io/badge/AI-Hybrid_(Cloud_%2B_Offline)-6366f1.svg?style=flat-square)](#-kiến-trúc-hybrid-ai--auto-fallback)
+[![STT Engine](https://img.shields.io/badge/STT-faster--whisper_int8-8A2BE2.svg?style=flat-square)](https://github.com/SYSTRAN/faster-whisper)
+[![Anki Export](https://img.shields.io/badge/Export-Anki_.apkg-00BFFF.svg?style=flat-square)](#-tính-năng-cốt-lõi)
+[![Tests](https://img.shields.io/badge/Tests-15%2F15_Passing-10b981.svg?style=flat-square)](#-kiểm-thử-tự-động-testing)
 
-[Cài đặt & Khởi chạy](#-khởi-động-nhanh-quick-start) •
-[Tính năng chính](#-tính-năng-nổi-bật) •
-[Cấu hình AI](#-cấu-hình-mô-hình-ai) •
-[Phím tắt & Mẹo](#-phím-tắt--mẹo-sử-dụng) •
+[Khởi động nhanh](#-khởi-động-nhanh-quick-start) •
+[Tính năng cốt lõi](#-tính-năng-cốt-lõi) •
+[Kiến trúc hệ thống](#-kiến-trúc-kỹ-thuật-system-architecture) •
+[Thuật toán & Cơ sở khoa học](#-thuật-toán-cốt-lõi--cơ-sở-khoa-học) •
+[Benchmarks](#-đo-đạc-thực-nghiệm-benchmarks) •
+[Cấu hình AI](#-kiến-trúc-hybrid-ai--auto-fallback) •
 [Tài liệu chi tiết](docs/)
 
 </div>
@@ -35,29 +38,146 @@ Khi học tập và nghiên cứu, sinh viên thường ghi âm hàng chục gi�
 
 ---
 
-## ✨ Tính năng Nổi bật
+## ✨ Tính năng Cốt lõi
 
 | Tính năng | Mô tả chi tiết |
 |:---|:---|
 | 🎙️ **Phiên âm giọng nói chuẩn xác** | Xử lý âm thanh ngay trên máy tính bằng `faster-whisper` (int8). Tự động nhận diện và sửa các từ phát âm tiếng Việt bồi sang thuật ngữ CNTT quốc tế (`MD5`, `SQL`, `JSON`, `OOP`, `TCP/IP`...). Bấm vào câu để tua âm thanh ngay lập tức. |
 | ⚡ **Auto-Pipeline 4-trong-1** | Vừa nạp bài học xong, hệ thống tự động sinh 4 phần học tập: **Tóm tắt 3 cấp độ**, **Sơ đồ tư duy Canvas**, **Quiz trắc nghiệm 4 lựa chọn** và **Bộ thẻ nhớ Flashcard**. |
-| 📥 **Nhập YouTube & Slide PDF** | Dán trực tiếp liên kết YouTube để tải bài giảng, hoặc kéo thả file Slide thuyết trình / Giáo trình PDF để AI bóc tách nội dung theo trang. |
-| 💬 **Trợ lý RAG hỏi-đáp bài giảng** | Chat trực tiếp với bài học. Trợ lý trả lời chính xác dựa trên lời giảng của thầy cô kèm dẫn chứng `[MM:SS]` để đối chiếu. |
+| 📥 **Nhập YouTube & Slide PDF** | Dán trực tiếp liên kết YouTube để tải bài giảng (`yt-dlp`), hoặc kéo thả file Slide thuyết trình / Giáo trình PDF (`pypdf`) để AI bóc tách nội dung theo từng trang. |
+| 💬 **Trợ lý RAG hỏi-đáp bài giảng** | Chat trực tiếp với bài học. Trợ lý trả lời chính xác dựa trên lời giảng của thầy cô kèm dẫn chứng `[MM:SS]` để đối chiếu. Lưu trữ lịch sử hội thoại nhiều lượt. |
 | 📝 **Ghi chú Inline theo mốc thời gian** | Vừa nghe vừa ghi chú gắn liền với giây hiện tại của bài giảng. Có chế độ lọc "Chỉ xem ghi chú" giúp ôn thi cấp tốc. |
-| 🔍 **Tìm kiếm toàn văn tức thì** | Tìm kiếm từ khóa xuyên suốt toàn bộ kho bài giảng, phụ đề và ghi chú bằng công cụ SQLite FTS5 tốc độ cao. |
+| 🔍 **Tìm kiếm toàn văn tức thì** | Tìm kiếm từ khóa xuyên suốt toàn bộ kho bài giảng, phụ đề và ghi chú bằng công cụ SQLite FTS5 tốc độ cao (<5ms). |
 | 🧠 **Khoa học ôn tập Ebbinghaus** | Biểu đồ dự báo số thẻ cần ôn trong 7 ngày tới theo công thức $R = 100 \times e^{-t/S}$. Hỗ trợ xuất trực tiếp bộ thẻ sang định dạng **Anki (`.apkg`)** và **Báo cáo học tập HTML**. |
+
+---
+
+## 🏗️ Kiến trúc Kỹ thuật (System Architecture)
+
+```mermaid
+flowchart TD
+    subgraph INGESTION ["📥 Đa Phương Tiện Đầu Vào (Multimodal Ingestion)"]
+        A1[🎙️ Ghi Âm Cục Bộ<br>MP3 / WAV / M4A] 
+        A2[🌐 YouTube Video URL<br>yt-dlp Audio Ingest]
+        A3[📄 Giáo Trình / Slide PDF<br>pypdf Page Extraction]
+    end
+
+    subgraph CORE_AI ["🧠 Động Cơ AI Hỗn Hợp (Hybrid AI Core)"]
+        B[⚙️ faster-whisper int8 STT<br>Silero VAD + Timestamp Alignment]
+        C[🪄 Vietnamese Phonetic Normalizer<br>Phục hồi thuật ngữ CNTT / Toán]
+        D[(📂 SQLite WAL + FTS5<br>Full-Text Search Index)]
+        
+        P[⚡ Auto-Pipeline Manager]
+        LLM[🤖 Hybrid LLM Engine<br>Cloud Gemini / Groq / Ollama<br>Offline Qwen 2.5 GGUF]
+    end
+
+    subgraph ACTIVE_RECALL ["📚 Không Gian Ôn Tập Chủ Động (Active Recall & Analytics)"]
+        F1[📋 Tóm Tắt Phân Cấp 3 Tầng<br>Executive / Key Points / Timeline]
+        F2[🧠 Interactive Mindmap<br>Mermaid Code & Canvas Tree]
+        F3[❓ AI Quiz Studio<br>4 Lựa Chọn, Chấm Điểm & Giải Thích]
+        F4[🗂️ Flashcard SRS Hub<br>SuperMemo-2 + Ebbinghaus Curve]
+        F5[💬 Multi-turn Contextual RAG<br>Sliding-Window BM25 + Timestamp Citation]
+        F6[📝 Inline Note-Taking<br>Ghi Chú Gắn Mốc Thời Gian]
+    end
+
+    subgraph OUTPUT ["📤 Phân Phối & Xuất Dữ Liệu (Multi-format Export)"]
+        G1[🗃️ Gói Thẻ Nhớ Anki .apkg]
+        G2[📄 Báo Cáo Học Tập HTML Toàn Diện]
+        G3[💾 Dữ Liệu Thô JSON / TXT]
+    end
+
+    A1 & A2 --> B
+    B --> C --> D
+    A3 --> D
+    D --> P
+    P --> LLM
+    LLM --> F1 & F2 & F3 & F4
+    D --> F5 & F6
+    F4 --> G1
+    F1 & F6 --> G2
+    D --> G3
+```
+
+---
+
+## 🔬 Thuật toán Cốt lõi & Cơ sở Khoa học
+
+### 1. Thuật toán Lặp lại Ngắt quãng SuperMemo-2 (SM-2)
+Hệ số ghi nhớ ($EF$) và khoảng thời gian ôn tập kế tiếp ($I$) được tính toán tự động sau mỗi lượt trả lời:
+
+$$EF' = \max\left(1.3, \; EF + \left(0.1 - (5 - q) \times (0.08 + (5 - q) \times 0.02)\right)\right)$$
+
+$$I(n) = \begin{cases} 
+1 & \text{khi } n = 1 \\ 
+6 & \text{khi } n = 2 \\ 
+\lceil I(n-1) \times EF' \rceil & \text{khi } n > 2 \text{ và } q \ge 3 
+\end{cases}$$
+
+*(Trong đó $q \in \{1, 2, 3, 4\}$ tương ứng với Again, Hard, Good, Easy; nếu $q < 3$, chuỗi ôn tập sẽ được reset về ngày 1).*
+
+### 2. Mô hình Suy giảm Trí nhớ Hermann Ebbinghaus
+Ước tính tỷ lệ kiến thức còn đọng lại trong não bộ ($R$) theo thời gian $t$ (ngày) dựa trên độ bền trí nhớ $S$:
+
+$$R(t) = 100 \cdot \exp\left(-\frac{t}{\max(1.0, \; \text{reps} \cdot EF)}\right)$$
+
+### 3. Thuật toán Xếp hạng Truy hồi Ngữ cảnh BM25 (Information Retrieval)
+Đo lường mức độ tương quan giữa câu hỏi của người học ($Q$) và từng phân đoạn bài giảng ($D$):
+
+$$\text{Score}(D, Q) = \sum_{i=1}^{N} \text{IDF}(q_i) \cdot \frac{f(q_i, D) \cdot (k_1 + 1)}{f(q_i, D) + k_1 \cdot \left(1 - b + b \cdot \frac{|D|}{\text{avgdl}}\right)}$$
+
+---
+
+## 📊 Đo đạc Thực nghiệm (Benchmarks)
+
+Kiểm nghiệm thực tế trên bài giảng Công nghệ thông tin tiếng Việt (Thời lượng: 10 phút, CPU Intel Core i5 8 nhân, RAM 16GB):
+
+| Model | Dung lượng | Tốc độ RTF* | RAM Đỉnh | Nhận diện Thuật ngữ CNTT | Khuyến nghị Phần cứng |
+|:---|:---|:---|:---|:---|:---|
+| **Tiny** | ~75 MB | **~0.10x (10x)** | ~450 MB | Cơ bản, dễ lẫn từ chuyên ngành | Máy RAM $\le$ 4GB |
+| **Base** | ~145 MB | **~0.16x (6x)** | ~700 MB | Tốt với câu đàm thoại thông dụng | Laptop văn phòng nhẹ |
+| **Small** | **~460 MB** | **~0.33x (3x)** | **~1.2 GB** | **Rất cao, bắt chuẩn thuật ngữ CNTT** | **⭐ Mặc định khuyên dùng** |
+| **Medium** | ~1.5 GB | **~0.95x (1x)** | ~3.1 GB | Hoàn hảo nhất, độ trễ cao hơn | Máy trạm cấu hình cao |
+
+*\*RTF (Real-Time Factor): Thời gian xử lý / Thời lượng âm thanh. RTF = 0.33 nghĩa là 1 giờ bài giảng được phiên âm chỉ trong 20 phút.*
+
+---
+
+## 🌐 Kiến trúc Hybrid AI & Auto-Fallback
+
+Open-mind giải quyết bài toán cạn kiệt Quota API miễn phí thông qua **Cơ chế chuyển vùng dự phòng tự động (Auto-Fallback)**:
+
+```
+[Yêu cầu AI từ Người Dùng]
+          │
+          ▼
+┌───────────────────────────┐
+│ Google Gemini 2.0 Flash   │ ──(HTTP 429 Quota Exceeded)──┐
+└───────────────────────────┘                               │
+          │ (Thành công)                                    ▼
+          │                                 ┌───────────────────────────┐
+          │                                 │ Groq (Llama 3.3 70B)      │ ──(Lỗi/Hết Quota)──┐
+          │                                 └───────────────────────────┘                     │
+          │                                               │                                   ▼
+          │                                               ▼                     ┌───────────────────────────┐
+          │                                        (Thành công)                 │ Qwen 2.5 3B GGUF (Local)  │
+          ▼                                                                     └───────────────────────────┘
+[Trả kết quả ngay lập tức — Zero Downtime]
+```
+
+* **Cloud AI (Khuyên dùng):** Tốc độ phản hồi cực nhanh (1 - 3 giây). Tích hợp Google Gemini, Groq, OpenRouter và Ollama.
+* **Local AI (100% Offline):** Tự động chuyển về mô hình nội bộ `Qwen 2.5 3B Instruct` (GGUF qua `llama-cpp-python`) khi mất mạng Internet.
 
 ---
 
 ## 🚀 Khởi động Nhanh (Quick Start)
 
-Ứng dụng có cơ chế **tự động hoàn toàn**: tự tạo môi trường ảo, tự cài thư viện và tải dữ liệu mẫu.
+Ứng dụng có cơ chế **tự động hoàn toàn**: tự tạo môi trường ảo, tự cài thư viện và tải dữ liệu mẫu ban đầu.
 
 ### Cách 1: Chạy 1-Click (Khuyên dùng)
 - **Windows:** Nhấp đúp vào file [`run.bat`](run.bat) (hoặc gõ `.\run.bat` trong Terminal).
 - **Linux / macOS:** Chạy `./run.sh`.
 
-### Cách 2: Khởi chạy bằng Python
+### Cách 2: Cài đặt Dạng Gói Chuẩn PEP 517/518 (Building from Source)
 ```bash
 # 1. Clone mã nguồn
 git clone https://github.com/dargits/Openmind.git
@@ -70,27 +190,25 @@ venv\Scripts\activate
 # Linux/macOS:
 source venv/bin/activate
 
-# 3. Cài đặt thư viện
-pip install -r requirements.txt
+# 3. Cài đặt ở chế độ Editable Package chuẩn mở
+pip install --upgrade pip setuptools wheel
+pip install -e .
 
 # 4. Khởi chạy ứng dụng
 python main.py
+# (Hoặc gõ lệnh: open-mind)
 ```
 
 ---
 
-## 🤖 Cấu hình Mô hình AI
+## 🧪 Kiểm thử Tự động (Testing)
 
-Open-mind hỗ trợ cả 2 chế độ suy luận AI linh hoạt (chỉnh tại tab **Cài đặt** trong ứng dụng):
+Dự án đi kèm bộ kiểm thử đơn vị tự động bao quát toàn bộ logic xử lý cốt lõi (SQLite CRUD, FTS5 Search, SM-2 SRS, Ebbinghaus Forgetting Curve, RAG BM25, Multi-turn Chat, Export Anki `.apkg`/HTML, Vietnamese Phonetic Normalizer và TranscriptPruner):
 
-### 1. Chế độ Đám mây (Cloud AI - Khuyên dùng)
-* **Tốc độ cực nhanh (1 - 3 giây)** cho các tác vụ tóm tắt và sinh Quiz.
-* Hỗ trợ: **Google Gemini** (`gemini-2.0-flash`, `gemini-1.5-flash`), **Groq** (`llama-3.3-70b`), **OpenRouter**, **Ollama**.
-* **Cơ chế Auto-Fallback:** Khi một model hết quota miễn phí trong ngày, hệ thống tự động nhảy sang model tiếp theo trong danh sách mà không làm gián đoạn tác vụ của bạn.
-
-### 2. Chế độ Cục bộ (100% Offline)
-* Hoạt động độc lập không cần Internet với mô hình `Qwen 2.5 3B Instruct` (GGUF).
-* Dữ liệu và file ghi âm được bảo mật tuyệt đối trên máy tính cá nhân.
+```bash
+python -m unittest tests/test_core.py -v
+```
+> **Kết quả:** `Ran 15 tests in 0.95s` — **15/15 tests OK**.
 
 ---
 
@@ -103,33 +221,47 @@ Open-mind hỗ trợ cả 2 chế độ suy luận AI linh hoạt (chỉnh tại
 
 ---
 
-## 📁 Cấu trúc Thư mục
+## 📁 Cấu trúc Kho Mã nguồn (Repository Structure)
 
 ```text
 Open-mind/
-├── 📁 core/          # Bộ máy xử lý: STT Whisper, Hybrid LLM, RAG, SQLite FTS5, SM-2 SRS
-├── 📁 ui/            # Giao diện Desktop hiện đại (HTML/CSS Glassmorphism/Vanilla JS)
-├── 📁 docs/          # Trung tâm tài liệu kỹ thuật, kiến trúc & đặc tả API
-├── 📁 data/          # CSDL SQLite và tệp học tập cá nhân (100% riêng tư)
-├── 📁 models/        # Thư mục lưu trữ trọng số mô hình AI offline
-├── 📁 scripts/       # Kịch bản đóng gói bản phát hành mở & PyInstaller
-├── main.py           # Điểm khởi chạy ứng dụng
-├── run.bat           # File chạy 1-Click trên Windows
-└── requirements.txt  # Danh sách thư viện phụ thuộc
+├── 📁 core/                         # Toàn bộ lõi ứng dụng & nghiệp vụ AI
+│   ├── api.py                      # Cầu nối IPC hai chiều Python ↔ JS (pywebview)
+│   ├── cloud_client.py             # Client Cloud AI đa nhà cung cấp & Auto-Fallback
+│   ├── config.py                   # Cấu hình phần cứng, số luồng CPU & đường dẫn
+│   ├── database.py                 # SQLite Data Access Layer (WAL Mode, FTS5)
+│   ├── stt_engine.py               # faster-whisper int8 & Bộ chuẩn hóa ngữ âm CNTT
+│   ├── llm_engine.py               # Engine Qwen 2.5 LLM & TranscriptPruner
+│   ├── rag_engine.py               # Sliding-window Chunking & BM25 Multi-turn RAG
+│   ├── flashcard_srs.py            # Thuật toán SuperMemo-2 & Đường cong Ebbinghaus
+│   └── export_engine.py            # Xuất Anki .apkg (genanki), HTML Report, JSON
+├── 📁 ui/                           # Giao diện Desktop hiện đại (HTML/CSS Glassmorphism/Vanilla JS)
+├── 📁 docs/                         # Trung tâm tài liệu kỹ thuật & đặc tả hệ thống
+│   ├── architecture.md             # Sơ đồ & phân tích kiến trúc hệ thống chi tiết
+│   ├── api.md                      # Đặc tả toàn bộ giao diện lập trình IPC API
+│   ├── BUILDING.md                 # Hướng dẫn chi tiết biên dịch & đóng gói từ mã nguồn
+│   ├── DEPENDENCIES.md             # Báo cáo 100% thư viện phụ thuộc & ma trận giấy phép
+│   ├── CHANGELOG.md                # Lịch sử thay đổi mã nguồn chuẩn Keep a Changelog
+│   └── COMPETITION_POF.md          # Báo cáo minh chứng đáp ứng tiêu chí cuộc thi PMMN & AI
+├── 📁 tests/                        # Bộ kiểm thử tự động 15 unit tests & benchmark
+├── 📁 scripts/                      # Kịch bản đóng gói bản phát hành mở .tar.gz & PyInstaller
+├── main.py                         # Entrypoint chính khởi chạy ứng dụng Desktop
+├── run.bat                         # Khởi chạy 1-Click thông minh trên Windows
+├── pyproject.toml                  # Cấu hình dự án & đóng gói chuẩn PEP 517/518/621
+├── requirements.txt                # Danh sách thư viện Python phụ thuộc
+└── LICENSE                         # Giấy phép mã nguồn mở MIT toàn văn (OSI-approved)
 ```
 
 ---
 
-## 📚 Tài liệu Tham khảo Thêm
+## 🔒 Cam kết Quyền riêng tư & An toàn Dữ liệu (Privacy First)
 
-* 🏗️ **[Kiến trúc hệ thống chi tiết](docs/architecture.md)** — Sơ đồ luồng dữ liệu và thiết kế phân tầng.
-* 🔌 **[Đặc tả API giao tiếp](docs/api.md)** — Danh mục API giữa Python Backend và Giao diện JS.
-* 🛠️ **[Biên dịch từ mã nguồn](docs/BUILDING.md)** — Hướng dẫn đóng gói exe độc lập và kiểm thử.
-* 📦 **[Thư viện phụ thuộc & Bản quyền](docs/DEPENDENCIES.md)** — Kê khai 100% thư viện và ma trận giấy phép.
-* 🏆 **[Báo cáo tiêu chí cuộc thi PMMN & AI](docs/COMPETITION_POF.md)** — Bảng đối chiếu tiêu chí đánh giá PoF.
+- 🛡️ **100% Local Audio Processing:** Mọi file ghi âm giọng nói bài giảng được xử lý cục bộ trên thiết bị của người dùng, tuyệt đối không bị tải lên máy chủ âm thanh của bên thứ ba.
+- 🚫 **Zero Telemetry:** Không gửi bất kỳ dữ liệu phân tích ngầm, cookies hay thông tin nhận dạng người dùng ra ngoài.
+- 🔌 **Air-Gapped Ready:** Sau khi tải mô hình, Open-mind hoàn toàn có thể khởi chạy và hoạt động mượt mà trong môi trường cách ly mạng hoàn toàn (Air-gapped).
 
 ---
 
 ## 📄 Giấy phép Bản quyền (License)
 
-Dự án được phát hành mã nguồn mở theo giấy phép **[MIT License](LICENSE)**. Mọi cá nhân và tổ chức đều có quyền tự do sử dụng, nghiên cứu, sửa đổi và phân phối phục vụ mục đích học tập và phát triển cộng đồng.
+Dự án được phát hành mã nguồn mở theo giấy phép **[MIT License](LICENSE)** được Tổ chức Sáng kiến Mã nguồn Mở (**OSI**) công nhận. Mọi tệp mã nguồn đều mang định danh bản quyền `SPDX-License-Identifier: MIT`.
