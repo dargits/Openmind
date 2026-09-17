@@ -153,7 +153,7 @@ def get_llm_model_path() -> Path:
 # ──────────────────────────────────────────────────────────────────
 # Hybrid Engine Configuration (Local vs Cloud Acceleration)
 # ──────────────────────────────────────────────────────────────────
-AI_ENGINE_MODE = os.getenv("OPENMIND_AI_ENGINE_MODE", _settings.get("ai_engine_mode", "local"))  # "local" | "cloud"
+AI_ENGINE_MODE = os.getenv("OPENMIND_AI_ENGINE_MODE", _settings.get("ai_engine_mode", "cloud"))  # "cloud" | "local"
 CLOUD_PROVIDER = os.getenv("OPENMIND_CLOUD_PROVIDER", _settings.get("cloud_provider", "gemini"))  # "gemini" | "openai_compatible"
 
 # Auto-Pipeline: tự động sinh tóm tắt, quiz, flashcard sau khi phiên âm xong

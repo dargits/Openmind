@@ -568,6 +568,32 @@ class TestCoreModules(unittest.TestCase):
         self.assertEqual(lec["audio_path"], "")
         self.db.delete_lecture(lid)
 
+    def test_startup_and_on_demand_llm_model_flow(self):
+        from core.api import api
+        from core.model_manager import model_manager
+
+        status = api.get_model_status()
+        self.assertIn("whisper_ready", status)
+        self.assertIn("llm_ready", status)
+        self.assertIn("llm_downloading", status)
+        self.assertFalse(status["llm_downloading"])
+
+        settings = api.get_settings()
+        self.assertIn("llm_available", settings)
+        self.assertIn("whisper_available", settings)
+        self.assertIn("llm_downloading", settings)
+
+        # Kiểm tra hủy tải khi không có tiến trình chạy
+        cancel_res = api.cancel_local_llm_download()
+        self.assertFalse(cancel_res["ok"])
+        self.assertEqual(cancel_res["status"], "not_downloading")
+
+        # Kiểm tra cancel_check hoạt động chính xác khi mô hình chưa có
+        from core.model_manager import ModelManager
+        with unittest.mock.patch.object(ModelManager, "is_llm_available", return_value=False):
+            cancelled = model_manager.download_llm_model(cancel_check=lambda: True)
+            self.assertFalse(cancelled)
+
 
 if __name__ == "__main__":
     unittest.main()

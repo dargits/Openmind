@@ -42,6 +42,8 @@ class API:
     def __init__(self):
         self._window: Optional[webview.Window] = None
         self._event_queue: list = []   # buffer events before window is ready
+        self._llm_downloading: bool = False
+        self._llm_cancel_requested: bool = False
 
     def set_window(self, window: webview.Window):
         self._window = window
@@ -84,49 +86,146 @@ class API:
     # ──────────────────────────────────────────────────────────────
     # Models
     # ──────────────────────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────────
+    # Models & Onboarding
+    # ──────────────────────────────────────────────────────────────
     def load_models(self):
-        """Non-blocking — checks, downloads if missing, loads STT + LLM, pushes progress events."""
+        """Non-blocking — checks and downloads Whisper STT if missing, initializes core DB & system.
+        NOTE: Qwen LLM (~2.1GB) is NOT downloaded automatically at startup to keep startup fast and light.
+        It is downloaded on-demand when the user chooses local mode.
+        """
         def run():
-            # 1. STT Whisper
+            # Phase 1: STT Whisper (Essential for lecture transcription)
             try:
                 if not model_manager.is_whisper_available():
-                    self._push("splash:status", {"text": "Đang tải mô hình giọng nói Whisper…", "phase": 1, "progress": 0.1})
+                    self._push("splash:status", {"text": "Đang tải mô hình nhận diện giọng nói Whisper (~460MB)…", "phase": 1, "progress": 0.1})
                     model_manager.download_whisper_model(
-                        progress_callback=lambda t, p: self._push("splash:status", {"text": t, "phase": 1, "progress": 0.1 + 0.35 * p})
+                        progress_callback=lambda t, p: self._push("splash:status", {"text": t, "phase": 1, "progress": 0.1 + 0.4 * p})
                     )
-                self._push("splash:status", {"text": "Đang nạp mô hình giọng nói…", "phase": 1, "progress": 0.45})
-                stt_engine.load_model(progress_callback=lambda t: self._push("splash:status", {"text": t, "phase": 1, "progress": 0.48}))
-                self._push("splash:status", {"text": "Mô hình giọng nói sẵn sàng ✓", "phase": 1, "progress": 0.5})
+                self._push("splash:status", {"text": "Đang nạp mô hình nhận diện giọng nói…", "phase": 1, "progress": 0.52})
+                stt_engine.load_model(progress_callback=lambda t: self._push("splash:status", {"text": t, "phase": 1, "progress": 0.56}))
+                self._push("splash:status", {"text": "Mô hình nhận diện giọng nói sẵn sàng ✓", "phase": 1, "progress": 0.6})
             except Exception as e:
                 print(f"[API Error] Whisper init error: {e}")
-                self._push("splash:status", {"text": f"Cảnh báo STT: {e}", "phase": 1, "progress": 0.5})
+                self._push("splash:status", {"text": f"Cảnh báo STT: {e}", "phase": 1, "progress": 0.6})
 
-            # 2. LLM Qwen 2.5
+            # Phase 2: Khởi tạo hệ thống & AI
             try:
-                if not model_manager.is_llm_available():
-                    self._push("splash:status", {"text": "Đang tải mô hình AI Qwen 2.5 (~2.0GB)…", "phase": 2, "progress": 0.55})
-                    model_manager.download_llm_model(
-                        progress_callback=lambda t, p: self._push("splash:status", {"text": t, "phase": 2, "progress": 0.55 + 0.35 * p})
-                    )
-                self._push("splash:status", {"text": "Đang nạp mô hình ngôn ngữ AI…", "phase": 2, "progress": 0.92})
-                llm_engine.load_model(progress_callback=lambda t: self._push("splash:status", {"text": t, "phase": 2, "progress": 0.96}))
-                self._push("splash:status", {"text": "Mô hình AI sẵn sàng ✓", "phase": 2, "progress": 1.0})
-            except Exception as e:
-                print(f"[API Error] LLM init error: {e}")
-                self._push("splash:status", {"text": f"Cảnh báo LLM: {e}", "phase": 2, "progress": 1.0})
+                self._push("splash:status", {"text": "Đang kiểm tra dữ liệu và hệ sinh thái học tập…", "phase": 2, "progress": 0.75})
+                # Warm-up database & stats overview
+                db.get_stats_overview()
 
+                # If local model is ALREADY present and mode is local, warm it up
+                import core.config as cfg
+                if getattr(cfg, "AI_ENGINE_MODE", "cloud") == "local" and model_manager.is_llm_available():
+                    self._push("splash:status", {"text": "Đang nạp mô hình AI cục bộ…", "phase": 2, "progress": 0.88})
+                    llm_engine.load_model()
+                else:
+                    self._push("splash:status", {"text": "Hệ thống AI đã sẵn sàng ✓", "phase": 2, "progress": 0.95})
+            except Exception as e:
+                print(f"[API Error] System init error: {e}")
+                self._push("splash:status", {"text": f"Khởi tạo: {e}", "phase": 2, "progress": 0.95})
+
+            self._push("splash:status", {"text": "Khởi động hoàn tất ✓", "phase": 2, "progress": 1.0})
             self._push("splash:done", {})
 
         threading.Thread(target=run, daemon=True).start()
         return {"status": "started"}
+
+    def download_local_llm(self) -> dict:
+        """Starts on-demand download of Qwen 2.5 3B GGUF with progress events."""
+        if model_manager.is_llm_available():
+            if llm_engine.model is None:
+                llm_engine.load_model()
+            return {"status": "already_available", "message": "Mô hình Qwen 2.5 3B đã có sẵn trên máy."}
+
+        if self._llm_downloading:
+            return {"status": "already_downloading", "message": "Tiến trình tải mô hình đang diễn ra."}
+
+        self._llm_downloading = True
+        self._llm_cancel_requested = False
+
+        def run():
+            try:
+                self._push("llm_download:start", {"status": "started"})
+
+                def on_progress(text, pct, stats=None):
+                    payload = {
+                        "text": text,
+                        "progress": pct,
+                        "percent": round(pct * 100, 1),
+                        "speed": stats.get("speed", "") if stats else "",
+                        "downloaded_mb": stats.get("downloaded_mb", 0) if stats else 0,
+                        "total_mb": stats.get("total_mb", 2100) if stats else 2100,
+                    }
+                    self._push("llm_download:progress", payload)
+
+                ok = model_manager.download_llm_model(
+                    progress_callback=on_progress,
+                    cancel_check=lambda: self._llm_cancel_requested
+                )
+
+                if self._llm_cancel_requested:
+                    self._push("llm_download:cancelled", {"message": "Đã hủy tải mô hình theo yêu cầu."})
+                elif ok:
+                    self._push("llm_download:progress", {
+                        "text": "Đang nạp mô hình vào bộ nhớ…",
+                        "progress": 0.98,
+                        "percent": 98,
+                        "speed": "",
+                        "downloaded_mb": 2100,
+                        "total_mb": 2100,
+                    })
+                    llm_engine.load_model()
+                    
+                    # Update active engine mode to local automatically
+                    self.save_settings({"ai_engine_mode": "local"})
+
+                    self._push("llm_download:done", {
+                        "message": "✓ Đã tải và kích hoạt mô hình Qwen 2.5 3B Offline thành công!",
+                        "llm_available": True,
+                        "llm_loaded": llm_engine.model is not None,
+                    })
+                else:
+                    self._push("llm_download:error", {
+                        "message": "Không thể tải mô hình. Vui lòng kiểm tra kết nối mạng và thử lại."
+                    })
+            except Exception as e:
+                print(f"[API Error] Local LLM download error: {e}")
+                self._push("llm_download:error", {"message": f"Lỗi tải mô hình: {e}"})
+            finally:
+                self._llm_downloading = False
+                self._llm_cancel_requested = False
+
+        threading.Thread(target=run, daemon=True).start()
+        return {"status": "started"}
+
+    def cancel_local_llm_download(self) -> dict:
+        """Signals cancellation of ongoing Qwen 2.5 GGUF download."""
+        if self._llm_downloading:
+            self._llm_cancel_requested = True
+            return {"status": "cancelling", "ok": True}
+        return {"status": "not_downloading", "ok": False}
+
+    def get_model_status(self) -> dict:
+        import core.config as cfg
+        return {
+            "whisper_ready": model_manager.is_whisper_available(),
+            "whisper_loaded": stt_engine.model is not None,
+            "llm_ready": model_manager.is_llm_available(),
+            "llm_loaded": llm_engine.model is not None,
+            "llm_downloading": self._llm_downloading,
+            "ai_engine_mode": getattr(cfg, "AI_ENGINE_MODE", "cloud"),
+        }
 
     def get_model_info(self) -> dict:
         return {
             "whisper_size": stt_engine.model_size,
             "whisper_loaded": stt_engine.model is not None,
             "llm_loaded": llm_engine.model is not None,
-            "llm_available": llm_engine.is_model_available(),
-            "stt_available": stt_engine.is_model_available(),
+            "llm_available": model_manager.is_llm_available(),
+            "stt_available": model_manager.is_whisper_available(),
+            "llm_downloading": self._llm_downloading,
         }
 
     def download_youtube_audio(self, url: str) -> dict:
@@ -792,8 +891,11 @@ class API:
             "llm_context": cfg.LLM_CONTEXT_SIZE,
             "whisper_model_loaded": stt_engine.model is not None,
             "llm_model_loaded": llm_engine.model is not None,
+            "llm_available": model_manager.is_llm_available(),
+            "whisper_available": model_manager.is_whisper_available(),
+            "llm_downloading": self._llm_downloading,
             # Hybrid Engine fields
-            "ai_engine_mode": getattr(cfg, "AI_ENGINE_MODE", "local"),
+            "ai_engine_mode": getattr(cfg, "AI_ENGINE_MODE", "cloud"),
             "cloud_provider": getattr(cfg, "CLOUD_PROVIDER", "gemini"),
             "gemini_api_key": getattr(cfg, "GEMINI_API_KEY", ""),
             "gemini_model": getattr(cfg, "GEMINI_MODEL", "gemini-1.5-flash"),

@@ -134,14 +134,19 @@ class ModelManager:
     @classmethod
     def download_llm_model(
         cls,
-        progress_callback: Optional[Callable[[str, float], None]] = None,
+        progress_callback: Optional[Callable[..., None]] = None,
+        cancel_check: Optional[Callable[[], bool]] = None,
     ) -> bool:
         """
         Downloads Qwen 2.5 3B GGUF model into models/qwen2.5-3b-instruct-q4_k_m.gguf.
+        Supports cancellation check and rich progress reporting.
         """
         if cls.is_llm_available():
             if progress_callback:
-                progress_callback("Mô hình AI Qwen 2.5 đã sẵn sàng.", 1.0)
+                try:
+                    progress_callback("Mô hình AI Qwen 2.5 đã sẵn sàng.", 1.0, {"percent": 1.0, "speed": "", "downloaded_mb": 2000, "total_mb": 2000})
+                except TypeError:
+                    progress_callback("Mô hình AI Qwen 2.5 đã sẵn sàng.", 1.0)
             return True
 
         target_file = MODELS_DIR / LLM_MODEL_FILENAME
@@ -150,12 +155,49 @@ class ModelManager:
         msg = f"[Open-mind] Đang tải mô hình AI Qwen 2.5 3B ({LLM_MODEL_FILENAME})..."
         print(msg)
         if progress_callback:
-            progress_callback("Đang tải mô hình AI Qwen 2.5 (~2.0GB, cần vài phút)...", 0.05)
+            try:
+                progress_callback("Đang kết nối tải mô hình AI Qwen 2.5 (~2.1GB)...", 0.02, {"percent": 0.02, "speed": "", "downloaded_mb": 0, "total_mb": 2100})
+            except TypeError:
+                progress_callback("Đang kết nối tải mô hình AI Qwen 2.5 (~2.1GB)...", 0.02)
 
         # Allow network access for download
         os.environ.pop("HF_HUB_OFFLINE", None)
 
-        # Method 1: Using huggingface_hub hf_hub_download
+        # Direct stream download with resume, speed calculation and cancel support
+        for url in LLM_DIRECT_URLS:
+            if cancel_check and cancel_check():
+                print("[Open-mind] Người dùng đã hủy tải mô hình LLM.")
+                return False
+            try:
+                print(f"[Open-mind] Đang kết nối tới: {url}")
+                success = cls._download_file_with_progress(
+                    url, tmp_file, progress_callback=progress_callback, cancel_check=cancel_check
+                )
+                if success and tmp_file.exists() and tmp_file.stat().st_size > 500 * 1024 * 1024:
+                    if target_file.exists():
+                        target_file.unlink()
+                    tmp_file.rename(target_file)
+                    print(f"[Open-mind] ✓ Đã tải và lưu LLM model thành công!")
+                    if progress_callback:
+                        try:
+                            progress_callback("Mô hình AI Qwen 2.5 đã sẵn sàng ✓", 1.0, {"percent": 1.0, "speed": "", "downloaded_mb": target_file.stat().st_size / (1024*1024), "total_mb": target_file.stat().st_size / (1024*1024)})
+                        except TypeError:
+                            progress_callback("Mô hình AI Qwen 2.5 đã sẵn sàng ✓", 1.0)
+                    return True
+                elif cancel_check and cancel_check():
+                    if tmp_file.exists():
+                        try:
+                            tmp_file.unlink()
+                        except Exception:
+                            pass
+                    return False
+            except Exception as e_url:
+                print(f"[Open-mind] Thất bại khi tải từ {url}: {e_url}")
+                continue
+
+        # Fallback Method: Using huggingface_hub hf_hub_download
+        if cancel_check and cancel_check():
+            return False
         try:
             from huggingface_hub import hf_hub_download
             downloaded_path = hf_hub_download(
@@ -168,29 +210,13 @@ class ModelManager:
             if Path(downloaded_path).exists():
                 print(f"[Open-mind] ✓ Đã tải xong LLM model vào {target_file}")
                 if progress_callback:
-                    progress_callback("Mô hình AI Qwen 2.5 đã sẵn sàng ✓", 1.0)
+                    try:
+                        progress_callback("Mô hình AI Qwen 2.5 đã sẵn sàng ✓", 1.0, {"percent": 1.0, "speed": "", "downloaded_mb": 2100, "total_mb": 2100})
+                    except TypeError:
+                        progress_callback("Mô hình AI Qwen 2.5 đã sẵn sàng ✓", 1.0)
                 return True
         except Exception as e:
-            print(f"[Open-mind] hf_hub_download failed: {e}. Trying direct stream download...")
-
-        # Method 2: Stream download with resume and progress
-        for url in LLM_DIRECT_URLS:
-            try:
-                print(f"[Open-mind] Đang kết nối tới: {url}")
-                success = cls._download_file_with_progress(
-                    url, tmp_file, progress_callback=progress_callback
-                )
-                if success and tmp_file.exists() and tmp_file.stat().st_size > 500 * 1024 * 1024:
-                    if target_file.exists():
-                        target_file.unlink()
-                    tmp_file.rename(target_file)
-                    print(f"[Open-mind] ✓ Đã tải và lưu LLM model thành công!")
-                    if progress_callback:
-                        progress_callback("Mô hình AI Qwen 2.5 đã sẵn sàng ✓", 1.0)
-                    return True
-            except Exception as e_url:
-                print(f"[Open-mind] Thất bại khi tải từ {url}: {e_url}")
-                continue
+            print(f"[Open-mind] hf_hub_download fallback failed: {e}")
 
         print(f"[Open-mind Error] Không thể tải mô hình LLM từ tất cả các nguồn.")
         return False
@@ -200,7 +226,8 @@ class ModelManager:
         cls,
         url: str,
         dest_path: Path,
-        progress_callback: Optional[Callable[[str, float], None]] = None,
+        progress_callback: Optional[Callable[..., None]] = None,
+        cancel_check: Optional[Callable[[], bool]] = None,
     ) -> bool:
         """Stream download a file with progress bar in console & GUI callback."""
         import requests
@@ -229,23 +256,45 @@ class ModelManager:
 
         chunk_size = 1024 * 1024  # 1MB
         last_log = time.time()
+        last_downloaded = downloaded
 
         with open(dest_path, mode) as f:
             for chunk in resp.iter_content(chunk_size=chunk_size):
+                if cancel_check and cancel_check():
+                    print("\n[Open-mind] Quá trình tải bị hủy bởi người dùng.")
+                    return False
                 if chunk:
                     f.write(chunk)
                     downloaded += len(chunk)
                     now = time.time()
-                    if now - last_log >= 0.5:
+                    dt = now - last_log
+                    if dt >= 0.5:
                         pct = (downloaded / total_bytes) if total_bytes > 0 else 0
                         mb_done = downloaded / (1024 * 1024)
                         mb_total = total_bytes / (1024 * 1024)
-                        text = f"Đang tải {dest_path.name}: {mb_done:.1f}/{mb_total:.1f} MB ({pct*100:.1f}%)"
-                        sys.stdout.write(f"\r{text}")
+                        # Speed calculation
+                        speed_bytes_sec = (downloaded - last_downloaded) / dt if dt > 0 else 0
+                        if speed_bytes_sec > 1024 * 1024:
+                            speed_str = f"{speed_bytes_sec / (1024 * 1024):.1f} MB/s"
+                        else:
+                            speed_str = f"{speed_bytes_sec / 1024:.0f} KB/s"
+
+                        text = f"Đang tải {dest_path.name}: {mb_done:.1f}/{mb_total:.1f} MB ({pct*100:.1f}%) - {speed_str}"
+                        sys.stdout.write(f"\r{text}   ")
                         sys.stdout.flush()
                         if progress_callback:
-                            progress_callback(text, pct)
+                            stats = {
+                                "percent": round(pct, 3),
+                                "speed": speed_str,
+                                "downloaded_mb": round(mb_done, 1),
+                                "total_mb": round(mb_total, 1),
+                            }
+                            try:
+                                progress_callback(text, pct, stats)
+                            except TypeError:
+                                progress_callback(text, pct)
                         last_log = now
+                        last_downloaded = downloaded
 
         sys.stdout.write("\n")
         return True

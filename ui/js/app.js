@@ -89,6 +89,9 @@ const API = {
   save_lecture_note: (lid, nid, ts, text) => API.call('save_lecture_note', lid, nid, ts, text),
   delete_lecture_note: (lid, nid) => API.call('delete_lecture_note', lid, nid),
   clear_chat_history: (lid) => API.call('clear_chat_history', lid),
+  download_local_llm: () => API.call('download_local_llm'),
+  cancel_local_llm_download: () => API.call('cancel_local_llm_download'),
+  get_model_status: () => API.call('get_model_status'),
 };
 
 function updateEngineBadge(mode, provider) {
@@ -735,12 +738,14 @@ function dismissSplash() {
 
 function setSplashStatus(text, phase, progress) {
   if (el('splashStatus')) el('splashStatus').textContent = text;
-  if (el('splashBar')) el('splashBar').style.width = `${Math.round(progress * 100)}%`;
+  if (el('splashBar')) el('splashBar').style.width = `${Math.min(100, Math.round(progress * 100))}%`;
 
   if (phase >= 1 && el('phase1'))
-    el('phase1').className = 'phase-pill' + (progress >= 0.5 ? ' done' : '');
-  if (phase >= 2 && el('phase2'))
-    el('phase2').className = 'phase-pill' + (progress >= 1.0 ? ' done' : '');
+    el('phase1').className = 'phase-pill' + (progress >= 0.55 ? ' done' : '');
+  if (phase >= 2 && el('phase2')) {
+    el('phase2').classList.remove('muted');
+    el('phase2').className = 'phase-pill' + (progress >= 0.95 ? ' done' : '');
+  }
 }
 
 EventBus.on('splash:status', ({ text, phase, progress }) => setSplashStatus(text, phase, progress));
@@ -753,7 +758,7 @@ EventBus.on('settings:updated', ({ ai_engine_mode, cloud_provider }) => {
 // Boot
 // ──────────────────────────────────────────
 window.addEventListener('pywebviewready', async () => {
-  setSplashStatus('Đang nạp mô hình AI…', 1, 0.05);
+  setSplashStatus('Đang kiểm tra nhận diện giọng nói Whisper…', 1, 0.05);
 
   setTimeout(() => {
     if (!splashDismissed && el('splashSkipBtn'))
