@@ -503,26 +503,77 @@ async function handleSeedDemo() {
 }
 
 async function handleResetDatabase() {
-  const confirmed = confirm(
-    '⚠️ CẢNH BÁO XÓA DỮ LIỆU:\n\n' +
-    'Hành động này sẽ xóa toàn bộ bài giảng, thẻ ghi nhớ, kết quả thi và khôi phục ứng dụng về trạng thái sạch ban đầu (với bài giảng mẫu Cấu trúc Dữ liệu tiêu chuẩn).\n\n' +
-    'Bạn có chắc chắn muốn tiếp tục?'
+  const modalHtml = `
+    <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;">
+      <div style="width:46px;height:46px;border-radius:12px;background:#fef2f2;color:#ef4444;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid #fee2e2;">
+        <i data-lucide="alert-triangle" style="width:24px;height:24px;"></i>
+      </div>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;">Đặt lại Cơ sở Dữ liệu Học tập</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.5;">
+          Bạn sắp xóa toàn bộ bài giảng cá nhân, bộ thẻ flashcard, điểm thi trắc nghiệm và chuỗi streak học tập trên máy.
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#f8fafc;border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:18px;">
+      <div style="font-weight:600;font-size:13px;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+        <i data-lucide="sliders" style="width:14px;height:14px;color:var(--accent);"></i> Chọn chế độ đặt lại mong muốn:
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--radius-md);background:#fff;border:1px solid #e2e8f0;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#ef4444'" onmouseout="this.style.borderColor='#e2e8f0'">
+          <input type="radio" name="resetModeChoice" value="clean" checked style="margin-top:3px;accent-color:#ef4444;">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#dc2626;display:flex;align-items:center;gap:6px;">
+              <i data-lucide="trash-2" style="width:14px;height:14px;"></i> Xóa sạch hoàn toàn (Về 0)
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;line-height:1.4;">
+              Xóa toàn bộ dữ liệu, trả về không gian học tập trống tinh (0 bài giảng, 0 thẻ, 0 streak) để bạn bắt đầu tạo dữ liệu mới.
+            </div>
+          </div>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--radius-md);background:#fff;border:1px solid #e2e8f0;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='#e2e8f0'">
+          <input type="radio" name="resetModeChoice" value="demo" style="margin-top:3px;accent-color:var(--accent);">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--accent);display:flex;align-items:center;gap:6px;">
+              <i data-lucide="sparkles" style="width:14px;height:14px;"></i> Đặt lại & Nạp lại dữ liệu bài giảng mẫu
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;line-height:1.4;">
+              Làm mới cơ sở dữ liệu và tự động nạp lại bài giảng mẫu Cấu trúc Dữ liệu & Thuật toán chuẩn kèm 8 thẻ SM-2.
+            </div>
+          </div>
+        </label>
+      </div>
+    </div>
+  `;
+
+  const choice = await showModal(
+    "Xác nhận Đặt lại Dữ liệu",
+    modalHtml,
+    [
+      { label: "Hủy bỏ", class: "btn-secondary" },
+      { label: "<i data-lucide='check' style='width:14px;height:14px;'></i> Xác nhận Đặt lại", class: "btn-danger" }
+    ]
   );
-  if (!confirmed) return;
+
+  if (choice !== 1) return;
+
+  const selectedMode = document.querySelector('input[name="resetModeChoice"]:checked')?.value || "clean";
+  const isSeedDemo = (selectedMode === "demo");
 
   try {
-    showToast('Đang làm sạch cơ sở dữ liệu…', 'info');
-    const res = await API.reset_database_data();
+    showToast(isSeedDemo ? "Đang đặt lại & nạp dữ liệu mẫu..." : "Đang xóa sạch toàn bộ dữ liệu về 0...", "info");
+    const res = await API.reset_database_data(isSeedDemo);
     if (res.ok) {
-      showToast('✓ Đã đặt lại dữ liệu sạch thành công!', 'success', 3500);
+      showToast(res.message || "Đã đặt lại dữ liệu thành công!", "success", 3500);
       setTimeout(() => {
         window.location.reload();
-      }, 700);
+      }, 600);
     } else {
-      showToast(res.error || 'Lỗi đặt lại dữ liệu', 'error');
+      showToast(res.error || "Lỗi đặt lại dữ liệu", "error");
     }
   } catch (e) {
-    showToast('Lỗi khi đặt lại: ' + e.message, 'error');
+    showToast("Lỗi khi đặt lại: " + e.message, "error");
   }
 }
 

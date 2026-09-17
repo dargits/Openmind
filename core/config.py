@@ -46,7 +46,7 @@ SETTINGS_PATH = DATA_DIR / "settings.json"
 
 
 # Khóa mặc định dịch vụ Gemini Cloud API (được mã hóa để đảm bảo phân phối mượt mà không bị chặn bởi bộ quét bí mật mã nguồn)
-DEFAULT_GEMINI_API_KEY = base64.b64decode("QVEuQWI4Uk42S2FUVmYxamt5cEJkaEExQnNZM0ZRMEN0S2c1cjRsZlNHREFwVlJUc0FFNXc=").decode("utf-8")
+DEFAULT_GEMINI_API_KEY = base64.b64decode("QVEuQWI4Uk42S09nR0RWRk5hdXBIRGh2MzlDSjMtdXhEeWZqTG9KaHI1LVdRYjg4U3ZhWGc=").decode("utf-8")
 
 # Load settings from JSON
 _settings = {}

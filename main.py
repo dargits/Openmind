@@ -87,9 +87,24 @@ for folder in ["data", "models"]:
 try:
     from core.database import db
     from core.demo_seeder import seed_demo_data
-    if len(db.list_lectures()) == 0:
-        print("[Open-mind] Đang nạp dữ liệu học tập mẫu ban đầu...")
+    from core.config import SETTINGS_PATH
+    import json
+    
+    settings = {}
+    if SETTINGS_PATH.exists():
+        try:
+            with open(SETTINGS_PATH, "r", encoding="utf-8") as sf:
+                settings = json.load(sf)
+        except Exception:
+            pass
+            
+    # Chỉ tự động nạp ở lần chạy đầu tiên trên máy mới (khi chưa từng khởi tạo hoặc chưa reset)
+    if not settings.get("has_initialized_db", False) and len(db.list_lectures()) == 0:
+        print("[Open-mind] Lần đầu chạy trên máy mới: Đang nạp dữ liệu bài giảng mẫu...")
         seed_demo_data(force=False)
+        settings["has_initialized_db"] = True
+        with open(SETTINGS_PATH, "w", encoding="utf-8") as sf:
+            json.dump(settings, sf, indent=2, ensure_ascii=False)
 except Exception as e:
     print(f"[Open-mind] Khởi tạo DB demo: {e}")
 
