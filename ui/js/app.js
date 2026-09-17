@@ -77,6 +77,7 @@ const API = {
   save_settings: (s) => API.call('save_settings', s),
   test_cloud_connection: (p, k, m, b) => API.call('test_cloud_connection', p, k, m || '', b || ''),
   seed_demo_data: (f) => API.call('seed_demo_data', f || false),
+  reset_database_data: () => API.call('reset_database_data'),
 
   export_txt: (id) => API.call('export_txt', id),
   export_html: (id) => API.call('export_html', id),
@@ -89,6 +90,9 @@ const API = {
   save_lecture_note: (lid, nid, ts, text) => API.call('save_lecture_note', lid, nid, ts, text),
   delete_lecture_note: (lid, nid) => API.call('delete_lecture_note', lid, nid),
   clear_chat_history: (lid) => API.call('clear_chat_history', lid),
+  download_local_llm: () => API.call('download_local_llm'),
+  cancel_local_llm_download: () => API.call('cancel_local_llm_download'),
+  get_model_status: () => API.call('get_model_status'),
 };
 
 function updateEngineBadge(mode, provider) {
@@ -121,6 +125,21 @@ const EventBus = {
 window.addEventListener('omEvent', e => {
   const { type, data } = e.detail;
   EventBus.emit(type, data);
+});
+
+// Centralized zero-flicker background database sync helper
+window.syncAppData = function(silent = true) {
+  refreshTopBar();
+  if (typeof loadLibrary === 'function') loadLibrary({ silent: true });
+  if (typeof loadDashboardData === 'function') loadDashboardData({ silent: true });
+  if (typeof loadStatsData === 'function' && State.currentView === 'stats') loadStatsData();
+};
+
+// Automatically synchronize freshest DB data on any processing event without reloading
+['transcribe:done', 'pdf:done', 'autopipeline:done', 'quiz:done', 'flashcards:done', 'youtube:done'].forEach(evt => {
+  EventBus.on(evt, () => {
+    setTimeout(() => window.syncAppData(true), 150);
+  });
 });
 
 // ──────────────────────────────────────────
@@ -274,8 +293,6 @@ function switchView(name) {
   const target = el(`view-${name}`);
   if (target) {
     target.classList.remove('hidden');
-    target.style.animation = 'none';
-    requestAnimationFrame(() => { target.style.animation = 'fadeIn 0.25s ease'; });
   }
 
   qsa('.nav-item').forEach(b => b.classList.remove('active'));
@@ -722,12 +739,14 @@ function dismissSplash() {
 
 function setSplashStatus(text, phase, progress) {
   if (el('splashStatus')) el('splashStatus').textContent = text;
-  if (el('splashBar')) el('splashBar').style.width = `${Math.round(progress * 100)}%`;
+  if (el('splashBar')) el('splashBar').style.width = `${Math.min(100, Math.round(progress * 100))}%`;
 
   if (phase >= 1 && el('phase1'))
-    el('phase1').className = 'phase-pill' + (progress >= 0.5 ? ' done' : '');
-  if (phase >= 2 && el('phase2'))
-    el('phase2').className = 'phase-pill' + (progress >= 1.0 ? ' done' : '');
+    el('phase1').className = 'phase-pill' + (progress >= 0.55 ? ' done' : '');
+  if (phase >= 2 && el('phase2')) {
+    el('phase2').classList.remove('muted');
+    el('phase2').className = 'phase-pill' + (progress >= 0.95 ? ' done' : '');
+  }
 }
 
 EventBus.on('splash:status', ({ text, phase, progress }) => setSplashStatus(text, phase, progress));
@@ -740,7 +759,7 @@ EventBus.on('settings:updated', ({ ai_engine_mode, cloud_provider }) => {
 // Boot
 // ──────────────────────────────────────────
 window.addEventListener('pywebviewready', async () => {
-  setSplashStatus('Đang nạp mô hình AI…', 1, 0.05);
+  setSplashStatus('Đang kiểm tra nhận diện giọng nói Whisper…', 1, 0.05);
 
   setTimeout(() => {
     if (!splashDismissed && el('splashSkipBtn'))

@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Open-mind Contributors
 # SPDX-License-Identifier: MIT
-#
 # Purpose: Script to package Open-mind source code into standard open archive
-# formats (.tar.gz and .tar.xz), strictly complying with the competition PoF rules
-# (preventing point deductions for proprietary archives like .zip or .rar).
+# formats (.tar.gz and .tar.xz) for production distribution.
 
 import os
 import sys
@@ -22,7 +20,7 @@ if sys.stdout and hasattr(sys.stdout, "reconfigure"):
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DIST_DIR = REPO_ROOT / "dist"
-VERSION = "1.0.0"
+VERSION = "2.0.0"
 
 # Directories and files to strictly exclude from the release tarball
 EXCLUDE_NAMES = {
@@ -40,10 +38,13 @@ EXCLUDE_NAMES = {
     "dist",
     ".idea",
     ".vscode",
+    "downloads",
     "openmind.db",
     "openmind.db-shm",
     "openmind.db-wal",
     "settings.json",
+    ".env",
+    ".env.local",
 }
 
 def is_excluded(tarinfo):
@@ -51,8 +52,8 @@ def is_excluded(tarinfo):
     # Exclude files in exclude list
     if name in EXCLUDE_NAMES:
         return None
-    # Exclude compiled bytecode or model binary weights
-    if name.endswith((".pyc", ".pyo", ".gguf", ".bin", ".safetensors", ".pt", ".pth")):
+    # Exclude compiled bytecode, model binary weights, or downloaded media
+    if name.endswith((".pyc", ".pyo", ".gguf", ".bin", ".safetensors", ".pt", ".pth", ".mp3", ".wav", ".m4a", ".mp4")):
         return None
     return tarinfo
 
@@ -72,7 +73,6 @@ def package():
     print(f"📦 Đang đóng gói Bản Phát Hành Mở: {archive_name}")
     print("=" * 65)
     print("Định dạng: GZIP Compressed Tarball (.tar.gz - Tiêu chuẩn Open Source POSIX)")
-    print("Tuân thủ: Bộ tiêu chí PoF cuộc thi PMMN & AI 2026 (Tránh trừ 3đ vì dùng .zip)")
 
     with tarfile.open(output_path, "w:gz") as tar:
         tar.add(REPO_ROOT, arcname=f"openmind-v{VERSION}", filter=is_excluded)
@@ -91,15 +91,15 @@ def package():
     print(f"  • Checksum:  {checksum_file}")
 
     print("\n" + "=" * 65)
-    print("📋 HƯỚNG DẪN TẠO GITHUB RELEASE CHUẨN THỂ LỆ:")
+    print("📋 HƯỚNG DẪN TẠO GITHUB RELEASE:")
     print("=" * 65)
     print(f"1. Tạo Git Tag phiên bản:")
-    print(f"   git tag -a v{VERSION} -m \"Release version {VERSION} for PMMN & AI 2026\"")
+    print(f"   git tag -a v{VERSION} -m \"Release version {VERSION}\"")
     print(f"   git push origin v{VERSION}")
     print(f"\n2. Truy cập GitHub tạo Release:")
     print(f"   URL: https://github.com/dargits/Openmind/releases/new")
     print(f"   - Tag version: v{VERSION}")
-    print(f"   - Release title: Open-mind v{VERSION} — Official Competition Release")
+    print(f"   - Release title: Open-mind v{VERSION} — Official Release")
     print(f"   - Attach binary/archive: Tải file '{archive_name}' và '{checksum_file.name}' lên!")
     print("=" * 65)
 

@@ -24,8 +24,9 @@ Tài liệu này cung cấp thông tin minh bạch về toàn bộ các thư vi�
 | **requests** | `>=2.28.0` | Thực hiện các yêu cầu HTTP kiểm tra tính sẵn sàng của tài nguyên | [psf/requests](https://github.com/psf/requests) | **Apache 2.0** | ✅ Có |
 | **tqdm** | `>=4.65.0` | Thanh tiến trình hiển thị quá trình tải mô hình và xử lý dữ liệu | [tqdm/tqdm](https://github.com/tqdm/tqdm) | **MIT / MPL 2.0** | ✅ Có |
 | **pyinstaller** | `>=6.10.0` | Công cụ mã nguồn mở hỗ trợ đóng gói ứng dụng độc lập | [pyinstaller/pyinstaller](https://github.com/pyinstaller/pyinstaller) | **GPL v2 with Exception** | ✅ Có |
-| **psutil** | `>=5.9.0` | Giám sát tài nguyên hệ thống (RAM, CPU usage) khi benchmark | [giampaolo/psutil](https://github.com/giampaolo/psutil) | **BSD-3-Clause** | ✅ Có |
-| **jiwer** | `>=3.0.0` | Tính toán tỷ lệ lỗi từ (Word Error Rate - WER) khi benchmark STT | [jitsi/jiwer](https://github.com/jitsi/jiwer) | **Apache 2.0** | ✅ Có |
+| **yt-dlp** | `>=2024.0.0` | Tải và trích xuất luồng âm thanh bài giảng từ YouTube | [yt-dlp/yt-dlp](https://github.com/yt-dlp/yt-dlp) | **The Unlicense** | ✅ Có |
+| **pypdf** | `>=4.0.0` | Trích xuất văn bản và phân tích cấu trúc tài liệu PDF/Slide bài giảng | [py-pdf/pypdf](https://github.com/py-pdf/pypdf) | **BSD-3-Clause** | ✅ Có |
+| **genanki** | `>=0.13.0` | Tạo và đóng gói trực tiếp bộ thẻ nhớ Anki định dạng nhị phân `.apkg` | [kerrickstaley/genanki](https://github.com/kerrickstaley/genanki) | **MIT License** | ✅ Có |
 
 ---
 
@@ -34,24 +35,29 @@ Tài liệu này cung cấp thông tin minh bạch về toàn bộ các thư vi�
 Dự án **Open-mind** được phát hành dưới giấy phép **MIT License**. Dưới đây là phân tích tính tương thích với từng loại giấy phép của các thư viện phụ thuộc:
 
 ```
-┌───────────────────────────────┐
-│     Open-mind (MIT License)   │
-└───────────────┬───────────────┘
-                │
-   ┌────────────┼────────────┬─────────────┐
-   ▼            ▼            ▼             ▼
-[MIT]      [Apache 2.0]  [BSD-3-Clause] [LGPL v2.1]
-(Hoàn toàn   (Tương thích  (Tương thích  (Tương thích
-tương thích)  một chiều)   tuyệt đối)    dạng liên kết)
+┌───────────────────────────────────────────────────────────┐
+│                 Open-mind (MIT License)                   │
+└─────────────────────────────┬─────────────────────────────┘
+                              │
+   ┌────────────┬─────────────┼─────────────┬─────────────┬──────────────┐
+   ▼            ▼             ▼             ▼             ▼              ▼
+ [MIT]     [Apache 2.0] [BSD-3-Clause] [LGPL v2.1]   [The Unlicense]  [MPL 2.0]
+ (Tương       (Tương        (Tương       (Tương           (Phạm vi         (Tương
+  thích        thích         thích        thích dạng       công cộng -      thích
+  tuyệt đối)  một chiều)    tuyệt đối)   liên kết động)   Public Domain)   tập tin)
 ```
 
-1. **Thư viện cấp phép MIT (faster-whisper, llama-cpp-python, pydub, tqdm):**
-   - Giấy phép MIT hoàn toàn tự do, cho phép nhúng, phân phối và tái cấp phép mà không có bất kỳ xung đột nào.
-2. **Thư viện cấp phép BSD 3-Clause (pywebview, psutil):**
-   - Giấy phép BSD thuộc dạng cấp phép tự do (permissive), hoàn toàn tương thích với MIT khi giữ nguyên thông báo bản quyền gốc.
-3. **Thư viện cấp phép Apache 2.0 (huggingface-hub, requests, jiwer):**
+1. **Thư viện cấp phép MIT (faster-whisper, llama-cpp-python, pydub, genanki):**
+   - Giấy phép MIT hoàn toàn tự do, cho phép nhúng, phân phối và tích hợp thương mại/phi thương mại mà không có bất kỳ xung đột nào.
+2. **Thư viện cấp phép BSD 3-Clause (pywebview, pypdf):**
+   - Giấy phép BSD thuộc nhóm cấp phép tự do (permissive), hoàn toàn tương thích với MIT khi giữ nguyên thông báo bản quyền gốc.
+3. **Thư viện cấp phép Apache 2.0 (huggingface-hub, requests):**
    - Theo công bố của Quỹ Phần mềm Tự do (FSF) và OSI, mã nguồn cấp phép MIT hoàn toàn có thể tích hợp và phân phối cùng các thư viện Apache 2.0.
-4. **Thư viện cấp phép LGPL v2.1 (pygame):**
+4. **Thư viện cấp phép The Unlicense (yt-dlp):**
+   - Đưa mã nguồn vào phạm vi công cộng (Public Domain), trao quyền tự do tối đa, tương thích hoàn toàn 100% với MIT.
+5. **Thư viện cấp phép LGPL v2.1 (pygame):**
    - Open-mind chỉ gọi API của `pygame` dưới dạng liên kết động (Dynamic linking thông qua `import pygame` của Python) mà không sửa đổi mã nguồn nội bộ của thư viện pygame, hoàn toàn tuân thủ Điều khoản 6 của GNU LGPL v2.1.
+6. **Thư viện cấp phép MPL 2.0 / MIT (tqdm):**
+   - Cấp phép kép (dual-license), Open-mind sử dụng theo điều khoản MIT.
 
-**Kết luận:** Mã nguồn dự án Open-mind **hoàn toàn tương thích** với tất cả các giấy phép của các thư viện phụ thuộc, không tồn tại bất kỳ sự xung đột bản quyền hay vi phạm pháp lý nào.
+**Kết luận:** Mã nguồn dự án Open-mind **hoàn toàn tương thích 100%** với tất cả các giấy phép của các thư viện phụ thuộc, đáp ứng tiêu chuẩn nguồn mở quốc tế (OSI-approved) và sẵn sàng cho môi trường production.

@@ -13,6 +13,8 @@
 'use strict';
 
 let sttModelsMeta = {};
+let currentSettings = null;
+let isLlmDownloading = false;
 
 function renderSettingsView() {
   const container = el('view-settings');
@@ -132,10 +134,41 @@ function renderSettingsView() {
 
     <!-- Local Sub-panel -->
     <div id="localSettingsPanel" style="display:none;margin-top:14px;padding-top:14px;border-top:1px dashed var(--glass-border);">
-      <div class="settings-row">
-        <span class="settings-key">Mô hình cục bộ</span>
-        <span class="settings-val" style="color:#0891b2;font-weight:600;">Qwen 2.5 3B Instruct GGUF</span>
+      <!-- On-Demand Model Download Box -->
+      <div id="localLlmBox" style="margin-bottom:16px;padding:14px 16px;border-radius:var(--radius-md);background:rgba(99,102,241,0.04);border:1px solid rgba(99,102,241,0.15);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:240px;">
+            <div style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px;" id="localLlmBoxTitle">
+              <i data-lucide="cpu" style="width:16px;height:16px;color:#4f46e5;"></i>
+              Mô hình Qwen 2.5 3B Instruct GGUF (~2.1 GB)
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:4px;line-height:1.5;" id="localLlmBoxDesc">
+              Mô hình ngôn ngữ xử lý ngoại tuyến (Offline) 100% trên thiết bị, bảo mật tuyệt đối và không cần Internet.
+            </div>
+          </div>
+          <div id="localLlmActionContainer" style="flex-shrink:0;margin-top:2px;">
+            <!-- Dynamic button or badge -->
+          </div>
+        </div>
+
+        <!-- Download progress bar container (hidden by default) -->
+        <div id="localLlmProgressContainer" style="display:none;margin-top:14px;padding-top:12px;border-top:1px dashed rgba(99,102,241,0.2);">
+          <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:6px;">
+            <span id="localLlmProgressStatus" style="color:#4f46e5;">Đang chuẩn bị tải…</span>
+            <span id="localLlmProgressPercent" style="color:var(--text);font-variant-numeric:tabular-nums;">0%</span>
+          </div>
+          <div style="width:100%;height:8px;background:rgba(99,102,241,0.12);border-radius:99px;overflow:hidden;margin-bottom:8px;">
+            <div id="localLlmProgressBar" style="width:0%;height:100%;background:linear-gradient(90deg,#4f46e5,#06b6d4);border-radius:99px;transition:width 0.25s;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span id="localLlmProgressDetails" style="font-size:11px;color:var(--text-muted);font-variant-numeric:tabular-nums;">0.0 / 2100.0 MB</span>
+            <button class="btn btn-ghost btn-sm" id="btnCancelLlmDownload" type="button" style="font-size:11px;padding:2px 8px;color:#ef4444;height:24px;display:inline-flex;align-items:center;gap:4px;">
+              <i data-lucide="x" style="width:12px;height:12px;"></i> Hủy tải
+            </button>
+          </div>
+        </div>
       </div>
+
       <div class="settings-row">
         <span class="settings-key">Số luồng CPU</span>
         <input class="input" type="number" id="inLlmThreads" min="1" max="16" style="width:180px;" placeholder="4">
@@ -264,6 +297,18 @@ function renderSettingsView() {
         <i data-lucide="download" style="width:14px;height:14px;"></i> Nạp dữ liệu mẫu
       </button>
     </div>
+
+    <div class="settings-row" style="padding-top:12px;margin-top:12px;border-top:1px solid var(--border);">
+      <div>
+        <div style="font-weight:600;font-size:13px;color:#ef4444;">Xóa sạch dữ liệu & Đặt lại xuất xưởng</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
+          Xóa toàn bộ bài giảng, thẻ ghi nhớ, kết quả thi và khởi tạo lại bài giảng mẫu sạch ban đầu
+        </div>
+      </div>
+      <button class="btn btn-danger btn-sm" id="btnResetDatabase" style="display:inline-flex;align-items:center;gap:6px;background:#ef4444;color:#fff;border:none;">
+        <i data-lucide="trash-2" style="width:14px;height:14px;"></i> Đặt lại dữ liệu sạch
+      </button>
+    </div>
   </div>
 
   <!-- 4. ABOUT -->
@@ -300,13 +345,19 @@ function renderSettingsView() {
   el('settingsRefresh')?.addEventListener('click', loadSettings);
   el('settingsSave')?.addEventListener('click', () => saveSettings(false));
   el('btnSeedDemo')?.addEventListener('click', handleSeedDemo);
+  el('btnResetDatabase')?.addEventListener('click', handleResetDatabase);
+  el('btnCancelLlmDownload')?.addEventListener('click', handleCancelLlmDownload);
 
   el('inCloudProvider')?.addEventListener('change', () => {
     updateProviderVisibility();
     saveSettings(true);
   });
   el('inAiEngineMode')?.addEventListener('change', () => {
+    const mode = el('inAiEngineMode')?.value || 'cloud';
     updateModeDisplay();
+    if (mode === 'local' && currentSettings && !currentSettings.llm_available && !isLlmDownloading) {
+      showToast('ℹ️ Mô hình Offline (Qwen 2.5 ~2.1GB) chưa được cài đặt. Hãy bấm "Tải mô hình Offline" bên dưới để sử dụng.', 'warning', 5000);
+    }
     saveSettings(true);
   });
 
@@ -451,9 +502,34 @@ async function handleSeedDemo() {
   }
 }
 
+async function handleResetDatabase() {
+  const confirmed = confirm(
+    '⚠️ CẢNH BÁO XÓA DỮ LIỆU:\n\n' +
+    'Hành động này sẽ xóa toàn bộ bài giảng, thẻ ghi nhớ, kết quả thi và khôi phục ứng dụng về trạng thái sạch ban đầu (với bài giảng mẫu Cấu trúc Dữ liệu tiêu chuẩn).\n\n' +
+    'Bạn có chắc chắn muốn tiếp tục?'
+  );
+  if (!confirmed) return;
+
+  try {
+    showToast('Đang làm sạch cơ sở dữ liệu…', 'info');
+    const res = await API.reset_database_data();
+    if (res.ok) {
+      showToast('✓ Đã đặt lại dữ liệu sạch thành công!', 'success', 3500);
+      setTimeout(() => {
+        window.location.reload();
+      }, 700);
+    } else {
+      showToast(res.error || 'Lỗi đặt lại dữ liệu', 'error');
+    }
+  } catch (e) {
+    showToast('Lỗi khi đặt lại: ' + e.message, 'error');
+  }
+}
+
 async function loadSettings() {
   try {
     const s = await API.get_settings();
+    currentSettings = s;
     sttModelsMeta = s.whisper_models || {};
 
     if (el('inWhisperDevice'))  el('inWhisperDevice').value  = s.whisper_device || 'cpu';
@@ -504,20 +580,138 @@ async function loadSettings() {
         : `<span style="color:var(--text-muted);display:inline-flex;align-items:center;gap:4px;"><i data-lucide="clock" style="width:14px;height:14px;"></i> Tự nạp khi xử lý bài giảng</span>`;
     }
 
-    // LLM status dot
-    if (el('setLlmStatus')) {
-      el('setLlmStatus').innerHTML = llmOk
-        ? `<span style="color:#059669;font-weight:600;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="check-circle-2" style="width:14px;height:14px;"></i> Đã nạp</span>`
-        : llmAvail
-          ? `<span style="color:var(--text-muted);display:inline-flex;align-items:center;gap:4px;"><i data-lucide="clock" style="width:14px;height:14px;"></i> Sẵn sàng nạp khi cần</span>`
-          : `<span style="color:#dc2626;font-weight:600;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="alert-circle" style="width:14px;height:14px;"></i> Không tìm thấy file GGUF</span>`;
-    }
-
+    updateLocalLlmUi(s);
     refreshIcons();
   } catch (e) {
     showToast('Lỗi tải cài đặt: ' + e.message, 'error');
   }
 }
+
+function updateLocalLlmUi(s) {
+  const llmOk = s?.llm_model_loaded;
+  const llmAvail = s?.llm_available;
+  const downloading = isLlmDownloading || s?.llm_downloading;
+
+  const actionContainer = el('localLlmActionContainer');
+  const progressContainer = el('localLlmProgressContainer');
+  const boxDesc = el('localLlmBoxDesc');
+
+  if (downloading) {
+    if (progressContainer) progressContainer.style.display = 'block';
+    if (actionContainer) {
+      actionContainer.innerHTML = `<span class="badge" style="background:rgba(99,102,241,0.15);color:#4f46e5;font-weight:600;display:inline-flex;align-items:center;gap:6px;">
+        <i data-lucide="loader-2" class="spin" style="width:13px;height:13px;"></i> Đang tải (~2.1 GB)…
+      </span>`;
+    }
+  } else if (llmAvail) {
+    if (progressContainer) progressContainer.style.display = 'none';
+    if (actionContainer) {
+      actionContainer.innerHTML = `<span class="badge" style="background:rgba(16,185,129,0.12);color:#059669;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+        <i data-lucide="check-circle-2" style="width:13px;height:13px;"></i> Đã cài đặt
+      </span>`;
+    }
+    if (boxDesc) {
+      boxDesc.textContent = 'Mô hình đã sẵn sàng hoạt động 100% ngoại tuyến trên thiết bị của bạn.';
+    }
+  } else {
+    if (progressContainer) progressContainer.style.display = 'none';
+    if (actionContainer) {
+      actionContainer.innerHTML = `<button class="btn btn-primary btn-sm" id="btnDownloadLocalLlm" type="button" style="display:inline-flex;align-items:center;gap:6px;font-weight:600;">
+        <i data-lucide="hard-drive-download" style="width:14px;height:14px;"></i> Tải mô hình Offline (~2.1 GB)
+      </button>`;
+      el('btnDownloadLocalLlm')?.addEventListener('click', handleStartLlmDownload);
+    }
+    if (boxDesc) {
+      boxDesc.textContent = 'Chưa có file mô hình trên máy. Nhấn nút tải về để sử dụng các tính năng AI không cần mạng.';
+    }
+  }
+
+  // LLM status row
+  if (el('setLlmStatus')) {
+    el('setLlmStatus').innerHTML = llmOk
+      ? `<span style="color:#059669;font-weight:600;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="check-circle-2" style="width:14px;height:14px;"></i> Đã nạp vào bộ nhớ</span>`
+      : llmAvail
+        ? `<span style="color:#0891b2;font-weight:600;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="check" style="width:14px;height:14px;"></i> Sẵn sàng nạp khi cần</span>`
+        : downloading
+          ? `<span style="color:#6366f1;font-weight:600;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="loader-2" class="spin" style="width:14px;height:14px;"></i> Đang tải về máy…</span>`
+          : `<span style="color:#dc2626;font-weight:600;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="alert-circle" style="width:14px;height:14px;"></i> Chưa tải về</span>`;
+  }
+}
+
+async function handleStartLlmDownload() {
+  if (isLlmDownloading) return;
+  isLlmDownloading = true;
+  updateLocalLlmUi(currentSettings);
+
+  const progContainer = el('localLlmProgressContainer');
+  if (progContainer) progContainer.style.display = 'block';
+  if (el('localLlmProgressStatus')) el('localLlmProgressStatus').textContent = 'Đang kết nối máy chủ HuggingFace…';
+  if (el('localLlmProgressPercent')) el('localLlmProgressPercent').textContent = '0%';
+  if (el('localLlmProgressBar')) el('localLlmProgressBar').style.width = '0%';
+  if (el('localLlmProgressDetails')) el('localLlmProgressDetails').textContent = 'Khởi tạo tiến trình tải (~2.1 GB)…';
+
+  try {
+    const res = await API.download_local_llm();
+    if (res.status === 'already_available') {
+      isLlmDownloading = false;
+      showToast(res.message, 'success');
+      await loadSettings();
+    }
+  } catch (err) {
+    isLlmDownloading = false;
+    showToast('Lỗi khi tải mô hình: ' + err.message, 'error');
+    updateLocalLlmUi(currentSettings);
+  }
+}
+
+async function handleCancelLlmDownload() {
+  try {
+    const res = await API.cancel_local_llm_download();
+    if (res.ok) {
+      showToast('Đang hủy tiến trình tải…', 'info');
+    }
+  } catch (err) {
+    showToast('Không thể hủy: ' + err.message, 'error');
+  }
+}
+
+// EventBus Listeners for Local LLM download
+EventBus.on('llm_download:start', () => {
+  isLlmDownloading = true;
+  updateLocalLlmUi(currentSettings);
+  refreshIcons();
+});
+
+EventBus.on('llm_download:progress', (data) => {
+  isLlmDownloading = true;
+  const progContainer = el('localLlmProgressContainer');
+  if (progContainer) progContainer.style.display = 'block';
+  if (el('localLlmProgressStatus')) el('localLlmProgressStatus').textContent = data.text || 'Đang tải…';
+  if (el('localLlmProgressPercent')) el('localLlmProgressPercent').textContent = `${data.percent || 0}%`;
+  if (el('localLlmProgressBar')) el('localLlmProgressBar').style.width = `${Math.min(100, Math.max(0, data.percent || 0))}%`;
+  if (el('localLlmProgressDetails')) {
+    const spd = data.speed ? ` • ${data.speed}` : '';
+    el('localLlmProgressDetails').textContent = `${data.downloaded_mb || 0} / ${data.total_mb || 2100} MB${spd}`;
+  }
+});
+
+EventBus.on('llm_download:done', (data) => {
+  isLlmDownloading = false;
+  showToast(data.message || '✓ Đã tải và cài đặt mô hình Offline thành công!', 'success', 4000);
+  loadSettings();
+});
+
+EventBus.on('llm_download:cancelled', (data) => {
+  isLlmDownloading = false;
+  showToast(data.message || 'Đã hủy tải mô hình.', 'info');
+  loadSettings();
+});
+
+EventBus.on('llm_download:error', (data) => {
+  isLlmDownloading = false;
+  showToast(data.message || 'Lỗi tải mô hình.', 'error', 4000);
+  loadSettings();
+});
 
 async function saveSettings(silent = false) {
   try {

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "open-mind"
-version = "1.0.0"
-description = "Offline AI-Powered Academic Lecture Copilot & Active Recall Learning Workspace"
+version = "2.0.0"
+description = "AI-Powered Academic Lecture Copilot & Active Recall Learning Workspace (Hybrid On-Device/Cloud AI)"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -18,8 +18,10 @@ keywords = [
     "whisper",
     "llm",
     "qwen",
-    "offline-ai",
+    "gemini",
+    "rag",
     "spaced-repetition",
+    "ebbinghaus",
     "education",
     "open-source"
 ]
@@ -45,16 +47,14 @@ dependencies = [
     "huggingface-hub>=0.20.0",
     "requests>=2.28.0",
     "tqdm>=4.65.0",
+    "yt-dlp>=2024.0.0",
+    "pypdf>=4.0.0",
+    "genanki>=0.13.0",
 ]
 
 [project.optional-dependencies]
 build = [
     "pyinstaller>=6.10.0",
-]
-benchmark = [
-    "psutil>=5.9.0",
-    "jiwer>=3.0.0",
-]
 dev = [
     "pytest>=7.0.0",
 ]

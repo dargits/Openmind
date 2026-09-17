@@ -16,19 +16,21 @@ ctranslate2_bins = collect_dynamic_libs('ctranslate2')
 llama_cpp_bins = collect_dynamic_libs('llama_cpp')
 
 hidden_imports = [
-    'uvicorn',
-    'fastapi',
     'webview',
     'ctranslate2',
     'llama_cpp',
     'sqlite3',
     'pydantic',
     'faster_whisper',
-] + collect_submodules('webview')
+    'numpy',
+    'av',
+    'multiprocessing',
+] + collect_submodules('webview') + collect_submodules('av')
 
 datas = [
     (str(ROOT_DIR / 'ui'), 'ui'),
     (str(ROOT_DIR / 'data' / 'demo_lecture.json'), 'data'),
+    (str(ROOT_DIR / 'data' / 'settings.json'), 'data'),
     (str(ROOT_DIR / '.env.example'), '.'),
 ]
 
@@ -71,7 +73,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=str(ROOT_DIR / 'ui' / 'logo.jpg') if (ROOT_DIR / 'ui' / 'logo.jpg').exists() else None,
+    icon=str(ROOT_DIR / 'ui' / 'logo.ico') if (ROOT_DIR / 'ui' / 'logo.ico').exists() else None,
 )
 
 coll = COLLECT(

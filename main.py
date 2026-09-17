@@ -7,7 +7,19 @@
 import os
 import sys
 import subprocess
+import multiprocessing
 from pathlib import Path
+
+# Đảm bảo hỗ trợ PyInstaller freeze trên Windows (bắt buộc cho multiprocessing & C-extensions)
+multiprocessing.freeze_support()
+
+# Pre-import các thư viện C-extension chính trên main thread để tránh re-initialization error
+try:
+    import numpy
+    import av
+    import faster_whisper
+except Exception:
+    pass
 
 # Ensure UTF-8 output on Windows console
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):
@@ -88,8 +100,18 @@ from core.api import api
 def main():
     print("[Open-mind] Đang khởi chạy ứng dụng...")
 
+    # Thiết lập Application User Model ID để Windows hiển thị đúng icon trên thanh Taskbar
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            app_id = "dargits.openmind.academic.ai.v2"
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+        except Exception as e:
+            print(f"[Open-mind] AppUserModelID: {e}")
+
     WEB_DIR = (BUNDLE_DIR / "ui") if (BUNDLE_DIR / "ui").exists() else (BASE_DIR / "ui")
     INDEX_HTML = WEB_DIR / "index.html"
+    icon_path = (WEB_DIR / "logo.ico") if (WEB_DIR / "logo.ico").exists() else (BASE_DIR / "ui" / "logo.ico")
 
     # Tự động phát hiện độ phân giải màn hình để căn giữa và định cỡ phù hợp
     try:
@@ -125,7 +147,7 @@ def main():
 
     api.set_window(window)
 
-    webview.start(debug=False)
+    webview.start(icon=str(icon_path) if icon_path.exists() else None, debug=False)
 
 
 if __name__ == "__main__":

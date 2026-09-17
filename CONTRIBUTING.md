@@ -12,14 +12,14 @@ Tài liệu này cung cấp các nguyên tắc và quy trình chuẩn để bạ
 2. [Cài đặt môi trường phát triển](#2-cài-đặt-môi-trường-phát-triển)
 3. [Quy trình đóng góp (Git Workflow)](#3-quy-trình-đóng-góp-git-workflow)
 4. [Cấu trúc mã nguồn & Phong cách lập trình](#4-cấu-trúc-mã-nguồn--phong-cách-lập-trình)
-5. [Chạy Benchmark & Kiểm thử](#5-chạy-benchmark--kiểm-thử)
+5. [Chạy Kiểm Thử Đơn Vị](#5-chạy-kiểm-thử-đơn-vị)
 6. [Báo cáo lỗi & Đề xuất tính năng mới](#6-báo-cáo-lỗi--đề-xuất-tính-năng-mới)
 
 ---
 
 ## 1. Quy tắc ứng xử
 
-- Tôn trọng các thành viên khác trong cộng đồng và ban giám khảo.
+- Tôn trọng các thành viên khác trong cộng đồng.
 - Đặt tiêu chí trải nghiệm người dùng, tính ổn định và tôn trọng quyền riêng tư (chạy 100% Offline) lên hàng đầu.
 
 ---
@@ -92,7 +92,7 @@ Mã nguồn được phân tách theo mô hình kiến trúc module rõ ràng:
 - **`ui/`**: Giao diện người dùng Webview hiện đại (HTML/CSS/Vanilla JS).
 - **`data/`**: Cơ sở dữ liệu SQLite và tệp dữ liệu bài giảng mẫu (`demo_lecture.json`).
 - **`models/`**: Thư mục lưu trữ trọng số mô hình AI cục bộ (100% Offline).
-- **`tests/`**: Toàn bộ kiểm thử tự động và công cụ đo đạc (`benchmark_stt.py`).
+- **`tests/`**: Toàn bộ kiểm thử tự động (`test_core.py`).
 
 ### Quy chuẩn Code:
 - Tuân thủ chuẩn **PEP 8** cho mã nguồn Python.
@@ -101,16 +101,12 @@ Mã nguồn được phân tách theo mô hình kiến trúc module rõ ràng:
 
 ---
 
-## 5. Chạy Benchmark & Kiểm thử
+## 5. Chạy Kiểm Thử Đơn Vị
 
-Trước khi gửi Pull Request, hãy đảm bảo các chức năng hoạt động chính xác và chạy công cụ benchmark để đánh giá không làm suy giảm hiệu năng:
+Trước khi gửi Pull Request, hãy đảm bảo toàn bộ bộ kiểm thử tự động chạy thành công mà không có lỗi:
 
 ```bash
-# Chạy Unit Tests
 python -m unittest tests/test_core.py -v
-
-# Kiểm tra Benchmark STT
-python tests/benchmark_stt.py --audio data/samples/lecture_sample.mp3 --models tiny,small
 ```
 
 ---
@@ -132,7 +128,7 @@ Khi gửi báo cáo lỗi, hãy cung cấp đầy đủ:
 
 ## 7. Tiêu Chuẩn Giấy Phép & Bản Quyền Mã Nguồn (SPDX License Headers)
 
-Theo quy định quản lý mã nguồn mở chuẩn quốc tế và thể lệ cuộc thi:
+Theo quy định quản lý mã nguồn mở chuẩn quốc tế:
 - Mọi tệp mã nguồn mới được thêm vào dự án bắt buộc phải đính kèm **SPDX Header** chuẩn OSI ở đầu tệp:
   ```python
   # SPDX-FileCopyrightText: 2026 Open-mind Contributors

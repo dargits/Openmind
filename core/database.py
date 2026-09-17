@@ -785,5 +785,17 @@ class Database:
                 }
             }
 
+    def reset_database(self):
+        """Drops and recreates all tables, resetting database to brand new clean state."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            tables = [
+                "flashcards", "decks", "quiz_attempts", "study_sessions",
+                "chat_history", "lecture_notes", "achievements", "lectures"
+            ]
+            for t in tables:
+                cursor.execute(f"DROP TABLE IF EXISTS {t};")
+        self._init_db()
+
 
 db = Database()
